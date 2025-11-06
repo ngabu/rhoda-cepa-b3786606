@@ -292,7 +292,7 @@ export function PermitManagement({ onNavigateToNewApplication }: PermitManagemen
                     {selectedPermitForPreview?.id === permit.id && (
                       <TableRow>
                         <TableCell colSpan={6} className="p-0">
-                          <div className="border-t bg-muted/30 p-4">
+                          <div className="border-t border-glass backdrop-blur-sm bg-glass p-6">
                             <PermitDetailsReadOnlyView permit={selectedPermitForPreview} />
                           </div>
                         </TableCell>
