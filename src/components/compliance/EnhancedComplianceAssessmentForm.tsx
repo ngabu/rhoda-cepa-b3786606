@@ -949,9 +949,319 @@ export function EnhancedComplianceAssessmentForm({ assessmentId, onComplete }: E
           </TabsContent>
 
           <TabsContent value="fees">
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Fee information will be displayed here.</p>
-            </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <DollarSign className="w-5 h-5 mr-2" />
+                  Fee Calculation & Invoice Generation
+                </CardTitle>
+                <CardDescription>
+                  Review and adjust fee parameters based on compliance assessment, then generate invoice
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Fee Parameters Section */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Fee Calculation Parameters</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="activityType">Activity Type</Label>
+                        <Select
+                          value={feeParameters.activityType}
+                          onValueChange={(value) => setFeeParameters(prev => ({ ...prev, activityType: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select activity type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="new">New Application</SelectItem>
+                            <SelectItem value="amendment">Amendment</SelectItem>
+                            <SelectItem value="transfer">Transfer</SelectItem>
+                            <SelectItem value="amalgamation">Amalgamation</SelectItem>
+                            <SelectItem value="renewal">Renewal</SelectItem>
+                            <SelectItem value="surrender">Surrender</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="prescribedActivity">Prescribed Activity</Label>
+                        <Select
+                          value={feeParameters.prescribedActivityId || ''}
+                          onValueChange={(value) => {
+                            const activity = prescribedActivities?.find(a => a.id === value);
+                            setFeeParameters(prev => ({ 
+                              ...prev, 
+                              prescribedActivityId: value,
+                              activitySubCategory: activity?.activity_description || ''
+                            }));
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select prescribed activity" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {prescribedActivities?.filter(activity => activity.id && activity.id.trim() !== '').map((activity) => (
+                              <SelectItem key={activity.id} value={activity.id}>
+                                {activity.category_number} - {activity.activity_description}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="permitType">Permit Type</Label>
+                        <Select
+                          value={feeParameters.permitType}
+                          onValueChange={(value) => setFeeParameters(prev => ({ ...prev, permitType: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select permit type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Environment Permit">Environment Permit</SelectItem>
+                            <SelectItem value="Water Permit">Water Permit</SelectItem>
+                            <SelectItem value="Waste Permit">Waste Permit</SelectItem>
+                            <SelectItem value="Air Permit">Air Permit</SelectItem>
+                            <SelectItem value="Mining Permit">Mining Permit</SelectItem>
+                            <SelectItem value="Industrial Permit">Industrial Permit</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="activityLevel">Activity Level</Label>
+                        <Select
+                          value={feeParameters.activityLevel}
+                          onValueChange={(value) => setFeeParameters(prev => ({ ...prev, activityLevel: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select activity level" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">Level 1</SelectItem>
+                            <SelectItem value="2A">Level 2A</SelectItem>
+                            <SelectItem value="2B">Level 2B</SelectItem>
+                            <SelectItem value="3">Level 3</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                    <div>
+                      <Label htmlFor="duration">Duration (Years)</Label>
+                      <Input
+                        type="number"
+                        value={feeParameters.duration}
+                        onChange={(e) => setFeeParameters(prev => ({ ...prev, duration: parseInt(e.target.value) || 1 }))}
+                        min="1"
+                        max="25"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="projectCost">Project Cost (PGK)</Label>
+                      <Input
+                        type="number"
+                        value={feeParameters.projectCost}
+                        onChange={(e) => setFeeParameters(prev => ({ ...prev, projectCost: parseFloat(e.target.value) || 0 }))}
+                        placeholder="0.00"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="landArea">Land Area (sqm)</Label>
+                      <Input
+                        type="number"
+                        value={feeParameters.landArea}
+                        onChange={(e) => setFeeParameters(prev => ({ ...prev, landArea: parseFloat(e.target.value) || 0 }))}
+                        placeholder="0"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="odsChemicalType">ODS Chemical Type</Label>
+                      <Select
+                        value={feeParameters.odsChemicalType}
+                        onValueChange={(value) => setFeeParameters(prev => ({ ...prev, odsChemicalType: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select if applicable" />
+                        </SelectTrigger>
+                         <SelectContent>
+                           <SelectItem value="none">None</SelectItem>
+                          <SelectItem value="CFC">CFC (Chlorofluorocarbons)</SelectItem>
+                          <SelectItem value="HCFC">HCFC (Hydrochlorofluorocarbons)</SelectItem>
+                          <SelectItem value="HFC">HFC (Hydrofluorocarbons)</SelectItem>
+                          <SelectItem value="Halons">Halons</SelectItem>
+                          <SelectItem value="other">Other ODS</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="wasteType">Waste Type</Label>
+                      <Select
+                        value={feeParameters.wasteType}
+                        onValueChange={(value) => setFeeParameters(prev => ({ ...prev, wasteType: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select if applicable" />
+                        </SelectTrigger>
+                         <SelectContent>
+                           <SelectItem value="none">None</SelectItem>
+                          <SelectItem value="hazardous">Hazardous Waste</SelectItem>
+                          <SelectItem value="industrial">Industrial Waste</SelectItem>
+                          <SelectItem value="chemical">Chemical Waste</SelectItem>
+                          <SelectItem value="medical">Medical Waste</SelectItem>
+                          <SelectItem value="radioactive">Radioactive Waste</SelectItem>
+                          <SelectItem value="other">Other Waste</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button 
+                      type="button" 
+                      onClick={() => calculateApplicationFees()}
+                      disabled={calculating}
+                      className="flex-1"
+                    >
+                      {calculating ? (
+                        <>
+                          <Calculator className="w-4 h-4 mr-2 animate-spin" />
+                          Calculating...
+                        </>
+                      ) : (
+                        <>
+                          <Calculator className="w-4 h-4 mr-2" />
+                          Calculate Enhanced Fees
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Parameter Validation */}
+                  {(!feeParameters.activityType || !feeParameters.permitType || !feeParameters.activityLevel) && (
+                    <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-destructive mt-0.5" />
+                        <div className="text-sm">
+                          <p className="font-medium text-destructive">Missing Required Parameters</p>
+                          <ul className="list-disc list-inside mt-1 text-destructive/80">
+                            {!feeParameters.activityType && <li>Activity Type is required</li>}
+                            {!feeParameters.permitType && <li>Permit Type is required</li>}
+                            {!feeParameters.activityLevel && <li>Activity Level is required</li>}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Fee Display Section */}
+                {calculatedFees ? (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Calculated Fees</h3>
+                    
+                    {calculatedFees.components && calculatedFees.components.length > 0 && (
+                      <div className="space-y-3">
+                        {calculatedFees.components.map((component: any, index: number) => (
+                          <div key={component.component_id || index} className="border rounded-lg p-4">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Label className="text-sm font-medium">{component.component_name}</Label>
+                                  <Badge variant={component.is_mandatory ? "default" : "secondary"} className="text-xs">
+                                    {component.is_mandatory ? "Mandatory" : "Optional"}
+                                  </Badge>
+                                  <Badge variant="outline" className="text-xs">{component.fee_category}</Badge>
+                                </div>
+                                
+                                <div className="space-y-1">
+                                  <p className="text-xs text-muted-foreground">
+                                    <strong>Method:</strong> {component.calculation_method}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    <strong>Formula:</strong> {component.formula_used}
+                                  </p>
+                                  {component.notes && (
+                                    <p className="text-xs text-blue-600 flex items-start gap-1">
+                                      <span className="text-blue-500">ℹ</span>
+                                      {component.notes}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <div className="text-right ml-4">
+                                <p className="text-lg font-semibold">
+                                  K{component.calculated_amount.toFixed(2)}
+                                </p>
+                                {component.base_amount !== component.calculated_amount && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Base: K{component.base_amount.toFixed(2)}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <Label className="text-sm font-medium">Total Calculated Fee</Label>
+                          <p className="text-2xl font-bold text-primary">K{calculatedFees.totalFee.toFixed(2)}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="final_fee_amount">Final Fee Amount (K)</Label>
+                      <Input
+                        id="final_fee_amount"
+                        type="number"
+                        step="0.01"
+                        {...register('final_fee_amount', { valueAsNumber: true })}
+                        placeholder="Confirm or adjust final fee amount"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Adjust if necessary based on assessment findings
+                      </p>
+                    </div>
+
+                    {watchedFinalFee > 0 && (
+                      <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <div>
+                          <Label className="text-sm font-medium text-green-800">Ready to Generate Invoice</Label>
+                          <p className="text-sm text-green-700">Invoice will be created for K{watchedFinalFee.toFixed(2)}</p>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={generateInvoice}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <Receipt className="w-4 h-4 mr-2" />
+                          Generate Invoice
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <AlertTriangle className="w-8 h-8 mx-auto mb-2" />
+                    <p>Complete the fee parameters above and click "Recalculate Fees" to see fee breakdown</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="decision">
