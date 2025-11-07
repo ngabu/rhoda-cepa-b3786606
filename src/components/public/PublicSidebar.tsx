@@ -51,6 +51,7 @@ interface PublicNavigationItem {
 const publicNavigationItems: PublicNavigationItem[] = [
   { title: "Dashboard", value: "dashboard", icon: LayoutDashboard },
   { title: "Entities", value: "entities", icon: Building2 },
+  { title: "Intent Registration", value: "intent-registration", icon: FilePlus },
   { 
     title: "Permits Management", 
     value: "permits", 
