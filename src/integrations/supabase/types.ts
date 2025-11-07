@@ -909,6 +909,65 @@ export type Database = {
           },
         ]
       }
+      intent_registrations: {
+        Row: {
+          activity_description: string
+          activity_level: string
+          commencement_date: string
+          completion_date: string
+          created_at: string
+          entity_id: string
+          id: string
+          preparatory_work_description: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_description: string
+          activity_level: string
+          commencement_date: string
+          completion_date: string
+          created_at?: string
+          entity_id: string
+          id?: string
+          preparatory_work_description: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_description?: string
+          activity_level?: string
+          commencement_date?: string
+          completion_date?: string
+          created_at?: string
+          entity_id?: string
+          id?: string
+          preparatory_work_description?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intent_registrations_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           activity_id: string | null

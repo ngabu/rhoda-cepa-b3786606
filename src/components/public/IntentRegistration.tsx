@@ -53,7 +53,7 @@ export function IntentRegistration() {
     setSubmitting(true);
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('intent_registrations')
         .insert({
           user_id: user.id,
@@ -66,7 +66,7 @@ export function IntentRegistration() {
           status: 'pending',
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 

@@ -28,6 +28,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUserNotifications } from '@/hooks/useUserNotifications';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDistanceToNow } from 'date-fns';
+import { IntentRegistration } from '@/components/public/IntentRegistration';
 
 interface DashboardStats {
   activeApplications: number;
@@ -404,6 +405,7 @@ export default function PublicDashboard() {
             )}
 
             {activeTab === 'entities' && <EntityManagement />}
+            {activeTab === 'intent-registration' && <IntentRegistration />}
             {activeTab === 'permits' && <PermitManagement onNavigateToNewApplication={() => {
               setSelectedApplicationId(null);
               setActiveTab('permit-application-new');
