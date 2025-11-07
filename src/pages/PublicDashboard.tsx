@@ -59,7 +59,7 @@ export default function PublicDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
   const [showApplicationDetail, setShowApplicationDetail] = useState(false);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { unreadCount } = useUserNotifications(user?.id);
 
   useEffect(() => {
@@ -303,6 +303,14 @@ export default function PublicDashboard() {
                   <p className="text-forest-600 mt-1">Manage your permit applications and documents</p>
                 </div>
               </div>
+              {profile && (
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Logged in as</p>
+                  <p className="font-semibold text-forest-800">
+                    {profile.full_name || profile.first_name || profile.last_name || user?.email || 'User'}
+                  </p>
+                </div>
+              )}
             </div>
           </header>
 

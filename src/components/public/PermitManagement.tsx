@@ -208,7 +208,7 @@ export function PermitManagement({ onNavigateToNewApplication }: PermitManagemen
                       key={permit.id} 
                       className={`cursor-pointer transition-colors ${
                         selectedPermitForPreview?.id === permit.id 
-                          ? 'bg-sidebar-accent hover:bg-sidebar-accent/90' 
+                          ? 'bg-accent hover:bg-accent/90' 
                           : 'hover:bg-muted/50'
                       }`}
                       onClick={() => setSelectedPermitForPreview(selectedPermitForPreview?.id === permit.id ? null : permit)}

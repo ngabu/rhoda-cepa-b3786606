@@ -599,7 +599,25 @@ export function ComprehensivePermitForm({ permitId, onSuccess, onCancel, isStand
       </div>
     ),
     permitspecific: <PermitSpecificFieldsStep data={formData} onChange={(updates) => setFormData(prev => ({ ...prev, ...updates }))} />,
-    compliance: <ComplianceTab formData={formData} handleComplianceChange={handleComplianceChange} />,
+    compliance: (
+      <div className="space-y-4">
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="flex items-center gap-2">
+            <Eye className="w-5 h-5 text-amber-600" />
+            <div>
+              <h4 className="font-medium text-amber-800">Read-Only: Compliance Assessment Required</h4>
+              <p className="text-sm text-amber-700 mt-1">
+                Compliance requirements will be assessed and verified by the Compliance division staff during the review process. You can view the compliance status once it has been evaluated.
+              </p>
+            </div>
+          </div>
+        </div>
+        <ComplianceTab 
+          formData={formData} 
+          handleComplianceChange={() => {}} // Disabled for public users
+        />
+      </div>
+    ),
     review: <ReviewSubmitStep data={formData} onChange={(updates) => setFormData(prev => ({ ...prev, ...updates }))} />,
   };
 
