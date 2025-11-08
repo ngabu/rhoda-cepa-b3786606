@@ -45,45 +45,42 @@ export function useIntentRegistrations(userId?: string) {
   const fetchIntents = async () => {
     try {
       setLoading(true);
+      
+      // Use the secure function to get intent registrations with reviewer info
       const { data, error } = await supabase
-        .from('intent_registrations')
-        .select(`
-          *,
-          entity:entities!inner(id, name, entity_type)
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+        .rpc('get_intent_registrations_with_reviewer', { requesting_user_id: userId });
 
       if (error) throw error;
 
-      // Fetch reviewer profiles separately and properly type the data
-      const intentsWithReviewer = await Promise.all(
-        (data || []).map(async (intent) => {
-          const typedIntent = {
+      // Fetch entity information and map reviewer data
+      const intentsWithEntity = await Promise.all(
+        (data || []).map(async (intent: any) => {
+          // Fetch entity info
+          const { data: entity } = await supabase
+            .from('entities')
+            .select('id, name, entity_type')
+            .eq('id', intent.entity_id)
+            .maybeSingle();
+
+          return {
             ...intent,
             official_feedback_attachments: intent.official_feedback_attachments 
               ? (Array.isArray(intent.official_feedback_attachments) 
                 ? intent.official_feedback_attachments 
                 : [])
               : null,
+            entity: entity || undefined,
+            reviewer: intent.reviewer_first_name ? {
+              id: intent.reviewed_by,
+              first_name: intent.reviewer_first_name,
+              last_name: intent.reviewer_last_name,
+              email: intent.reviewer_email
+            } : undefined
           } as IntentRegistration;
-
-          if (intent.reviewed_by) {
-            const { data: reviewer, error: reviewerError } = await supabase
-              .from('profiles')
-              .select('id, first_name, last_name, email')
-              .eq('user_id', intent.reviewed_by)
-              .maybeSingle();
-            
-            if (!reviewerError && reviewer) {
-              return { ...typedIntent, reviewer };
-            }
-          }
-          return typedIntent;
         })
       );
 
-      setIntents(intentsWithReviewer);
+      setIntents(intentsWithEntity);
     } catch (error) {
       console.error('Error fetching intent registrations:', error);
       toast({
