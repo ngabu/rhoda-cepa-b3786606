@@ -275,11 +275,13 @@ export function IntentRegistrationReviewForm({ intentId, onBack }: IntentRegistr
 
       const notificationMessage = `Your intent registration has been reviewed by ${reviewerName}. Status: ${reviewStatus.replace(/_/g, ' ')}. ${reviewNotes ? 'Review notes: ' + reviewNotes : ''}`;
 
-      let notificationType = 'registry_intent_feedback';
+      let notificationType: 'success' | 'warning' | 'error' | 'info' = 'info';
       if (reviewStatus === 'approved') {
-        notificationType = 'registry_assessment_passed';
+        notificationType = 'success';
       } else if (reviewStatus === 'rejected') {
-        notificationType = 'registry_assessment_failed';
+        notificationType = 'error';
+      } else if (reviewStatus === 'requires_clarification') {
+        notificationType = 'warning';
       }
 
       const { error: notificationError } = await supabase
