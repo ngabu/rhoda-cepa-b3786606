@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Bell, Check, X, AlertCircle, CheckCircle, Info, Clock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUserNotifications } from '@/hooks/useUserNotifications';
 import { markUserNotificationRead, markAllUserNotificationsRead } from '@/services/userNotificationsService';
 import { formatDistanceToNow } from 'date-fns';
+import { BrowserNotificationSettings } from './BrowserNotificationSettings';
 
 const getNotificationIcon = (type: string) => {
   switch (type) {
@@ -57,16 +58,7 @@ interface NotificationCenterProps {
 export function NotificationCenter({ onViewApplication }: NotificationCenterProps = {}) {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { notifications, loading, error, unreadCount, refetch } = useUserNotifications(
-    user?.id,
-    (notification) => {
-      // Handle real-time notification updates
-      toast({
-        title: notification.title,
-        description: notification.message,
-      });
-    }
-  );
+  const { notifications, loading, error, unreadCount, refetch } = useUserNotifications(user?.id);
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -111,99 +103,105 @@ export function NotificationCenter({ onViewApplication }: NotificationCenterProp
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center">
-              <Bell className="w-5 h-5 mr-2" />
-              Notifications
-              {unreadCount > 0 && (
-                <Badge variant="destructive" className="ml-2">
-                  {unreadCount}
-                </Badge>
-              )}
-            </CardTitle>
-            <CardDescription>Stay updated with your application progress</CardDescription>
+    <div className="space-y-6">
+      {/* Browser Notification Settings */}
+      <BrowserNotificationSettings />
+
+      {/* Notification List */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center">
+                <Bell className="w-5 h-5 mr-2" />
+                Notifications
+                {unreadCount > 0 && (
+                  <Badge variant="destructive" className="ml-2">
+                    {unreadCount}
+                  </Badge>
+                )}
+              </CardTitle>
+              <CardDescription>Stay updated with your application progress</CardDescription>
+            </div>
+            {unreadCount > 0 && (
+              <Button variant="secondary" size="sm" onClick={markAllAsRead}>
+                <Check className="w-4 h-4 mr-2" />
+                Mark all as read
+              </Button>
+            )}
           </div>
-          {unreadCount > 0 && (
-            <Button variant="secondary" size="sm" onClick={markAllAsRead}>
-              <Check className="w-4 h-4 mr-2" />
-              Mark all as read
-            </Button>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        {notifications.length === 0 ? (
-          <div className="text-center py-8">
-            <Bell className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground">No notifications yet</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {notifications.map((notification) => (
-              <div
-                key={notification.id}
-                className={`p-4 rounded-lg border ${
-                  notification.is_read ? 'bg-sidebar' : 'bg-primary/5 border-primary/20'
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3 flex-1">
-                    {getNotificationIcon(notification.type)}
-                    <div className="flex-1">
-                      <h4 className="font-medium text-sm">{notification.title}</h4>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {notification.message}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                      </p>
-                       {notification.related_permit_id && (
-                        <div className="mt-2">
-                           <Button
-                             size="sm"
-                             variant="secondary"
-                             onClick={() => {
-                               if (onViewApplication) {
-                                 onViewApplication(notification.related_permit_id!);
-                               } else {
-                                 // Fallback to navigate to permits tab
-                                 const event = new CustomEvent('navigate-to-permits', { 
-                                   detail: { permitId: notification.related_permit_id } 
-                                 });
-                                 window.dispatchEvent(event);
-                               }
-                             }}
-                             className="text-xs"
-                           >
-                             View Application
-                           </Button>
-                         </div>
-                       )}
+        </CardHeader>
+        <CardContent>
+          {notifications.length === 0 ? (
+            <div className="text-center py-8">
+              <Bell className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">No notifications yet</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {notifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  className={`p-4 rounded-lg border ${
+                    notification.is_read ? 'bg-sidebar' : 'bg-primary/5 border-primary/20'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3 flex-1">
+                      {getNotificationIcon(notification.type)}
+                      <div className="flex-1">
+                        <h4 className="font-medium text-sm">{notification.title}</h4>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {notification.message}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                        </p>
+                         {notification.related_permit_id && (
+                          <div className="mt-2">
+                             <Button
+                               size="sm"
+                               variant="secondary"
+                               onClick={() => {
+                                 if (onViewApplication) {
+                                   onViewApplication(notification.related_permit_id!);
+                                 } else {
+                                   // Fallback to navigate to permits tab
+                                   const event = new CustomEvent('navigate-to-permits', { 
+                                     detail: { permitId: notification.related_permit_id } 
+                                   });
+                                   window.dispatchEvent(event);
+                                 }
+                               }}
+                               className="text-xs"
+                             >
+                               View Application
+                             </Button>
+                           </div>
+                         )}
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant={getNotificationBadgeVariant(notification.type)} className="text-xs">
+                        {notification.type.replace(/_/g, ' ')}
+                      </Badge>
+                      {!notification.is_read && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => markAsRead(notification.id)}
+                        >
+                          <Check className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant={getNotificationBadgeVariant(notification.type)} className="text-xs">
-                      {notification.type.replace(/_/g, ' ')}
-                    </Badge>
-                    {!notification.is_read && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => markAsRead(notification.id)}
-                      >
-                        <Check className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

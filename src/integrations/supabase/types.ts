@@ -466,6 +466,8 @@ export type Database = {
           file_size: number | null
           filename: string
           id: string
+          intent_registration_draft_id: string | null
+          intent_registration_id: string | null
           mime_type: string | null
           permit_id: string | null
           uploaded_at: string
@@ -479,6 +481,8 @@ export type Database = {
           file_size?: number | null
           filename: string
           id?: string
+          intent_registration_draft_id?: string | null
+          intent_registration_id?: string | null
           mime_type?: string | null
           permit_id?: string | null
           uploaded_at?: string
@@ -492,6 +496,8 @@ export type Database = {
           file_size?: number | null
           filename?: string
           id?: string
+          intent_registration_draft_id?: string | null
+          intent_registration_id?: string | null
           mime_type?: string | null
           permit_id?: string | null
           uploaded_at?: string
@@ -510,6 +516,20 @@ export type Database = {
             columns: ["entity_id"]
             isOneToOne: false
             referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_intent_registration_draft_id_fkey"
+            columns: ["intent_registration_draft_id"]
+            isOneToOne: false
+            referencedRelation: "intent_registration_drafts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_intent_registration_id_fkey"
+            columns: ["intent_registration_id"]
+            isOneToOne: false
+            referencedRelation: "intent_registrations"
             referencedColumns: ["id"]
           },
         ]
@@ -909,6 +929,56 @@ export type Database = {
           },
         ]
       }
+      intent_registration_drafts: {
+        Row: {
+          activity_description: string | null
+          activity_level: string | null
+          commencement_date: string | null
+          completion_date: string | null
+          created_at: string
+          draft_name: string | null
+          entity_id: string | null
+          id: string
+          preparatory_work_description: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_description?: string | null
+          activity_level?: string | null
+          commencement_date?: string | null
+          completion_date?: string | null
+          created_at?: string
+          draft_name?: string | null
+          entity_id?: string | null
+          id?: string
+          preparatory_work_description?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_description?: string | null
+          activity_level?: string | null
+          commencement_date?: string | null
+          completion_date?: string | null
+          created_at?: string
+          draft_name?: string | null
+          entity_id?: string | null
+          id?: string
+          preparatory_work_description?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intent_registration_drafts_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       intent_registrations: {
         Row: {
           activity_description: string
@@ -918,6 +988,7 @@ export type Database = {
           created_at: string
           entity_id: string
           id: string
+          official_feedback_attachments: Json | null
           preparatory_work_description: string
           review_notes: string | null
           reviewed_at: string | null
@@ -934,6 +1005,7 @@ export type Database = {
           created_at?: string
           entity_id: string
           id?: string
+          official_feedback_attachments?: Json | null
           preparatory_work_description: string
           review_notes?: string | null
           reviewed_at?: string | null
@@ -950,6 +1022,7 @@ export type Database = {
           created_at?: string
           entity_id?: string
           id?: string
+          official_feedback_attachments?: Json | null
           preparatory_work_description?: string
           review_notes?: string | null
           reviewed_at?: string | null
