@@ -933,39 +933,66 @@ export type Database = {
         Row: {
           activity_description: string | null
           activity_level: string | null
+          approvals_required: string | null
           commencement_date: string | null
           completion_date: string | null
           created_at: string
+          departments_approached: string | null
           draft_name: string | null
           entity_id: string | null
+          estimated_cost_kina: number | null
+          government_agreement: string | null
           id: string
+          landowner_negotiation_status: string | null
           preparatory_work_description: string | null
+          prescribed_activity_id: string | null
+          project_site_address: string | null
+          project_site_description: string | null
+          site_ownership_details: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           activity_description?: string | null
           activity_level?: string | null
+          approvals_required?: string | null
           commencement_date?: string | null
           completion_date?: string | null
           created_at?: string
+          departments_approached?: string | null
           draft_name?: string | null
           entity_id?: string | null
+          estimated_cost_kina?: number | null
+          government_agreement?: string | null
           id?: string
+          landowner_negotiation_status?: string | null
           preparatory_work_description?: string | null
+          prescribed_activity_id?: string | null
+          project_site_address?: string | null
+          project_site_description?: string | null
+          site_ownership_details?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           activity_description?: string | null
           activity_level?: string | null
+          approvals_required?: string | null
           commencement_date?: string | null
           completion_date?: string | null
           created_at?: string
+          departments_approached?: string | null
           draft_name?: string | null
           entity_id?: string | null
+          estimated_cost_kina?: number | null
+          government_agreement?: string | null
           id?: string
+          landowner_negotiation_status?: string | null
           preparatory_work_description?: string | null
+          prescribed_activity_id?: string | null
+          project_site_address?: string | null
+          project_site_description?: string | null
+          site_ownership_details?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -977,22 +1004,59 @@ export type Database = {
             referencedRelation: "entities"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "intent_registration_drafts_prescribed_activity_id_fkey"
+            columns: ["prescribed_activity_id"]
+            isOneToOne: false
+            referencedRelation: "activity_fee_view"
+            referencedColumns: ["activity_id"]
+          },
+          {
+            foreignKeyName: "intent_registration_drafts_prescribed_activity_id_fkey"
+            columns: ["prescribed_activity_id"]
+            isOneToOne: false
+            referencedRelation: "prescribed_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intent_registration_drafts_prescribed_activity_id_fkey"
+            columns: ["prescribed_activity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_activity_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intent_registration_drafts_prescribed_activity_id_fkey"
+            columns: ["prescribed_activity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_activity_requirements"
+            referencedColumns: ["activity_id"]
+          },
         ]
       }
       intent_registrations: {
         Row: {
           activity_description: string
           activity_level: string
+          approvals_required: string | null
           commencement_date: string
           completion_date: string
           created_at: string
+          departments_approached: string | null
           entity_id: string
+          estimated_cost_kina: number | null
+          government_agreement: string | null
           id: string
+          landowner_negotiation_status: string | null
           official_feedback_attachments: Json | null
           preparatory_work_description: string
+          prescribed_activity_id: string | null
+          project_site_address: string | null
+          project_site_description: string | null
           review_notes: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          site_ownership_details: string | null
           status: string
           updated_at: string
           user_id: string
@@ -1000,16 +1064,25 @@ export type Database = {
         Insert: {
           activity_description: string
           activity_level: string
+          approvals_required?: string | null
           commencement_date: string
           completion_date: string
           created_at?: string
+          departments_approached?: string | null
           entity_id: string
+          estimated_cost_kina?: number | null
+          government_agreement?: string | null
           id?: string
+          landowner_negotiation_status?: string | null
           official_feedback_attachments?: Json | null
           preparatory_work_description: string
+          prescribed_activity_id?: string | null
+          project_site_address?: string | null
+          project_site_description?: string | null
           review_notes?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          site_ownership_details?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -1017,16 +1090,25 @@ export type Database = {
         Update: {
           activity_description?: string
           activity_level?: string
+          approvals_required?: string | null
           commencement_date?: string
           completion_date?: string
           created_at?: string
+          departments_approached?: string | null
           entity_id?: string
+          estimated_cost_kina?: number | null
+          government_agreement?: string | null
           id?: string
+          landowner_negotiation_status?: string | null
           official_feedback_attachments?: Json | null
           preparatory_work_description?: string
+          prescribed_activity_id?: string | null
+          project_site_address?: string | null
+          project_site_description?: string | null
           review_notes?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          site_ownership_details?: string | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -1038,6 +1120,34 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intent_registrations_prescribed_activity_id_fkey"
+            columns: ["prescribed_activity_id"]
+            isOneToOne: false
+            referencedRelation: "activity_fee_view"
+            referencedColumns: ["activity_id"]
+          },
+          {
+            foreignKeyName: "intent_registrations_prescribed_activity_id_fkey"
+            columns: ["prescribed_activity_id"]
+            isOneToOne: false
+            referencedRelation: "prescribed_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intent_registrations_prescribed_activity_id_fkey"
+            columns: ["prescribed_activity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_activity_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intent_registrations_prescribed_activity_id_fkey"
+            columns: ["prescribed_activity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_activity_requirements"
+            referencedColumns: ["activity_id"]
           },
         ]
       }
@@ -1650,6 +1760,7 @@ export type Database = {
           field_type: string
           help_text: string | null
           id: string
+          is_active: boolean
           is_mandatory: boolean | null
           permit_type_id: string
           placeholder: string | null
@@ -1665,6 +1776,7 @@ export type Database = {
           field_type: string
           help_text?: string | null
           id?: string
+          is_active?: boolean
           is_mandatory?: boolean | null
           permit_type_id: string
           placeholder?: string | null
@@ -1680,6 +1792,7 @@ export type Database = {
           field_type?: string
           help_text?: string | null
           id?: string
+          is_active?: boolean
           is_mandatory?: boolean | null
           permit_type_id?: string
           placeholder?: string | null
