@@ -2107,19 +2107,28 @@ export type Database = {
         Returns: {
           activity_description: string
           activity_level: string
+          approvals_required: string
           commencement_date: string
           completion_date: string
           created_at: string
+          departments_approached: string
           entity_id: string
+          estimated_cost_kina: number
+          government_agreement: string
           id: string
+          landowner_negotiation_status: string
           official_feedback_attachments: Json
           preparatory_work_description: string
+          prescribed_activity_id: string
+          project_site_address: string
+          project_site_description: string
           review_notes: string
           reviewed_at: string
           reviewed_by: string
           reviewer_email: string
           reviewer_first_name: string
           reviewer_last_name: string
+          site_ownership_details: string
           status: string
           updated_at: string
           user_id: string
