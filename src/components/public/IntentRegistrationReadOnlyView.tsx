@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -6,12 +6,79 @@ import { Building, User, Calendar, MapPin, DollarSign, Users, FileText, Download
 import { format } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { IntentRegistration } from '@/hooks/useIntentRegistrations';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Label } from '@/components/ui/label';
 
 interface IntentRegistrationReadOnlyViewProps {
   intent: IntentRegistration;
 }
 
+interface Document {
+  id: string;
+  filename: string;
+  file_path: string;
+  uploaded_at: string;
+  file_size: number;
+}
+
 export function IntentRegistrationReadOnlyView({ intent }: IntentRegistrationReadOnlyViewProps) {
+  const { toast } = useToast();
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loadingDocs, setLoadingDocs] = useState(true);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [intent.id]);
+
+  const fetchDocuments = async () => {
+    try {
+      setLoadingDocs(true);
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('intent_registration_id', intent.id)
+        .order('uploaded_at', { ascending: false });
+
+      if (error) throw error;
+      setDocuments(data || []);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+    } finally {
+      setLoadingDocs(false);
+    }
+  };
+
+  const handleDownloadDocument = async (filePath: string, filename: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .download(filePath);
+      
+      if (error) throw error;
+      
+      const url = window.URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Download Started",
+        description: `Downloading ${filename}`,
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download document",
+        variant: "destructive"
+      });
+    }
+  };
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
       pending: 'secondary',
@@ -228,6 +295,43 @@ export function IntentRegistrationReadOnlyView({ intent }: IntentRegistrationRea
             </>
           )}
 
+          {/* Supporting Documents Section */}
+          <div className="space-y-4 pt-6 border-t border-glass">
+            <div className="flex items-center justify-between">
+              <Label className="text-muted-foreground">Supporting Documents ({documents.length})</Label>
+            </div>
+            {loadingDocs ? (
+              <div className="flex justify-center p-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              </div>
+            ) : documents.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No documents attached</p>
+            ) : (
+              <div className="space-y-2">
+                {documents.map((doc) => (
+                  <div key={doc.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <FileText className="w-4 h-4 text-primary flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{doc.filename}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {(doc.file_size / 1024).toFixed(2)} KB • {new Date(doc.uploaded_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDownloadDocument(doc.file_path, doc.filename)}
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Review Information (if available) */}
           {intent.reviewed_by && (
             <>
@@ -271,8 +375,4 @@ export function IntentRegistrationReadOnlyView({ intent }: IntentRegistrationRea
       </Card>
     </div>
   );
-}
-
-function Label({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <label className={`text-sm font-medium ${className || ''}`}>{children}</label>;
 }
