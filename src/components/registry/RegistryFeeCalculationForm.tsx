@@ -43,15 +43,19 @@ export function RegistryFeeCalculationForm({ data, onChange }: RegistryFeeCalcul
       const { data: feeData, error } = await supabase.rpc('calculate_application_fee', {
         p_activity_id: data.activity_id,
         p_permit_type: data.permit_type_specific,
-        p_custom_processing_days: data.processing_days || null
+        p_custom_processing_days: null // Let database determine based on fee_category
       });
 
       if (error) throw error;
 
+      const totalFee = feeData || 0;
+      const adminFee = totalFee * 0.3;
+      const techFee = totalFee * 0.7;
+
       const breakdown = {
-        administrationFee: feeData || 0,
-        technicalFee: feeData || 0,
-        totalFee: feeData || 0,
+        administrationFee: Math.round(adminFee * 100) / 100,
+        technicalFee: Math.round(techFee * 100) / 100,
+        totalFee: Math.round(totalFee * 100) / 100,
         calculationMethod: 'Database Function',
         activityId: data.activity_id,
         permitType: data.permit_type_specific
@@ -98,20 +102,6 @@ export function RegistryFeeCalculationForm({ data, onChange }: RegistryFeeCalcul
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="processing_days">Processing Days (Optional)</Label>
-            <Input
-              type="number"
-              id="processing_days"
-              value={data.processing_days || ''}
-              onChange={(e) => onChange({ processing_days: parseInt(e.target.value) || null })}
-              placeholder="Override default processing days"
-            />
-            <p className="text-xs text-muted-foreground">
-              Leave empty to use default processing days for the activity level
-            </p>
-          </div>
-
           <Button 
             onClick={handleCalculateFee} 
             disabled={calculating || !data.activity_id || !data.permit_type_specific}
@@ -148,14 +138,14 @@ export function RegistryFeeCalculationForm({ data, onChange }: RegistryFeeCalcul
               
               <div className="space-y-3">
                 <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                  <span className="text-sm font-medium">Administration Fee</span>
+                  <span className="text-sm font-medium">Administration Fee (30%)</span>
                   <Badge variant="secondary">
                     PGK {feeBreakdown.administrationFee?.toLocaleString() || '0'}
                   </Badge>
                 </div>
 
                 <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                  <span className="text-sm font-medium">Technical Review Fee</span>
+                  <span className="text-sm font-medium">Technical Review Fee (70%)</span>
                   <Badge variant="secondary">
                     PGK {feeBreakdown.technicalFee?.toLocaleString() || '0'}
                   </Badge>
@@ -177,6 +167,9 @@ export function RegistryFeeCalculationForm({ data, onChange }: RegistryFeeCalcul
                 </p>
                 <p className="text-xs text-blue-700 mt-1">
                   <span className="font-medium">Permit Type:</span> {feeBreakdown.permitType}
+                </p>
+                <p className="text-xs text-blue-700 mt-1">
+                  <span className="font-medium">Formula:</span> (Annual Recurrent Fee ÷ 365) × Processing Days
                 </p>
               </div>
             </div>
