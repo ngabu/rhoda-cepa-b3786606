@@ -1371,7 +1371,6 @@ export type Database = {
           effluent_discharge_details: Json | null
           eia_required: boolean | null
           eis_required: boolean | null
-          emergency_discharge_details: Json | null
           entity_id: string | null
           entity_name: string | null
           entity_type: string | null
@@ -1391,10 +1390,8 @@ export type Database = {
           infrastructure_details: Json | null
           is_draft: boolean | null
           land_clearing_details: Json | null
-          land_type: string | null
           landowner_negotiation_status: string | null
           legal_declaration_accepted: boolean | null
-          legal_description: string | null
           mandatory_fields_complete: boolean | null
           marine_dumping_details: Json | null
           mining_chemical_details: Json | null
@@ -1407,18 +1404,17 @@ export type Database = {
           operating_hours: string | null
           operational_capacity: string | null
           operational_details: string | null
-          other_permit_details: Json | null
-          owner_name: string | null
           payment_status: string | null
           permit_category: string | null
           permit_number: string | null
           permit_period: string | null
-          permit_specific_fields: Json | null
           permit_type: string
           permit_type_id: string | null
           permit_type_specific: string | null
           pesticide_details: Json | null
-          proposed_works_description: string | null
+          project_description: string | null
+          project_end_date: string | null
+          project_start_date: string | null
           public_consultation_proof: Json | null
           rehabilitation_details: Json | null
           renewable_energy_details: Json | null
@@ -1428,7 +1424,6 @@ export type Database = {
           solid_waste_details: Json | null
           status: string
           stormwater_details: Json | null
-          tenure: string | null
           title: string
           updated_at: string
           uploaded_files: Json | null
@@ -1473,7 +1468,6 @@ export type Database = {
           effluent_discharge_details?: Json | null
           eia_required?: boolean | null
           eis_required?: boolean | null
-          emergency_discharge_details?: Json | null
           entity_id?: string | null
           entity_name?: string | null
           entity_type?: string | null
@@ -1493,10 +1487,8 @@ export type Database = {
           infrastructure_details?: Json | null
           is_draft?: boolean | null
           land_clearing_details?: Json | null
-          land_type?: string | null
           landowner_negotiation_status?: string | null
           legal_declaration_accepted?: boolean | null
-          legal_description?: string | null
           mandatory_fields_complete?: boolean | null
           marine_dumping_details?: Json | null
           mining_chemical_details?: Json | null
@@ -1509,18 +1501,17 @@ export type Database = {
           operating_hours?: string | null
           operational_capacity?: string | null
           operational_details?: string | null
-          other_permit_details?: Json | null
-          owner_name?: string | null
           payment_status?: string | null
           permit_category?: string | null
           permit_number?: string | null
           permit_period?: string | null
-          permit_specific_fields?: Json | null
           permit_type: string
           permit_type_id?: string | null
           permit_type_specific?: string | null
           pesticide_details?: Json | null
-          proposed_works_description?: string | null
+          project_description?: string | null
+          project_end_date?: string | null
+          project_start_date?: string | null
           public_consultation_proof?: Json | null
           rehabilitation_details?: Json | null
           renewable_energy_details?: Json | null
@@ -1530,7 +1521,6 @@ export type Database = {
           solid_waste_details?: Json | null
           status?: string
           stormwater_details?: Json | null
-          tenure?: string | null
           title: string
           updated_at?: string
           uploaded_files?: Json | null
@@ -1575,7 +1565,6 @@ export type Database = {
           effluent_discharge_details?: Json | null
           eia_required?: boolean | null
           eis_required?: boolean | null
-          emergency_discharge_details?: Json | null
           entity_id?: string | null
           entity_name?: string | null
           entity_type?: string | null
@@ -1595,10 +1584,8 @@ export type Database = {
           infrastructure_details?: Json | null
           is_draft?: boolean | null
           land_clearing_details?: Json | null
-          land_type?: string | null
           landowner_negotiation_status?: string | null
           legal_declaration_accepted?: boolean | null
-          legal_description?: string | null
           mandatory_fields_complete?: boolean | null
           marine_dumping_details?: Json | null
           mining_chemical_details?: Json | null
@@ -1611,18 +1598,17 @@ export type Database = {
           operating_hours?: string | null
           operational_capacity?: string | null
           operational_details?: string | null
-          other_permit_details?: Json | null
-          owner_name?: string | null
           payment_status?: string | null
           permit_category?: string | null
           permit_number?: string | null
           permit_period?: string | null
-          permit_specific_fields?: Json | null
           permit_type?: string
           permit_type_id?: string | null
           permit_type_specific?: string | null
           pesticide_details?: Json | null
-          proposed_works_description?: string | null
+          project_description?: string | null
+          project_end_date?: string | null
+          project_start_date?: string | null
           public_consultation_proof?: Json | null
           rehabilitation_details?: Json | null
           renewable_energy_details?: Json | null
@@ -1632,7 +1618,6 @@ export type Database = {
           solid_waste_details?: Json | null
           status?: string
           stormwater_details?: Json | null
-          tenure?: string | null
           title?: string
           updated_at?: string
           uploaded_files?: Json | null
@@ -1945,6 +1930,78 @@ export type Database = {
         }
         Relationships: []
       }
+      registry_audit_trail: {
+        Row: {
+          action_type: string
+          assessment_id: string | null
+          assessment_notes: string | null
+          changes_made: Json | null
+          created_at: string
+          feedback_provided: string | null
+          id: string
+          metadata: Json | null
+          new_outcome: string | null
+          new_status: string | null
+          officer_email: string | null
+          officer_id: string
+          officer_name: string | null
+          permit_application_id: string
+          previous_outcome: string | null
+          previous_status: string | null
+        }
+        Insert: {
+          action_type: string
+          assessment_id?: string | null
+          assessment_notes?: string | null
+          changes_made?: Json | null
+          created_at?: string
+          feedback_provided?: string | null
+          id?: string
+          metadata?: Json | null
+          new_outcome?: string | null
+          new_status?: string | null
+          officer_email?: string | null
+          officer_id: string
+          officer_name?: string | null
+          permit_application_id: string
+          previous_outcome?: string | null
+          previous_status?: string | null
+        }
+        Update: {
+          action_type?: string
+          assessment_id?: string | null
+          assessment_notes?: string | null
+          changes_made?: Json | null
+          created_at?: string
+          feedback_provided?: string | null
+          id?: string
+          metadata?: Json | null
+          new_outcome?: string | null
+          new_status?: string | null
+          officer_email?: string | null
+          officer_id?: string
+          officer_name?: string | null
+          permit_application_id?: string
+          previous_outcome?: string | null
+          previous_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registry_audit_trail_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "initial_assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registry_audit_trail_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       required_documents: {
         Row: {
           created_at: string
@@ -2163,6 +2220,23 @@ export type Database = {
           p_permit_application_id: string
           p_technical_fee: number
           p_total_fee: number
+        }
+        Returns: string
+      }
+      log_registry_action: {
+        Args: {
+          p_action_type: string
+          p_assessment_id: string
+          p_assessment_notes?: string
+          p_changes_made?: Json
+          p_feedback_provided?: string
+          p_metadata?: Json
+          p_new_outcome?: string
+          p_new_status?: string
+          p_officer_id: string
+          p_permit_application_id: string
+          p_previous_outcome?: string
+          p_previous_status?: string
         }
         Returns: string
       }
