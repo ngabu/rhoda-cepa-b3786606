@@ -159,7 +159,7 @@ export const useFeeCalculation = () => {
       
       if (activityData.data) {
         if (activityData.data.level === 2) {
-          processingDays = activityData.data.fee_category === '2.1' ? 30 : 88;
+          processingDays = activityData.data.fee_category === '2.1' ? 30 : 60;
         } else if (activityData.data.level === 3) {
           processingDays = 90;
         }

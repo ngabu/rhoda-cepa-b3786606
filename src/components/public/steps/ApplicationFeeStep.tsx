@@ -133,7 +133,7 @@ export function ApplicationFeeStep({ data, onChange }: ApplicationFeeStepProps) 
                       <p>• Calculation formula: (Annual Recurrent Fee ÷ 365) × Processing Days</p>
                       <p>• Processing days: {calculatedFees?.processingDays || 'N/A'} days</p>
                       <p>• Fee split: 30% Administration / 70% Technical</p>
-                      <p>• Level 2.1: 30 days | Level 2.2/2.3/2.4: 88 days | Level 3: 90 days</p>
+                      <p>• Level 2.1: 30 days | Level 2.2/2.3/2.4: 60 days | Level 3: 90 days</p>
                     </div>
                   </div>
                 </CollapsibleContent>
