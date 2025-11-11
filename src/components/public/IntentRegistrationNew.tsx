@@ -422,10 +422,10 @@ export function IntentRegistrationNew() {
                 </div>
 
                 {/* Existing Permit Selection */}
-                {formData.entity_id && permits.length > 0 && (
+                {formData.entity_id && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <Label htmlFor="existing_permit_id" className="flex items-center gap-2">
+                      <Label className="flex items-center gap-2">
                         <FileCheck className="w-4 h-4" />
                         Related Existing Permit (Optional)
                       </Label>
@@ -438,22 +438,54 @@ export function IntentRegistrationNew() {
                         </TooltipContent>
                       </Tooltip>
                     </div>
-                    <Select
-                      value={formData.existing_permit_id || 'none'}
-                      onValueChange={(value) => setFormData({ ...formData, existing_permit_id: value === 'none' ? '' : value })}
-                    >
-                      <SelectTrigger id="existing_permit_id" className="bg-glass/50">
-                        <SelectValue placeholder="Select existing permit..." />
-                      </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      {permits.map((permit) => (
-                        <SelectItem key={permit.id} value={permit.id}>
-                          {permit.permit_number || permit.title} - {permit.permit_type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                    </Select>
+                    {permitsLoading ? (
+                      <div className="p-4 bg-muted/50 rounded-lg text-sm text-muted-foreground text-center">
+                        Loading permits...
+                      </div>
+                    ) : permits.length > 0 ? (
+                      <div className="space-y-2 p-3 bg-background border rounded-lg max-h-48 overflow-y-auto">
+                        <div 
+                          onClick={() => setFormData({ ...formData, existing_permit_id: '' })}
+                          className={`p-3 rounded-md cursor-pointer transition-colors ${
+                            !formData.existing_permit_id 
+                              ? 'bg-primary text-primary-foreground' 
+                              : 'hover:bg-muted/50'
+                          }`}
+                        >
+                          <span className="font-medium">None</span>
+                          <p className="text-xs opacity-80 mt-1">No existing permit</p>
+                        </div>
+                        {permits.map((permit) => (
+                          <div
+                            key={permit.id}
+                            onClick={() => setFormData({ ...formData, existing_permit_id: permit.id })}
+                            className={`p-3 rounded-md cursor-pointer transition-colors ${
+                              formData.existing_permit_id === permit.id 
+                                ? 'bg-primary text-primary-foreground' 
+                                : 'hover:bg-muted/50'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate">{permit.title}</p>
+                                <p className="text-xs opacity-80 mt-1">
+                                  {permit.permit_number || 'No permit number'} • {permit.permit_type}
+                                </p>
+                                {permit.approval_date && (
+                                  <p className="text-xs opacity-70 mt-1">
+                                    Approved: {new Date(permit.approval_date).toLocaleDateString()}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-muted/50 rounded-lg text-sm text-muted-foreground text-center">
+                        No approved permits found for this entity
+                      </div>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       Select an existing permit if this intent is related to an amendment, renewal, or transfer
                     </p>
