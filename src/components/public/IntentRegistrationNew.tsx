@@ -449,7 +449,7 @@ export function IntentRegistrationNew() {
                       <SelectItem value="none">None</SelectItem>
                       {permits.map((permit) => (
                         <SelectItem key={permit.id} value={permit.id}>
-                          {permit.permit_number || permit.title} - {permit.permit_type} ({permit.status})
+                          {permit.permit_number || permit.title} - {permit.permit_type}
                         </SelectItem>
                       ))}
                     </SelectContent>

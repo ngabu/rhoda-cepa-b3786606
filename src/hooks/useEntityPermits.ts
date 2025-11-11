@@ -27,8 +27,8 @@ export function useEntityPermits(entityId: string | null) {
           .from('permit_applications')
           .select('id, title, permit_number, permit_type, status, approval_date')
           .eq('entity_id', entityId)
-          .neq('status', 'draft')
-          .order('created_at', { ascending: false });
+          .eq('status', 'approved')
+          .order('approval_date', { ascending: false });
 
         if (error) throw error;
         setPermits(data || []);
