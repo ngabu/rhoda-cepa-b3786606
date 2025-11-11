@@ -67,7 +67,7 @@ export const useFeeCalculation = () => {
 
   const validateParameters = (params: FeeCalculationParams): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
-    const requiredFields = ['activityType', 'activitySubCategory', 'permitType', 'activityLevel'];
+    const requiredFields = ['activityType', 'activitySubCategory', 'activityLevel'];
     
     requiredFields.forEach(field => {
       if (!params[field as keyof FeeCalculationParams]) {
@@ -124,7 +124,7 @@ export const useFeeCalculation = () => {
       // Call Supabase function - processing days are now handled by the database function
       const { data, error } = await supabase.rpc('calculate_application_fee', {
         p_activity_id: activityId,
-        p_permit_type: params.permitType || 'Other',
+        p_permit_type: null,
         p_custom_processing_days: null // Let the database determine based on fee_category
       });
 
@@ -144,10 +144,6 @@ export const useFeeCalculation = () => {
 
       // Use the database result directly - no client-side multipliers
       const calculatedFee = typeof data === 'number' ? data : 0;
-      
-      // Split fee: 30% Administration / 70% Technical
-      const adminFee = calculatedFee * 0.3;
-      const techFee = calculatedFee * 0.7;
 
       // Get processing days info for display
       let processingDays = 30; // default
@@ -166,14 +162,14 @@ export const useFeeCalculation = () => {
       }
 
       const result = {
-        administrationFee: Math.round(adminFee * 100) / 100,
-        technicalFee: Math.round(techFee * 100) / 100,
+        administrationFee: Math.round(calculatedFee * 100) / 100,
+        technicalFee: 0,
         totalFee: Math.round(calculatedFee * 100) / 100,
-        baseAdministrationFee: Math.round(adminFee * 100) / 100,
-        baseTechnicalFee: Math.round(techFee * 100) / 100,
+        baseAdministrationFee: Math.round(calculatedFee * 100) / 100,
+        baseTechnicalFee: 0,
         processingDays,
-        administrationForm: 'Official Administration Form',
-        technicalForm: 'Official Technical Form',
+        administrationForm: 'Form 2',
+        technicalForm: 'N/A',
         isEstimated: false,
         source: 'official' as const
       };
@@ -185,11 +181,11 @@ export const useFeeCalculation = () => {
             p_permit_application_id: permitApplicationId,
             p_calculation_method: 'calculate_application_fee',
             p_parameters: params as any,
-            p_administration_fee: result.administrationFee,
-            p_technical_fee: result.technicalFee,
+            p_administration_fee: result.totalFee,
+            p_technical_fee: 0,
             p_total_fee: result.totalFee,
             p_is_official: true,
-            p_notes: 'Calculated using database function'
+            p_notes: 'Calculated using official 2018 Environment Act Fees formula: (Annual Recurrent Fee ÷ 365) × Processing Days'
           });
         } catch (logError) {
           console.error('Failed to log calculation:', logError);

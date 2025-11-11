@@ -49,8 +49,8 @@ export function ApplicationFeeStep({ data, onChange }: ApplicationFeeStepProps) 
         hasCalculatedOnce.current = true;
         
         onChange({
-          administration_fee: fees.administrationFee,
-          technical_fee: fees.technicalFee,
+          administration_fee: fees.totalFee,
+          technical_fee: 0,
           total_fee: fees.totalFee,
           fee_amount: fees.totalFee,
           processing_days: fees.processingDays,
@@ -106,33 +106,17 @@ export function ApplicationFeeStep({ data, onChange }: ApplicationFeeStepProps) 
                 
                 <CollapsibleContent>
                   <div className="p-4 space-y-4 bg-background">
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center p-3 bg-primary/5 rounded-lg">
-                        <span className="text-sm font-semibold">Administration Fee (30%)</span>
-                        <span className="text-sm font-semibold text-primary">
-                          PGK {calculatedFees?.administrationFee?.toLocaleString() || '0'}
-                        </span>
-                      </div>
-                      
-                      <div className="flex justify-between items-center p-3 bg-primary/5 rounded-lg">
-                        <span className="text-sm font-semibold">Technical Fee (70%)</span>
-                        <span className="text-sm font-semibold text-primary">
-                          PGK {calculatedFees?.technicalFee?.toLocaleString() || '0'}
-                        </span>
-                      </div>
-                    </div>
-
                     <div className="flex justify-between items-center p-4 bg-primary/10 rounded-lg border border-primary/20">
-                      <span className="font-bold text-foreground">Total Fee</span>
+                      <span className="font-bold text-foreground">Application Fee</span>
                       <span className="font-bold text-lg text-primary">
-                        PGK {calculatedFees?.totalFee?.toLocaleString() || '0'}
+                        PGK {calculatedFees?.totalFee?.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') || '0.00'}
                       </span>
                     </div>
 
                     <div className="text-xs text-muted-foreground space-y-1 p-3 bg-muted/20 rounded">
                       <p>• Calculation formula: (Annual Recurrent Fee ÷ 365) × Processing Days</p>
                       <p>• Processing days: {calculatedFees?.processingDays || 'N/A'} days</p>
-                      <p>• Fee split: 30% Administration / 70% Technical</p>
+                      <p>• Based on official 2018 Environment Act Fees</p>
                       <p>• Level 2.1: 30 days | Level 2.2/2.3/2.4: 60 days | Level 3: 90 days</p>
                     </div>
                   </div>

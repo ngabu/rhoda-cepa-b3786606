@@ -49,14 +49,12 @@ export function RegistryFeeCalculationForm({ data, onChange }: RegistryFeeCalcul
       if (error) throw error;
 
       const totalFee = feeData || 0;
-      const adminFee = totalFee * 0.3;
-      const techFee = totalFee * 0.7;
 
       const breakdown = {
-        administrationFee: Math.round(adminFee * 100) / 100,
-        technicalFee: Math.round(techFee * 100) / 100,
+        administrationFee: Math.round(totalFee * 100) / 100,
+        technicalFee: 0,
         totalFee: Math.round(totalFee * 100) / 100,
-        calculationMethod: 'Database Function',
+        calculationMethod: 'Official 2018 Environment Act Fees',
         activityId: data.activity_id,
         permitType: data.permit_type_specific
       };
@@ -134,27 +132,11 @@ export function RegistryFeeCalculationForm({ data, onChange }: RegistryFeeCalcul
           <>
             <Separator />
             <div className="space-y-4">
-              <h4 className="font-medium">Fee Breakdown</h4>
+              <h4 className="font-medium">Fee Calculation</h4>
               
               <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                  <span className="text-sm font-medium">Administration Fee (30%)</span>
-                  <Badge variant="secondary">
-                    PGK {feeBreakdown.administrationFee?.toLocaleString() || '0'}
-                  </Badge>
-                </div>
-
-                <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                  <span className="text-sm font-medium">Technical Review Fee (70%)</span>
-                  <Badge variant="secondary">
-                    PGK {feeBreakdown.technicalFee?.toLocaleString() || '0'}
-                  </Badge>
-                </div>
-
-                <Separator />
-
                 <div className="flex justify-between items-center p-4 bg-primary/10 rounded-lg">
-                  <span className="font-semibold">Total Application Fee</span>
+                  <span className="font-semibold">Application Fee</span>
                   <Badge className="text-base px-3 py-1">
                     PGK {feeBreakdown.totalFee?.toLocaleString() || '0'}
                   </Badge>

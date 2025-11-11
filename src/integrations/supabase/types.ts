@@ -941,6 +941,7 @@ export type Database = {
           draft_name: string | null
           entity_id: string | null
           estimated_cost_kina: number | null
+          existing_permit_id: string | null
           government_agreement: string | null
           id: string
           landowner_negotiation_status: string | null
@@ -963,6 +964,7 @@ export type Database = {
           draft_name?: string | null
           entity_id?: string | null
           estimated_cost_kina?: number | null
+          existing_permit_id?: string | null
           government_agreement?: string | null
           id?: string
           landowner_negotiation_status?: string | null
@@ -985,6 +987,7 @@ export type Database = {
           draft_name?: string | null
           entity_id?: string | null
           estimated_cost_kina?: number | null
+          existing_permit_id?: string | null
           government_agreement?: string | null
           id?: string
           landowner_negotiation_status?: string | null
@@ -1002,6 +1005,13 @@ export type Database = {
             columns: ["entity_id"]
             isOneToOne: false
             referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intent_registration_drafts_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
             referencedColumns: ["id"]
           },
           {
@@ -1045,6 +1055,7 @@ export type Database = {
           departments_approached: string | null
           entity_id: string
           estimated_cost_kina: number | null
+          existing_permit_id: string | null
           government_agreement: string | null
           id: string
           landowner_negotiation_status: string | null
@@ -1071,6 +1082,7 @@ export type Database = {
           departments_approached?: string | null
           entity_id: string
           estimated_cost_kina?: number | null
+          existing_permit_id?: string | null
           government_agreement?: string | null
           id?: string
           landowner_negotiation_status?: string | null
@@ -1097,6 +1109,7 @@ export type Database = {
           departments_approached?: string | null
           entity_id?: string
           estimated_cost_kina?: number | null
+          existing_permit_id?: string | null
           government_agreement?: string | null
           id?: string
           landowner_negotiation_status?: string | null
@@ -1119,6 +1132,13 @@ export type Database = {
             columns: ["entity_id"]
             isOneToOne: false
             referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intent_registrations_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
             referencedColumns: ["id"]
           },
           {
@@ -1376,6 +1396,7 @@ export type Database = {
           entity_type: string | null
           environmental_impact: string | null
           estimated_cost_kina: number | null
+          existing_permit_id: string | null
           existing_permits_details: string | null
           expiry_date: string | null
           fee_amount: number | null
@@ -1473,6 +1494,7 @@ export type Database = {
           entity_type?: string | null
           environmental_impact?: string | null
           estimated_cost_kina?: number | null
+          existing_permit_id?: string | null
           existing_permits_details?: string | null
           expiry_date?: string | null
           fee_amount?: number | null
@@ -1570,6 +1592,7 @@ export type Database = {
           entity_type?: string | null
           environmental_impact?: string | null
           estimated_cost_kina?: number | null
+          existing_permit_id?: string | null
           existing_permits_details?: string | null
           expiry_date?: string | null
           fee_amount?: number | null
@@ -1660,6 +1683,13 @@ export type Database = {
             columns: ["entity_id"]
             isOneToOne: false
             referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
             referencedColumns: ["id"]
           },
           {
@@ -2110,7 +2140,7 @@ export type Database = {
         Args: {
           p_activity_id: string
           p_custom_processing_days?: number
-          p_permit_type: string
+          p_permit_type?: string
         }
         Returns: number
       }
