@@ -64,7 +64,7 @@ const ProjectAndSpecificDetailsTab: React.FC<ProjectAndSpecificDetailsTabProps> 
                 value={formData.existing_permit_id || 'none'}
                 onValueChange={(value) => handleInputChange('existing_permit_id', value === 'none' ? null : value)}
               >
-                <SelectTrigger id="existing_permit_id">
+                <SelectTrigger id="existing_permit_id" className="bg-background">
                   <SelectValue placeholder="Select existing permit..." />
                 </SelectTrigger>
                 <SelectContent>

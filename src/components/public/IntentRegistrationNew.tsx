@@ -425,8 +425,8 @@ export function IntentRegistrationNew() {
                 {formData.entity_id && permits.length > 0 && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <Label htmlFor="existing_permit_id">
-                        <FileCheck className="w-4 h-4 inline mr-1" />
+                      <Label htmlFor="existing_permit_id" className="flex items-center gap-2">
+                        <FileCheck className="w-4 h-4" />
                         Related Existing Permit (Optional)
                       </Label>
                       <Tooltip>
