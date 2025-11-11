@@ -445,14 +445,14 @@ export function IntentRegistrationNew() {
                       <SelectTrigger id="existing_permit_id" className="bg-glass/50">
                         <SelectValue placeholder="Select existing permit..." />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        {permits.map((permit) => (
-                          <SelectItem key={permit.id} value={permit.id}>
-                            {permit.permit_number || permit.title} - {permit.permit_type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {permits.map((permit) => (
+                        <SelectItem key={permit.id} value={permit.id}>
+                          {permit.permit_number || permit.title} - {permit.permit_type} ({permit.status})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">
                       Select an existing permit if this intent is related to an amendment, renewal, or transfer

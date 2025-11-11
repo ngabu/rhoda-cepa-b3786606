@@ -71,7 +71,7 @@ const ProjectAndSpecificDetailsTab: React.FC<ProjectAndSpecificDetailsTabProps> 
                   <SelectItem value="none">None</SelectItem>
                   {permits.map((permit) => (
                     <SelectItem key={permit.id} value={permit.id}>
-                      {permit.permit_number || permit.title} - {permit.permit_type}
+                      {permit.permit_number || permit.title} - {permit.permit_type} ({permit.status})
                     </SelectItem>
                   ))}
                 </SelectContent>
