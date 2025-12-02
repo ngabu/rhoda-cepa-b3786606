@@ -167,8 +167,8 @@ export function IntentRegistrationReadOnlyView({ intent, showFeedbackWithBlueHea
         {/* Header with PNG Emblem and Authority Name */}
         <div className="text-center mb-8">
           <img 
-            src="/images/png-emblem.png" 
-            alt="Papua New Guinea Emblem" 
+            src="/images/cepa-header-crescent.png" 
+            alt="CEPA Header" 
             className="mx-auto h-24 mb-4"
           />
           <h1 className="text-xl font-bold text-gray-800">Conservation & Environment Protection Authority</h1>
