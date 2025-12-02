@@ -158,6 +158,16 @@
     font-size: 10pt;
     line-height: 1.4;
     color: #000;
+    overflow: hidden !important;
+  }
+  
+  /* Ensure print content fits within page width */
+  .hidden.print\\:block {
+    max-width: 100%;
+    width: 100%;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
   }
 
   .no-print,
@@ -239,7 +249,9 @@
     padding-bottom: 0.75rem;
     border-bottom: 1px solid #d1d5db;
     max-width: 100%;
+    width: 100%;
     overflow: hidden;
+    box-sizing: border-box;
   }
 
   .print-section:last-child {
@@ -268,14 +280,15 @@
 
   .print-field-value {
     color: #111827;
-    font-size: 10pt;
+    font-size: 9pt;
     background-color: #f3f4f6;
-    padding: 0.5rem 0.75rem;
+    padding: 0.4rem 0.6rem;
     border-radius: 0.25rem;
     word-wrap: break-word;
     overflow-wrap: break-word;
     word-break: break-word;
     hyphens: auto;
+    max-width: 100%;
   }
 
   /* Grid layout for print */
@@ -283,5 +296,21 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
+  }
+  
+  /* Ensure flex containers don't overflow */
+  .flex {
+    flex-wrap: wrap;
+  }
+  
+  /* Ensure equal spacing on both sides */
+  .print\\:block > * {
+    box-sizing: border-box;
+  }
+  
+  /* Fix image sizing */
+  img {
+    max-width: 100%;
+    height: auto;
   }
 }
