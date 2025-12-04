@@ -4,8 +4,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CheckCircle, AlertTriangle, FileText, User, MapPin, DollarSign, Download, Printer, ClipboardCheck, List } from 'lucide-react';
+import { CheckCircle, AlertTriangle, FileText, User, MapPin, DollarSign, Download, Printer, ClipboardCheck, List, Activity, Users } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useIndustrialSectors } from '@/hooks/useIndustrialSectors';
 
 interface ReviewSubmitStepProps {
   data: any;
@@ -13,6 +14,9 @@ interface ReviewSubmitStepProps {
 }
 
 export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
+  const { industrialSectors } = useIndustrialSectors();
+  const selectedSector = industrialSectors.find(s => s.id === data.industrial_sector_id);
+
   const checkMandatoryFields = () => {
     const mandatory = {
       'Basic Information': [
@@ -297,10 +301,10 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
           </div>
 
           {/* Activity Classification Summary */}
-          {(data.activity_level || data.permit_type_specific) && (
+          {(data.activity_level || data.permit_type || data.activity_description || data.industrial_sector_id) && (
             <div>
               <h4 className="font-medium flex items-center gap-2 mb-3">
-                <Badge className="w-4 h-4" />
+                <Activity className="w-4 h-4" />
                 Activity Classification
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -314,8 +318,42 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
                 </div>
                 <div>
                   <span className="text-muted-foreground">Permit Type:</span>
-                  <p className="font-medium text-orange-600">{data.permit_type_specific || 'Not specified'}</p>
+                  <p className="font-medium text-orange-600">{data.permit_type || 'Not specified'}</p>
                 </div>
+                <div>
+                  <span className="text-muted-foreground">Industrial Sector:</span>
+                  <p className="font-medium text-orange-600">{selectedSector?.name || 'Not specified'}</p>
+                </div>
+                <div className="col-span-full">
+                  <span className="text-muted-foreground">Description of Prescribed Activity:</span>
+                  <p className="font-medium text-orange-600">{data.activity_description || 'Not specified'}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Public Consultation Summary - only for Level 2/3 */}
+          {['Level 2', 'Level 3'].includes(data.activity_level) && (data.consultation_period_start || data.consultation_period_end) && (
+            <div>
+              <h4 className="font-medium flex items-center gap-2 mb-3">
+                <Users className="w-4 h-4" />
+                Public Consultation
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Consultation Start Date:</span>
+                  <p className="font-medium text-orange-600">{data.consultation_period_start || 'Not specified'}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Consultation End Date:</span>
+                  <p className="font-medium text-orange-600">{data.consultation_period_end || 'Not specified'}</p>
+                </div>
+                {data.public_consultation_proof && data.public_consultation_proof.length > 0 && (
+                  <div className="col-span-full">
+                    <span className="text-muted-foreground">Consultation Documents:</span>
+                    <p className="font-medium text-orange-600">{data.public_consultation_proof.length} document(s) uploaded</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
