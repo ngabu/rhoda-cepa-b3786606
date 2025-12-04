@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, AlertTriangle, FileText, User, MapPin, DollarSign, Download, Printer } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CheckCircle, AlertTriangle, FileText, User, MapPin, DollarSign, Download, Printer, ClipboardCheck, List } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface ReviewSubmitStepProps {
@@ -126,28 +127,148 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
 
   return (
     <div className="space-y-6">
-      {/* Action Buttons */}
-      <div className="flex justify-end gap-2 print:hidden">
-        <Button variant="secondary" onClick={handlePrint} className="gap-2">
-          <Printer className="w-4 h-4" />
-          Print
-        </Button>
-        <Button variant="secondary" onClick={handleDownload} className="gap-2">
-          <Download className="w-4 h-4" />
-          Download
-        </Button>
-      </div>
-      {/* Application Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-primary" />
-            Application Summary
-          </CardTitle>
-          <CardDescription>
-            Review all information before submitting your environmental permit application
-          </CardDescription>
-        </CardHeader>
+      {/* Tabbed Section for Completeness Check and Summary */}
+      <Tabs defaultValue="completeness" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="completeness" className="gap-2">
+            <ClipboardCheck className="w-4 h-4" />
+            Completeness Check
+          </TabsTrigger>
+          <TabsTrigger value="summary" className="gap-2">
+            <List className="w-4 h-4" />
+            Summary
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Completeness Check Tab */}
+        <TabsContent value="completeness" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                {allSectionsComplete ? (
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                ) : (
+                  <AlertTriangle className="w-5 h-5 text-amber-600" />
+                )}
+                Application Completeness Check
+              </CardTitle>
+              <CardDescription>
+                Review the status of each required field below. All fields must be completed before submission.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {Object.entries(mandatoryFields).map(([sectionName, fields]) => {
+                const sectionComplete = fields.every(field => field.value);
+                const completedCount = fields.filter(field => field.value).length;
+                return (
+                  <div key={sectionName} className="space-y-2 p-3 bg-muted/30 rounded-lg border border-border/50">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium flex items-center gap-2">
+                        {sectionComplete ? (
+                          <div className="w-4 h-4 rounded-full bg-green-600 flex items-center justify-center">
+                            <CheckCircle className="w-3 h-3 text-white" />
+                          </div>
+                        ) : (
+                          <div className="w-4 h-4 rounded-full border-2 border-amber-500 bg-amber-100" />
+                        )}
+                        {sectionName}
+                      </h4>
+                      <Badge variant={sectionComplete ? "default" : "secondary"} className="text-xs">
+                        {completedCount}/{fields.length} completed
+                      </Badge>
+                    </div>
+                    <div className="ml-6 space-y-1.5">
+                      {fields.map((field) => (
+                        <div key={field.field} className="flex items-center gap-3 text-sm">
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                            field.value 
+                              ? 'border-green-600 bg-green-600' 
+                              : 'border-muted-foreground/40 bg-background'
+                          }`}>
+                            {field.value && (
+                              <div className="w-2 h-2 rounded-full bg-white" />
+                            )}
+                          </div>
+                          <span className={field.value ? 'text-foreground' : 'text-muted-foreground'}>
+                            {field.label}
+                          </span>
+                          {field.value && (
+                            <CheckCircle className="w-3 h-3 text-green-600 ml-auto" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Documents Section */}
+              <div className="space-y-2 p-3 bg-muted/30 rounded-lg border border-border/50">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium flex items-center gap-2">
+                    {data.uploaded_files && data.uploaded_files.length > 0 ? (
+                      <div className="w-4 h-4 rounded-full bg-green-600 flex items-center justify-center">
+                        <CheckCircle className="w-3 h-3 text-white" />
+                      </div>
+                    ) : (
+                      <div className="w-4 h-4 rounded-full border-2 border-amber-500 bg-amber-100" />
+                    )}
+                    Documents
+                  </h4>
+                  <Badge variant={data.uploaded_files?.length > 0 ? "default" : "secondary"} className="text-xs">
+                    {data.uploaded_files?.length || 0} uploaded
+                  </Badge>
+                </div>
+                <div className="ml-6 space-y-1.5">
+                  {data.uploaded_files && data.uploaded_files.length > 0 ? (
+                    data.uploaded_files.map((file: any, index: number) => (
+                      <div key={index} className="flex items-center gap-3 text-sm">
+                        <div className="w-4 h-4 rounded-full border-2 flex items-center justify-center border-green-600 bg-green-600">
+                          <div className="w-2 h-2 rounded-full bg-white" />
+                        </div>
+                        <span className="text-foreground">
+                          {file.name || file.filename || `Document ${index + 1}`}
+                        </span>
+                        <CheckCircle className="w-3 h-3 text-green-600 ml-auto" />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/40 bg-background" />
+                      <span className="text-muted-foreground">No documents uploaded</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Summary Tab */}
+        <TabsContent value="summary" className="mt-4 space-y-4">
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-2 print:hidden">
+            <Button variant="secondary" onClick={handlePrint} className="gap-2">
+              <Printer className="w-4 h-4" />
+              Print
+            </Button>
+            <Button variant="secondary" onClick={handleDownload} className="gap-2">
+              <Download className="w-4 h-4" />
+              Download
+            </Button>
+          </div>
+
+          {/* Application Summary */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary" />
+                Application Summary
+              </CardTitle>
+              <CardDescription>
+                Review all information before submitting your environmental permit application
+              </CardDescription>
+            </CardHeader>
         <CardContent id="application-summary" className="space-y-6">
           {/* Basic Info Summary */}
           <div>
@@ -398,111 +519,10 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Mandatory Fields Checklist */}
-      <Card className="print:hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {allSectionsComplete ? (
-              <CheckCircle className="w-5 h-5 text-green-600" />
-            ) : (
-              <AlertTriangle className="w-5 h-5 text-amber-600" />
-            )}
-            Application Completeness Check
-          </CardTitle>
-          <CardDescription>
-            Review the status of each required field below. All fields must be completed before submission.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {Object.entries(mandatoryFields).map(([sectionName, fields]) => {
-            const sectionComplete = fields.every(field => field.value);
-            const completedCount = fields.filter(field => field.value).length;
-            return (
-              <div key={sectionName} className="space-y-2 p-3 bg-muted/30 rounded-lg border border-border/50">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium flex items-center gap-2">
-                    {sectionComplete ? (
-                      <div className="w-4 h-4 rounded-full bg-green-600 flex items-center justify-center">
-                        <CheckCircle className="w-3 h-3 text-white" />
-                      </div>
-                    ) : (
-                      <div className="w-4 h-4 rounded-full border-2 border-amber-500 bg-amber-100" />
-                    )}
-                    {sectionName}
-                  </h4>
-                  <Badge variant={sectionComplete ? "default" : "secondary"} className="text-xs">
-                    {completedCount}/{fields.length} completed
-                  </Badge>
-                </div>
-                <div className="ml-6 space-y-1.5">
-                  {fields.map((field) => (
-                    <div key={field.field} className="flex items-center gap-3 text-sm">
-                      {/* Radio button style indicator */}
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                        field.value 
-                          ? 'border-green-600 bg-green-600' 
-                          : 'border-muted-foreground/40 bg-background'
-                      }`}>
-                        {field.value && (
-                          <div className="w-2 h-2 rounded-full bg-white" />
-                        )}
-                      </div>
-                      <span className={field.value ? 'text-foreground' : 'text-muted-foreground'}>
-                        {field.label}
-                      </span>
-                      {field.value && (
-                        <CheckCircle className="w-3 h-3 text-green-600 ml-auto" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Documents Section */}
-          <div className="space-y-2 p-3 bg-muted/30 rounded-lg border border-border/50">
-            <div className="flex items-center justify-between">
-              <h4 className="font-medium flex items-center gap-2">
-                {data.uploaded_files && data.uploaded_files.length > 0 ? (
-                  <div className="w-4 h-4 rounded-full bg-green-600 flex items-center justify-center">
-                    <CheckCircle className="w-3 h-3 text-white" />
-                  </div>
-                ) : (
-                  <div className="w-4 h-4 rounded-full border-2 border-amber-500 bg-amber-100" />
-                )}
-                Documents
-              </h4>
-              <Badge variant={data.uploaded_files?.length > 0 ? "default" : "secondary"} className="text-xs">
-                {data.uploaded_files?.length || 0} uploaded
-              </Badge>
-            </div>
-            <div className="ml-6 space-y-1.5">
-              {data.uploaded_files && data.uploaded_files.length > 0 ? (
-                data.uploaded_files.map((file: any, index: number) => (
-                  <div key={index} className="flex items-center gap-3 text-sm">
-                    <div className="w-4 h-4 rounded-full border-2 flex items-center justify-center border-green-600 bg-green-600">
-                      <div className="w-2 h-2 rounded-full bg-white" />
-                    </div>
-                    <span className="text-foreground">
-                      {file.name || file.filename || `Document ${index + 1}`}
-                    </span>
-                    <CheckCircle className="w-3 h-3 text-green-600 ml-auto" />
-                  </div>
-                ))
-              ) : (
-                <div className="flex items-center gap-3 text-sm">
-                  <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/40 bg-background" />
-                  <span className="text-muted-foreground">No documents uploaded</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Legal Declaration */}
       <Card className="print:hidden">
