@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { exportIntentRegistrationPDF } from '@/utils/pdfExport';
+import { IntentBoundaryMapDisplay } from '@/components/registry/read-only/IntentBoundaryMapDisplay';
 
 interface IntentRegistrationReadOnlyViewProps {
   intent: IntentRegistration;
@@ -463,7 +464,16 @@ export function IntentRegistrationReadOnlyView({ intent, showFeedbackWithBlueHea
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {intent.province && (
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground">Province</Label>
+                    <div className="p-3 bg-primary/10 rounded-lg">
+                      <p className="text-sm">{intent.province}</p>
+                    </div>
+                  </div>
+                )}
+
                 {intent.district && (
                   <div className="space-y-2">
                     <Label className="text-muted-foreground">District</Label>
@@ -473,11 +483,11 @@ export function IntentRegistrationReadOnlyView({ intent, showFeedbackWithBlueHea
                   </div>
                 )}
 
-                {intent.province && (
+                {intent.llg && (
                   <div className="space-y-2">
-                    <Label className="text-muted-foreground">Province</Label>
+                    <Label className="text-muted-foreground">LLG</Label>
                     <div className="p-3 bg-primary/10 rounded-lg">
-                      <p className="text-sm">{intent.province}</p>
+                      <p className="text-sm">{intent.llg}</p>
                     </div>
                   </div>
                 )}

@@ -16,7 +16,7 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
     const mandatory = {
       'Basic Information': [
         { field: 'applicationTitle', label: 'Application Title', value: data.applicationTitle },
-        { field: 'applicantName', label: 'Applicant Name', value: data.applicantName },
+        { field: 'entity_name', label: 'Entity', value: data.entity_name || data.organizationName },
         { field: 'applicantEmail', label: 'Email Address', value: data.applicantEmail },
         { field: 'applicantPhone', label: 'Phone Number', value: data.applicantPhone }
       ],
@@ -118,7 +118,7 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
               <span className="text-muted-foreground capitalize">
                 {key.replace(/_/g, ' ')}:
               </span>
-              <p className="font-medium">{String(value) || 'Not specified'}</p>
+              <p className="font-medium text-orange-600">{String(value) || 'Not specified'}</p>
             </div>
           ))}
         </div>
@@ -155,24 +155,24 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
           <div>
             <h4 className="font-medium flex items-center gap-2 mb-3">
               <User className="w-4 h-4" />
-              Applicant Information
+              Application Information
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-muted-foreground">Application Title:</span>
-                <p className="font-medium">{data.applicationTitle || 'Not specified'}</p>
+                <p className="font-medium text-orange-600">{data.applicationTitle || 'Not specified'}</p>
               </div>
               <div>
-                <span className="text-muted-foreground">Applicant Name:</span>
-                <p className="font-medium">{data.applicantName || 'Not specified'}</p>
+                <span className="text-muted-foreground">Entity:</span>
+                <p className="font-medium text-orange-600">{data.entity_name || data.organizationName || 'Not specified'}</p>
               </div>
               <div>
                 <span className="text-muted-foreground">Email:</span>
-                <p className="font-medium">{data.applicantEmail || 'Not specified'}</p>
+                <p className="font-medium text-orange-600">{data.applicantEmail || 'Not specified'}</p>
               </div>
               <div>
-                <span className="text-muted-foreground">Organization:</span>
-                <p className="font-medium">{data.organizationName || 'Individual applicant'}</p>
+                <span className="text-muted-foreground">Phone:</span>
+                <p className="font-medium text-orange-600">{data.applicantPhone || 'Not specified'}</p>
               </div>
             </div>
           </div>
@@ -187,15 +187,15 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-muted-foreground">Activity Level:</span>
-                  <p className="font-medium">
+                  <p className="font-medium text-orange-600">
                     {data.activity_level ? (
-                      <Badge variant="outline">{data.activity_level}</Badge>
+                      <Badge variant="outline" className="text-orange-600 border-orange-600">{data.activity_level}</Badge>
                     ) : 'Not selected'}
                   </p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Permit Type:</span>
-                  <p className="font-medium">{data.permit_type_specific || 'Not specified'}</p>
+                  <p className="font-medium text-orange-600">{data.permit_type_specific || 'Not specified'}</p>
                 </div>
               </div>
             </div>
@@ -211,12 +211,12 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <span className="text-muted-foreground">Location:</span>
-                  <p className="font-medium">{data.projectLocation || data.activity_location || <span className="text-amber-600">Not specified</span>}</p>
+                  <p className="font-medium text-orange-600">{data.projectLocation || data.activity_location || 'Not specified'}</p>
                 </div>
                 {data.coordinates && (
                   <div>
                     <span className="text-muted-foreground">Coordinates:</span>
-                    <p className="font-medium">
+                    <p className="font-medium text-orange-600">
                       Lat: {data.coordinates.lat}, Lng: {data.coordinates.lng}
                     </p>
                   </div>
@@ -226,37 +226,37 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
               {/* Always show core project fields */}
               <div>
                 <span className="text-muted-foreground">Project Description:</span>
-                <p className="font-medium whitespace-pre-wrap">
-                  {data.projectDescription || data.description || <span className="text-amber-600">Not provided</span>}
+                <p className="font-medium text-orange-600 whitespace-pre-wrap">
+                  {data.projectDescription || data.description || 'Not provided'}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <span className="text-muted-foreground">Start Date:</span>
-                  <p className="font-medium">{data.projectStartDate || data.commencement_date || <span className="text-amber-600">Not specified</span>}</p>
+                  <p className="font-medium text-orange-600">{data.projectStartDate || data.commencement_date || 'Not specified'}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">End Date:</span>
-                  <p className="font-medium">{data.projectEndDate || data.completion_date || <span className="text-amber-600">Not specified</span>}</p>
+                  <p className="font-medium text-orange-600">{data.projectEndDate || data.completion_date || 'Not specified'}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Permit Period:</span>
-                  <p className="font-medium">{data.permit_period || <span className="text-amber-600">Not specified</span>}</p>
+                  <p className="font-medium text-orange-600">{data.permit_period || 'Not specified'}</p>
                 </div>
               </div>
 
               <div>
                 <span className="text-muted-foreground">Environmental Impact Assessment:</span>
-                <p className="font-medium whitespace-pre-wrap">
-                  {data.environmentalImpact || <span className="text-amber-600">Not provided</span>}
+                <p className="font-medium text-orange-600 whitespace-pre-wrap">
+                  {data.environmentalImpact || 'Not provided'}
                 </p>
               </div>
 
               <div>
                 <span className="text-muted-foreground">Mitigation Measures:</span>
-                <p className="font-medium whitespace-pre-wrap">
-                  {data.mitigationMeasures || <span className="text-amber-600">Not provided</span>}
+                <p className="font-medium text-orange-600 whitespace-pre-wrap">
+                  {data.mitigationMeasures || 'Not provided'}
                 </p>
               </div>
 
@@ -268,19 +268,19 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
                     {data.operational_details && (
                       <div>
                         <span className="text-muted-foreground">Operational Details:</span>
-                        <p className="font-medium">{data.operational_details}</p>
+                        <p className="font-medium text-orange-600">{data.operational_details}</p>
                       </div>
                     )}
                     {data.operational_capacity && (
                       <div>
                         <span className="text-muted-foreground">Operational Capacity:</span>
-                        <p className="font-medium">{data.operational_capacity}</p>
+                        <p className="font-medium text-orange-600">{data.operational_capacity}</p>
                       </div>
                     )}
                     {data.operating_hours && (
                       <div>
                         <span className="text-muted-foreground">Operating Hours:</span>
-                        <p className="font-medium">{data.operating_hours}</p>
+                        <p className="font-medium text-orange-600">{data.operating_hours}</p>
                       </div>
                     )}
                   </div>
@@ -290,36 +290,10 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
               {data.estimated_cost_kina && data.estimated_cost_kina > 0 && (
                 <div className="pt-3 border-t">
                   <span className="text-muted-foreground">Estimated Project Cost:</span>
-                  <p className="font-medium text-lg">{formatCurrency(data.estimated_cost_kina)}</p>
+                  <p className="font-medium text-lg text-orange-600">{formatCurrency(data.estimated_cost_kina)}</p>
                 </div>
               )}
 
-              {/* Activity Classification Details */}
-              {(data.activity_classification || data.activity_category || data.activity_subcategory) && (
-                <div className="pt-3 border-t">
-                  <h5 className="font-medium mb-2">Activity Classification</h5>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {data.activity_classification && (
-                      <div>
-                        <span className="text-muted-foreground">Classification:</span>
-                        <p className="font-medium">{data.activity_classification}</p>
-                      </div>
-                    )}
-                    {data.activity_category && (
-                      <div>
-                        <span className="text-muted-foreground">Category:</span>
-                        <p className="font-medium">{data.activity_category}</p>
-                      </div>
-                    )}
-                    {data.activity_subcategory && (
-                      <div>
-                        <span className="text-muted-foreground">Subcategory:</span>
-                        <p className="font-medium">{data.activity_subcategory}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {/* Compliance and Approvals */}
               {(data.existing_permits_details || data.government_agreements_details || data.required_approvals) && (
@@ -328,31 +302,31 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
                   {data.existing_permits_details && (
                     <div className="mb-2">
                       <span className="text-muted-foreground">Existing Permits:</span>
-                      <p className="font-medium">{data.existing_permits_details}</p>
+                      <p className="font-medium text-orange-600">{data.existing_permits_details}</p>
                     </div>
                   )}
                   {data.government_agreements_details && (
                     <div className="mb-2">
                       <span className="text-muted-foreground">Government Agreements:</span>
-                      <p className="font-medium">{data.government_agreements_details}</p>
+                      <p className="font-medium text-orange-600">{data.government_agreements_details}</p>
                     </div>
                   )}
                   {data.required_approvals && (
                     <div className="mb-2">
                       <span className="text-muted-foreground">Required Approvals:</span>
-                      <p className="font-medium">{data.required_approvals}</p>
+                      <p className="font-medium text-orange-600">{data.required_approvals}</p>
                     </div>
                   )}
                   {data.consulted_departments && (
                     <div className="mb-2">
                       <span className="text-muted-foreground">Consulted Departments:</span>
-                      <p className="font-medium">{data.consulted_departments}</p>
+                      <p className="font-medium text-orange-600">{data.consulted_departments}</p>
                     </div>
                   )}
                   {data.landowner_negotiation_status && (
                     <div>
                       <span className="text-muted-foreground">Landowner Negotiation Status:</span>
-                      <p className="font-medium">{data.landowner_negotiation_status}</p>
+                      <p className="font-medium text-orange-600">{data.landowner_negotiation_status}</p>
                     </div>
                   )}
                 </div>
@@ -366,25 +340,25 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
                     {data.legal_description && (
                       <div>
                         <span className="text-muted-foreground">Legal Description:</span>
-                        <p className="font-medium">{data.legal_description}</p>
+                        <p className="font-medium text-orange-600">{data.legal_description}</p>
                       </div>
                     )}
                     {data.land_type && (
                       <div>
                         <span className="text-muted-foreground">Land Type:</span>
-                        <p className="font-medium">{data.land_type}</p>
+                        <p className="font-medium text-orange-600">{data.land_type}</p>
                       </div>
                     )}
                     {data.owner_name && (
                       <div>
                         <span className="text-muted-foreground">Owner Name:</span>
-                        <p className="font-medium">{data.owner_name}</p>
+                        <p className="font-medium text-orange-600">{data.owner_name}</p>
                       </div>
                     )}
                     {data.tenure && (
                       <div>
                         <span className="text-muted-foreground">Tenure:</span>
-                        <p className="font-medium">{data.tenure}</p>
+                        <p className="font-medium text-orange-600">{data.tenure}</p>
                       </div>
                     )}
                   </div>
@@ -407,7 +381,7 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
                 {data.uploaded_files.map((file: any, index: number) => (
                   <div key={index} className="flex items-center gap-2">
                     <CheckCircle className="w-3 h-3 text-green-600" />
-                    <span>{file.name || file.filename || `Document ${index + 1}`}</span>
+                    <span className="text-orange-600">{file.name || file.filename || `Document ${index + 1}`}</span>
                   </div>
                 ))}
               </div>
@@ -421,19 +395,19 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
                 <DollarSign className="w-4 h-4" />
                 Fee Summary
               </h4>
-              <div className="p-4 bg-sidebar rounded-lg">
+              <div className="p-4 bg-muted/50 border border-border rounded-lg">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div>
                     <span className="text-muted-foreground">Administration Fee:</span>
-                    <p className="font-medium">{formatCurrency(data.calculatedFees.administrationFee)}</p>
+                    <p className="font-medium text-orange-600">{formatCurrency(data.calculatedFees.administrationFee)}</p>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Technical Fee:</span>
-                    <p className="font-medium">{formatCurrency(data.calculatedFees.technicalFee)}</p>
+                    <p className="font-medium text-orange-600">{formatCurrency(data.calculatedFees.technicalFee)}</p>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Total Fee:</span>
-                    <p className="font-semibold text-lg">{formatCurrency(data.calculatedFees.totalFee)}</p>
+                    <p className="font-semibold text-lg text-orange-600">{formatCurrency(data.calculatedFees.totalFee)}</p>
                   </div>
                 </div>
               </div>
@@ -453,31 +427,50 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
             )}
             Application Completeness Check
           </CardTitle>
+          <CardDescription>
+            Review the status of each required field below. All fields must be completed before submission.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {Object.entries(mandatoryFields).map(([sectionName, fields]) => {
             const sectionComplete = fields.every(field => field.value);
+            const completedCount = fields.filter(field => field.value).length;
             return (
-              <div key={sectionName} className="space-y-2">
-                <h4 className="font-medium flex items-center gap-2">
-                  {sectionComplete ? (
-                    <CheckCircle className="w-4 h-4 text-green-600" />
-                  ) : (
-                    <AlertTriangle className="w-4 h-4 text-amber-600" />
-                  )}
-                  {sectionName}
-                </h4>
-                <div className="ml-6 space-y-1">
+              <div key={sectionName} className="space-y-2 p-3 bg-muted/30 rounded-lg border border-border/50">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium flex items-center gap-2">
+                    {sectionComplete ? (
+                      <div className="w-4 h-4 rounded-full bg-green-600 flex items-center justify-center">
+                        <CheckCircle className="w-3 h-3 text-white" />
+                      </div>
+                    ) : (
+                      <div className="w-4 h-4 rounded-full border-2 border-amber-500 bg-amber-100" />
+                    )}
+                    {sectionName}
+                  </h4>
+                  <Badge variant={sectionComplete ? "default" : "secondary"} className="text-xs">
+                    {completedCount}/{fields.length} completed
+                  </Badge>
+                </div>
+                <div className="ml-6 space-y-1.5">
                   {fields.map((field) => (
-                    <div key={field.field} className="flex items-center gap-2 text-sm">
-                      {field.value ? (
-                        <CheckCircle className="w-3 h-3 text-green-600" />
-                      ) : (
-                        <div className="w-3 h-3 rounded-full border border-amber-400" />
-                      )}
+                    <div key={field.field} className="flex items-center gap-3 text-sm">
+                      {/* Radio button style indicator */}
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        field.value 
+                          ? 'border-green-600 bg-green-600' 
+                          : 'border-muted-foreground/40 bg-background'
+                      }`}>
+                        {field.value && (
+                          <div className="w-2 h-2 rounded-full bg-white" />
+                        )}
+                      </div>
                       <span className={field.value ? 'text-foreground' : 'text-muted-foreground'}>
                         {field.label}
                       </span>
+                      {field.value && (
+                        <CheckCircle className="w-3 h-3 text-green-600 ml-auto" />
+                      )}
                     </div>
                   ))}
                 </div>
