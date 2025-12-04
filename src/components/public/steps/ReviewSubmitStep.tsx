@@ -26,9 +26,7 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
       ],
       'Project Details': [
         { field: 'projectDescription', label: 'Project Description', value: data.projectDescription },
-        { field: 'projectStartDate', label: 'Project Start Date', value: data.projectStartDate },
-        { field: 'environmentalImpact', label: 'Environmental Impact', value: data.environmentalImpact },
-        { field: 'mitigationMeasures', label: 'Mitigation Measures', value: data.mitigationMeasures }
+        { field: 'projectStartDate', label: 'Project Start Date', value: data.projectStartDate }
       ],
       'Location': [
         { field: 'projectLocation', label: 'Project Location', value: data.projectLocation }
@@ -246,19 +244,6 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
                 </div>
               </div>
 
-              <div>
-                <span className="text-muted-foreground">Environmental Impact Assessment:</span>
-                <p className="font-medium text-orange-600 whitespace-pre-wrap">
-                  {data.environmentalImpact || 'Not provided'}
-                </p>
-              </div>
-
-              <div>
-                <span className="text-muted-foreground">Mitigation Measures:</span>
-                <p className="font-medium text-orange-600 whitespace-pre-wrap">
-                  {data.mitigationMeasures || 'Not provided'}
-                </p>
-              </div>
 
               {/* Optional fields - only show if filled */}
               {(data.operational_details || data.operational_capacity || data.operating_hours) && (
