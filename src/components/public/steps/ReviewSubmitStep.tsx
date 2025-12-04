@@ -462,6 +462,45 @@ export function ReviewSubmitStep({ data, onChange }: ReviewSubmitStepProps) {
               </div>
             );
           })}
+
+          {/* Documents Section */}
+          <div className="space-y-2 p-3 bg-muted/30 rounded-lg border border-border/50">
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium flex items-center gap-2">
+                {data.uploaded_files && data.uploaded_files.length > 0 ? (
+                  <div className="w-4 h-4 rounded-full bg-green-600 flex items-center justify-center">
+                    <CheckCircle className="w-3 h-3 text-white" />
+                  </div>
+                ) : (
+                  <div className="w-4 h-4 rounded-full border-2 border-amber-500 bg-amber-100" />
+                )}
+                Documents
+              </h4>
+              <Badge variant={data.uploaded_files?.length > 0 ? "default" : "secondary"} className="text-xs">
+                {data.uploaded_files?.length || 0} uploaded
+              </Badge>
+            </div>
+            <div className="ml-6 space-y-1.5">
+              {data.uploaded_files && data.uploaded_files.length > 0 ? (
+                data.uploaded_files.map((file: any, index: number) => (
+                  <div key={index} className="flex items-center gap-3 text-sm">
+                    <div className="w-4 h-4 rounded-full border-2 flex items-center justify-center border-green-600 bg-green-600">
+                      <div className="w-2 h-2 rounded-full bg-white" />
+                    </div>
+                    <span className="text-foreground">
+                      {file.name || file.filename || `Document ${index + 1}`}
+                    </span>
+                    <CheckCircle className="w-3 h-3 text-green-600 ml-auto" />
+                  </div>
+                ))
+              ) : (
+                <div className="flex items-center gap-3 text-sm">
+                  <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/40 bg-background" />
+                  <span className="text-muted-foreground">No documents uploaded</span>
+                </div>
+              )}
+            </div>
+          </div>
         </CardContent>
       </Card>
 
