@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Download, 
   Printer, 
@@ -18,15 +21,24 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
-  Users
+  Users,
+  FileStack
 } from "lucide-react";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useToast } from "@/hooks/use-toast";
+import { usePermitAnalytics } from "./hooks/usePermitAnalytics";
 
 const RegistryReports = () => {
   const { toast } = useToast();
   const [selectedPeriod, setSelectedPeriod] = useState("monthly");
   const [selectedReport, setSelectedReport] = useState("overview");
+  const { analytics: permitAnalytics, loading: analyticsLoading, refetch: refetchAnalytics } = usePermitAnalytics();
+
+  // Chart colors for permit types
+  const PERMIT_COLORS = [
+    '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', 
+    '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#6366f1'
+  ];
 
   // Mock data for charts
   const assessmentTrendsData = [
@@ -392,29 +404,240 @@ const RegistryReports = () => {
 
         {/* Permits Tab */}
         <TabsContent value="permits" className="space-y-4">
+          {/* Summary Cards */}
+          {analyticsLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <Card key={i}>
+                  <CardHeader className="pb-3">
+                    <Skeleton className="h-4 w-24" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-8 w-16" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : permitAnalytics && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium flex items-center">
+                    <FileStack className="w-4 h-4 mr-2 text-blue-500" />
+                    Total Applications
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{permitAnalytics.totalApplications}</div>
+                  <p className="text-xs text-muted-foreground">All permit types</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium flex items-center">
+                    <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                    Approved
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-green-600">{permitAnalytics.totalApproved}</div>
+                  <p className="text-xs text-muted-foreground">Successfully processed</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium flex items-center">
+                    <AlertCircle className="w-4 h-4 mr-2 text-red-500" />
+                    Rejected
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-red-600">{permitAnalytics.totalRejected}</div>
+                  <p className="text-xs text-muted-foreground">Did not meet criteria</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium flex items-center">
+                    <TrendingUp className="w-4 h-4 mr-2 text-emerald-500" />
+                    Approval Rate
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-emerald-600">
+                    {permitAnalytics.overallApprovalRate.toFixed(1)}%
+                  </div>
+                  <p className="text-xs text-muted-foreground">Of decided applications</p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Chart and Table */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Volume by Permit Type Chart */}
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Volume by Permit Type</CardTitle>
+                    <CardDescription>Distribution of applications</CardDescription>
+                  </div>
+                  <ReportActions reportName="Permit Volume" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                {analyticsLoading ? (
+                  <Skeleton className="h-[300px] w-full" />
+                ) : permitAnalytics && permitAnalytics.byType.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={permitAnalytics.byType.map((t, i) => ({
+                          name: t.permit_type,
+                          value: t.total,
+                          color: PERMIT_COLORS[i % PERMIT_COLORS.length]
+                        }))}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={100}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {permitAnalytics.byType.map((_, index) => (
+                          <Cell key={`cell-${index}`} fill={PERMIT_COLORS[index % PERMIT_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                    No permit data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Approval Rate by Type Chart */}
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Approval Rate by Type</CardTitle>
+                    <CardDescription>Success rate per permit category</CardDescription>
+                  </div>
+                  <ReportActions reportName="Approval Rates" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                {analyticsLoading ? (
+                  <Skeleton className="h-[300px] w-full" />
+                ) : permitAnalytics && permitAnalytics.byType.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart 
+                      data={permitAnalytics.byType.map(t => ({
+                        name: t.permit_type.length > 15 ? t.permit_type.substring(0, 15) + '...' : t.permit_type,
+                        rate: t.approval_rate,
+                        approved: t.approved,
+                        rejected: t.rejected
+                      }))}
+                      layout="vertical"
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
+                      <YAxis type="category" dataKey="name" width={120} />
+                      <Tooltip 
+                        formatter={(value: number) => [`${value.toFixed(1)}%`, 'Approval Rate']}
+                        labelFormatter={(label) => `Permit Type: ${label}`}
+                      />
+                      <Bar dataKey="rate" fill="#10b981" name="Approval Rate" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                    No permit data available
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Detailed Table */}
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
                 <div>
-                  <CardTitle>Permit Analytics Report</CardTitle>
-                  <CardDescription>Permit types, volumes, and approval rates</CardDescription>
+                  <CardTitle>Permit Analytics Detail</CardTitle>
+                  <CardDescription>Comprehensive breakdown by permit type</CardDescription>
                 </div>
-                <ReportActions reportName="Permit Analytics" />
+                <ReportActions reportName="Permit Analytics Detail" />
               </div>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={350}>
-                <LineChart data={assessmentTrendsData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="passed" stroke="#10b981" strokeWidth={2} name="Approved" />
-                  <Line type="monotone" dataKey="pending" stroke="#3b82f6" strokeWidth={2} name="In Progress" />
-                  <Line type="monotone" dataKey="failed" stroke="#ef4444" strokeWidth={2} name="Rejected" />
-                </LineChart>
-              </ResponsiveContainer>
+              {analyticsLoading ? (
+                <div className="space-y-2">
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : permitAnalytics && permitAnalytics.byType.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Permit Type</TableHead>
+                      <TableHead className="text-center">Total</TableHead>
+                      <TableHead className="text-center">Approved</TableHead>
+                      <TableHead className="text-center">Rejected</TableHead>
+                      <TableHead className="text-center">Pending</TableHead>
+                      <TableHead className="text-center">In Review</TableHead>
+                      <TableHead className="text-right">Approval Rate</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {permitAnalytics.byType.map((type, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell className="font-medium">{type.permit_type}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline">{type.total}</Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">{type.approved}</Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge className="bg-red-100 text-red-800 hover:bg-red-100">{type.rejected}</Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">{type.pending}</Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">{type.in_review}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Progress 
+                              value={type.approval_rate} 
+                              className="w-16 h-2"
+                            />
+                            <span className="text-sm font-medium w-12 text-right">
+                              {type.approval_rate.toFixed(0)}%
+                            </span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="flex items-center justify-center h-32 text-muted-foreground">
+                  No permit applications found in the database
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
