@@ -52,16 +52,15 @@ interface RegistryNavigationItem {
 
 const registryNavigationItems: RegistryNavigationItem[] = [
   { title: "Dashboard", value: "dashboard", icon: LayoutDashboard },
-  { title: "Compliance Reports", value: "compliance-reporting", icon: FileCheck },
 ]
 
 const managementItems: RegistryNavigationItem[] = [
   { title: "Documents Management", value: "documents-management", icon: FolderOpen },
   { title: "Team Management", value: "team", icon: Users, managerOnly: true },
+  { title: "Analytics and Reporting", value: "reports", icon: BarChart3 },
 ]
 
 const endMenuItems: RegistryNavigationItem[] = [
-  { title: "Reports", value: "reports", icon: BarChart3 },
   { title: "Notifications", value: "notifications", icon: Bell },
 ]
 
@@ -332,7 +331,20 @@ export function RegistrySidebar({ activeTab, onTabChange }: RegistrySidebarProps
                 )}
               </SidebarMenuItem>
 
-              {/* End Menu Items - Reports, Notifications */}
+              {/* Compliance Reports */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <button
+                    onClick={() => onTabChange('compliance-reporting')}
+                    className={`w-full ${getNavCls(activeTab === 'compliance-reporting')}`}
+                  >
+                    <FileCheck className="w-5 h-5 shrink-0" />
+                    {!isCollapsed && <span className="ml-3 flex-1 text-left">Compliance Reports</span>}
+                  </button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* End Menu Items - Notifications */}
               {endMenuItems
                 .filter(item => !item.managerOnly || isManager)
                 .map((item) => (
