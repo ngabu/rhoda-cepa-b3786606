@@ -55,9 +55,12 @@ const registryNavigationItems: RegistryNavigationItem[] = [
   { title: "Compliance Reports", value: "compliance-reporting", icon: FileCheck },
 ]
 
-const endMenuItems: RegistryNavigationItem[] = [
+const managementItems: RegistryNavigationItem[] = [
   { title: "Documents Management", value: "documents-management", icon: FolderOpen },
   { title: "Team Management", value: "team", icon: Users, managerOnly: true },
+]
+
+const endMenuItems: RegistryNavigationItem[] = [
   { title: "Reports", value: "reports", icon: BarChart3 },
   { title: "Notifications", value: "notifications", icon: Bell },
 ]
@@ -329,7 +332,7 @@ export function RegistrySidebar({ activeTab, onTabChange }: RegistrySidebarProps
                 )}
               </SidebarMenuItem>
 
-              {/* End Menu Items - Team Management, Reports, Notifications */}
+              {/* End Menu Items - Reports, Notifications */}
               {endMenuItems
                 .filter(item => !item.managerOnly || isManager)
                 .map((item) => (
@@ -357,6 +360,30 @@ export function RegistrySidebar({ activeTab, onTabChange }: RegistrySidebarProps
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+          {/* Management Section */}
+          <SidebarGroup className="mt-4">
+            {!isCollapsed && <SidebarGroupLabel className="text-white/60 text-xs uppercase tracking-wider mb-2">Management</SidebarGroupLabel>}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {managementItems
+                  .filter(item => !item.managerOnly || isManager)
+                  .map((item) => (
+                    <SidebarMenuItem key={item.value}>
+                      <SidebarMenuButton asChild>
+                        <button
+                          onClick={() => onTabChange(item.value)}
+                          className={`w-full ${getNavCls(activeTab === item.value)}`}
+                        >
+                          <item.icon className="w-5 h-5 shrink-0" />
+                          {!isCollapsed && <span className="ml-3 flex-1 text-left">{item.title}</span>}
+                        </button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
 
           <SidebarGroup className="mt-6">
             {!isCollapsed && <SidebarGroupLabel className="text-white/60 text-xs uppercase tracking-wider mb-2">Account</SidebarGroupLabel>}
