@@ -126,6 +126,20 @@ export default function PublicDashboard() {
                 />
               </div>
             )}
+            {activeTab === 'permit-registration-existing' && (
+              <div className="max-w-7xl mx-auto">
+                <PermitManagement 
+                  onNavigateToNewApplication={() => {
+                    setSelectedApplicationId(null);
+                    setActiveTab('permit-application-new');
+                  }}
+                  onNavigateToEditApplication={(permitId) => {
+                    setSelectedApplicationId(permitId);
+                    setActiveTab('permit-application-new');
+                  }}
+                />
+              </div>
+            )}
             {activeTab === 'permit-application-new' && (
               <div className="max-w-7xl mx-auto">
                 <ComprehensivePermitForm
