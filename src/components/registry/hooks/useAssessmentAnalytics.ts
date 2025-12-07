@@ -38,6 +38,14 @@ export function useAssessmentAnalytics() {
   const query = useQuery({
     queryKey: ["assessment-analytics"],
     queryFn: async (): Promise<AssessmentAnalytics> => {
+      // Fetch all industrial sectors first
+      const { data: sectors, error: sectorsError } = await supabase
+        .from("industrial_sectors")
+        .select("id, name")
+        .order("name");
+
+      if (sectorsError) throw sectorsError;
+
       // Fetch permit applications with assessments and sector info
       const { data: applications, error } = await supabase
         .from("permit_applications")
@@ -53,11 +61,6 @@ export function useAssessmentAnalytics() {
 
       if (error) throw error;
 
-      // Fetch sectors for lookup
-      const { data: sectors } = await supabase
-        .from("industrial_sectors")
-        .select("id, name");
-
       const sectorMap = new Map(sectors?.map(s => [s.id, s.name]) || []);
 
       // Initialize aggregations
@@ -72,11 +75,34 @@ export function useAssessmentAnalytics() {
         overallApprovalRate: 0
       };
 
+      // Pre-initialize all sectors from database with zero counts
+      sectors?.forEach(sector => {
+        sectorStats[sector.id] = {
+          sectorId: sector.id,
+          sectorName: sector.name,
+          total: 0,
+          passed: 0,
+          failed: 0,
+          pending: 0,
+          approvalRate: 0
+        };
+      });
+
+      // Add unclassified sector for applications without sector
+      sectorStats["unclassified"] = {
+        sectorId: null,
+        sectorName: "Unclassified",
+        total: 0,
+        passed: 0,
+        failed: 0,
+        pending: 0,
+        approvalRate: 0
+      };
+
       // Process each application
       applications?.forEach(app => {
         const level = app.activity_level || "Unclassified";
         const sectorId = app.industrial_sector_id;
-        const sectorName = sectorId ? sectorMap.get(sectorId) || "Unknown Sector" : "Unclassified";
         
         // Get assessment status
         const assessment = app.initial_assessments?.[0];
@@ -95,39 +121,36 @@ export function useAssessmentAnalytics() {
           };
         }
 
-        // Initialize sector stats if needed
+        // Use sector key - sectors are already pre-initialized
         const sectorKey = sectorId || "unclassified";
-        if (!sectorStats[sectorKey]) {
-          sectorStats[sectorKey] = {
-            sectorId,
-            sectorName,
-            total: 0,
-            passed: 0,
-            failed: 0,
-            pending: 0,
-            approvalRate: 0
-          };
-        }
 
         // Increment counts
         levelStats[level].total++;
-        sectorStats[sectorKey].total++;
+        if (sectorStats[sectorKey]) {
+          sectorStats[sectorKey].total++;
+        }
         totals.total++;
 
         if (status === "passed") {
           levelStats[level].passed++;
-          sectorStats[sectorKey].passed++;
+          if (sectorStats[sectorKey]) {
+            sectorStats[sectorKey].passed++;
+          }
           totals.passed++;
         } else if (status === "failed") {
           levelStats[level].failed++;
-          sectorStats[sectorKey].failed++;
+          if (sectorStats[sectorKey]) {
+            sectorStats[sectorKey].failed++;
+          }
           totals.failed++;
         } else if (status === "requires_clarification") {
           levelStats[level].clarification++;
           totals.clarification++;
         } else {
           levelStats[level].pending++;
-          sectorStats[sectorKey].pending++;
+          if (sectorStats[sectorKey]) {
+            sectorStats[sectorKey].pending++;
+          }
           totals.pending++;
         }
       });
@@ -154,8 +177,13 @@ export function useAssessmentAnalytics() {
         return (aIndex === -1 ? 999 : aIndex) - (bIndex === -1 ? 999 : bIndex);
       });
 
-      // Sort sectors by total (descending)
-      const sortedSectors = Object.values(sectorStats).sort((a, b) => b.total - a.total);
+      // Sort sectors alphabetically by name
+      const sortedSectors = Object.values(sectorStats).sort((a, b) => {
+        // Keep "Unclassified" at the end
+        if (a.sectorName === "Unclassified") return 1;
+        if (b.sectorName === "Unclassified") return -1;
+        return a.sectorName.localeCompare(b.sectorName);
+      });
 
       return {
         byActivityLevel: sortedLevels,

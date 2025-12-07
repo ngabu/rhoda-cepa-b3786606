@@ -7,40 +7,54 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
-import { FileText, Calendar, Building, Clock, Search, Filter, CheckCircle, Info } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { FileText, Calendar, Building, Clock, Search, Filter, MapPin, Shield, Receipt, UserCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
-import { PermitApplicationReadOnlyView } from './read-only/PermitApplicationReadOnlyView';
+import {
+  PermitSiteMappingTab,
+  PermitRegistrationDetailsTab,
+  PermitRegistryReviewTab,
+  PermitComplianceReviewTab,
+  PermitInvoicePaymentsTab,
+  PermitMDReviewTab,
+} from './permit-review';
 
 interface PermitApplication {
   id: string;
   user_id: string;
   entity_id: string;
   title: string;
-  description: string;
+  description: string | null;
   permit_type: string;
   status: string;
   application_number: string | null;
   created_at: string;
   updated_at: string;
-  activity_location: string | null;
-  estimated_cost_kina: number | null;
-  activity_classification: string | null;
-  activity_category: string | null;
-  activity_subcategory: string | null;
-  permit_period: string | null;
-  commencement_date: string | null;
-  completion_date: string | null;
-  entity_name: string | null;
-  entity_type: string | null;
-  coordinates: any;
-  environmental_impact: string | null;
-  mitigation_measures: string | null;
-  compliance_checks: any;
-  uploaded_files: any;
+  activity_location?: string | null;
+  estimated_cost_kina?: number | null;
+  activity_classification?: string | null;
+  activity_category?: string | null;
+  activity_subcategory?: string | null;
+  activity_level?: string | null;
+  permit_period?: string | null;
+  commencement_date?: string | null;
+  completion_date?: string | null;
+  entity_name?: string | null;
+  entity_type?: string | null;
+  coordinates?: any;
+  project_boundary?: any;
+  environmental_impact?: string | null;
+  mitigation_measures?: string | null;
+  compliance_checks?: any;
+  uploaded_files?: any;
+  project_description?: string | null;
+  project_start_date?: string | null;
+  project_end_date?: string | null;
+  district?: string | null;
+  province?: string | null;
+  llg?: string | null;
+  permit_specific_fields?: any;
   entity?: {
     id: string;
     name: string;
@@ -49,18 +63,12 @@ interface PermitApplication {
 }
 
 export function PermitApplicationReview() {
-  const { profile } = useAuth();
   const { toast } = useToast();
   const [applications, setApplications] = useState<PermitApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
-  const [reviewStatus, setReviewStatus] = useState('');
-  const [reviewNotes, setReviewNotes] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  const isManager = profile?.staff_position && ['manager', 'director', 'managing_director'].includes(profile.staff_position);
 
   useEffect(() => {
     fetchApplications();
@@ -73,18 +81,18 @@ export function PermitApplicationReview() {
         .from('permit_applications')
         .select(`
           *,
-          entity:entities!inner(id, name, entity_type)
+          entity:entities(id, name, entity_type)
         `)
-        .in('status', ['submitted', 'under_initial_review', 'under_review', 'approved', 'rejected', 'requires_clarification'])
+        .not('status', 'eq', 'approved')
+        .not('status', 'eq', 'draft')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      // Map data to include entity name and type directly on application
       const mappedApplications: PermitApplication[] = (data || []).map(app => ({
         ...app,
-        entity_name: app.entity?.name || null,
-        entity_type: app.entity?.entity_type || null,
+        entity_name: app.entity?.name || app.entity_name || null,
+        entity_type: app.entity?.entity_type || app.entity_type || null,
       }));
       
       setApplications(mappedApplications);
@@ -97,84 +105,6 @@ export function PermitApplicationReview() {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSubmitReview = async () => {
-    if (!selectedApplicationId || !reviewStatus) {
-      toast({
-        title: "Error",
-        description: "Please select a review decision.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-      
-      // Update the permit application status
-      const { error: appError } = await supabase
-        .from('permit_applications')
-        .update({
-          status: reviewStatus,
-        })
-        .eq('id', selectedApplicationId);
-
-      if (appError) throw appError;
-
-      // Create or update initial assessment
-      const { data: existingAssessment } = await supabase
-        .from('initial_assessments')
-        .select('id')
-        .eq('permit_application_id', selectedApplicationId)
-        .maybeSingle();
-
-      if (existingAssessment) {
-        const { error: assessmentError } = await supabase
-          .from('initial_assessments')
-          .update({
-            assessment_notes: reviewNotes,
-            assessment_status: reviewStatus === 'approved' ? 'completed' : 'pending',
-            assessment_outcome: reviewStatus,
-            assessed_by: profile?.user_id || '00000000-0000-0000-0000-000000000000',
-          })
-          .eq('id', existingAssessment.id);
-
-        if (assessmentError) throw assessmentError;
-      } else {
-        const { error: assessmentError } = await supabase
-          .from('initial_assessments')
-          .insert({
-            permit_application_id: selectedApplicationId,
-            assessed_by: profile?.user_id || '00000000-0000-0000-0000-000000000000',
-            assessment_notes: reviewNotes,
-            assessment_status: reviewStatus === 'approved' ? 'completed' : 'pending',
-            assessment_outcome: reviewStatus,
-            permit_activity_type: 'new_application'
-          });
-
-        if (assessmentError) throw assessmentError;
-      }
-
-      toast({
-        title: "Success",
-        description: "Registry review submitted successfully.",
-      });
-
-      setSelectedApplicationId(null);
-      setReviewStatus('');
-      setReviewNotes('');
-      fetchApplications();
-    } catch (error) {
-      console.error('Error submitting review:', error);
-      toast({
-        title: "Error",
-        description: "Failed to submit review.",
-        variant: "destructive",
-      });
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -200,6 +130,7 @@ export function PermitApplicationReview() {
     const matchesSearch = !searchTerm || 
       app.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.entity?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      app.entity_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.application_number?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
@@ -223,7 +154,7 @@ export function PermitApplicationReview() {
   }
 
   return (
-    <>
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -237,14 +168,7 @@ export function PermitApplicationReview() {
               </p>
             </div>
             {selectedApplicationId && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSelectedApplicationId(null);
-                  setReviewStatus('');
-                  setReviewNotes('');
-                }}
-              >
+              <Button variant="outline" onClick={() => setSelectedApplicationId(null)}>
                 Back to List
               </Button>
             )}
@@ -280,7 +204,6 @@ export function PermitApplicationReview() {
                       <SelectItem value="submitted">Submitted</SelectItem>
                       <SelectItem value="under_initial_review">Under Initial Review</SelectItem>
                       <SelectItem value="under_review">Under Review</SelectItem>
-                      <SelectItem value="approved">Approved</SelectItem>
                       <SelectItem value="rejected">Rejected</SelectItem>
                       <SelectItem value="requires_clarification">Requires Clarification</SelectItem>
                     </SelectContent>
@@ -320,13 +243,10 @@ export function PermitApplicationReview() {
                     <Card 
                       key={app.id} 
                       className={`border-l-4 ${
-                        app.status === 'submitted' 
-                          ? 'border-l-blue-500' 
-                          : app.status === 'approved'
-                          ? 'border-l-green-500'
-                          : app.status === 'rejected'
-                          ? 'border-l-red-500'
-                          : 'border-l-orange-500'
+                        app.status === 'submitted' ? 'border-l-blue-500' 
+                        : app.status === 'approved' ? 'border-l-green-500'
+                        : app.status === 'rejected' ? 'border-l-red-500'
+                        : 'border-l-orange-500'
                       }`}
                     >
                       <CardContent className="p-4">
@@ -334,26 +254,22 @@ export function PermitApplicationReview() {
                           <div className="space-y-2 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <FileText className="w-4 h-4 text-blue-600" />
-                              <h3 className="font-medium">
-                                {app.title}
-                              </h3>
+                              <h3 className="font-medium">{app.title}</h3>
                               <Badge className={getStatusColor(app.status)}>
                                 {app.status.replace(/_/g, ' ')}
                               </Badge>
                               {app.application_number && (
-                                <Badge variant="outline">
-                                  {app.application_number}
-                                </Badge>
+                                <Badge variant="outline">{app.application_number}</Badge>
+                              )}
+                              {app.activity_level && (
+                                <Badge variant="outline">Level {app.activity_level}</Badge>
                               )}
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Building className="w-4 h-4" />
-                                <span>{app.entity?.name || 'Unknown Entity'}</span>
-                                <span className="text-xs px-1 py-0.5 bg-muted rounded">
-                                  {app.entity?.entity_type}
-                                </span>
+                                <span>{app.entity?.name || app.entity_name || 'Unknown Entity'}</span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Calendar className="w-4 h-4" />
@@ -364,27 +280,15 @@ export function PermitApplicationReview() {
                                 <span>Type: {app.permit_type}</span>
                               </div>
                             </div>
-
-                            {app.description && (
-                              <div className="mt-2 p-2 bg-muted/50 rounded text-sm">
-                                <strong>Description:</strong> {app.description}
-                              </div>
-                            )}
                           </div>
                           
-                          <div className="ml-4">
-                            <Button 
-                              size="sm" 
-                              variant={selectedApplicationId === app.id ? "default" : "outline"}
-                              onClick={() => {
-                                setSelectedApplicationId(app.id);
-                                setReviewStatus(app.status);
-                                setReviewNotes('');
-                              }}
-                            >
-                              {app.status === 'submitted' ? 'Review' : 'View/Update'}
-                            </Button>
-                          </div>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => setSelectedApplicationId(app.id)}
+                          >
+                            {app.status === 'submitted' ? 'Review' : 'View/Update'}
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>
@@ -396,80 +300,77 @@ export function PermitApplicationReview() {
         </CardContent>
       </Card>
 
-      {/* Read-Only Permit Application Details + Registry Review Section */}
+      {/* Selected Application with Tabs */}
       {selectedApplication && (
-        <>
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              Review the permit application details below. Provide your assessment and update the status accordingly.
-            </AlertDescription>
-          </Alert>
+        <Tabs defaultValue="site-mapping" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="site-mapping" className="flex items-center gap-1 text-xs">
+              <MapPin className="w-3 h-3" />
+              Site Mapping
+            </TabsTrigger>
+            <TabsTrigger value="registration" className="flex items-center gap-1 text-xs">
+              <FileText className="w-3 h-3" />
+              Registration
+            </TabsTrigger>
+            <TabsTrigger value="registry-review" className="flex items-center gap-1 text-xs">
+              <FileText className="w-3 h-3" />
+              Registry Review
+            </TabsTrigger>
+            <TabsTrigger value="compliance-review" className="flex items-center gap-1 text-xs">
+              <Shield className="w-3 h-3" />
+              Compliance
+            </TabsTrigger>
+            <TabsTrigger value="invoice-payments" className="flex items-center gap-1 text-xs">
+              <Receipt className="w-3 h-3" />
+              Invoices
+            </TabsTrigger>
+            <TabsTrigger value="md-review" className="flex items-center gap-1 text-xs">
+              <UserCheck className="w-3 h-3" />
+              MD Approval
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Read-Only Permit Application Details */}
-          {selectedApplication && <PermitApplicationReadOnlyView application={selectedApplication} />}
+          <TabsContent value="site-mapping">
+            <PermitSiteMappingTab application={selectedApplication} />
+          </TabsContent>
 
-          {/* Registry Review Section */}
-          <Card className="bg-accent/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-primary" />
-                Registry Review & Assessment
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="reviewStatus">Review Decision</Label>
-                <Select value={reviewStatus} onValueChange={setReviewStatus}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select review decision" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="approved">Approve Application</SelectItem>
-                    <SelectItem value="under_review">Under Review</SelectItem>
-                    <SelectItem value="requires_clarification">Requires Clarification</SelectItem>
-                    <SelectItem value="rejected">Reject Application</SelectItem>
-                    <SelectItem value="under_initial_review">Move to Initial Review</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <TabsContent value="registration">
+            <PermitRegistrationDetailsTab application={selectedApplication} />
+          </TabsContent>
 
-              <div className="space-y-2">
-                <Label htmlFor="reviewNotes">Registry Review Notes</Label>
-                <Textarea
-                  id="reviewNotes"
-                  value={reviewNotes}
-                  onChange={(e) => setReviewNotes(e.target.value)}
-                  placeholder="Provide detailed review notes, assessment findings, and recommendations..."
-                  rows={6}
-                />
-              </div>
+          <TabsContent value="registry-review">
+            <PermitRegistryReviewTab 
+              applicationId={selectedApplication.id}
+              currentStatus={selectedApplication.status}
+              onStatusUpdate={fetchApplications}
+            />
+          </TabsContent>
 
-              <div className="flex gap-4">
-                <Button 
-                  onClick={handleSubmitReview} 
-                  className="flex-1"
-                  disabled={submitting}
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  {submitting ? 'Submitting...' : 'Submit Review'}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="flex-1"
-                  onClick={() => {
-                    setSelectedApplicationId(null);
-                    setReviewStatus('');
-                    setReviewNotes('');
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </>
+          <TabsContent value="compliance-review">
+            <PermitComplianceReviewTab 
+              applicationId={selectedApplication.id}
+              currentStatus={selectedApplication.status}
+              onStatusUpdate={fetchApplications}
+            />
+          </TabsContent>
+
+          <TabsContent value="invoice-payments">
+            <PermitInvoicePaymentsTab 
+              applicationId={selectedApplication.id}
+              entityId={selectedApplication.entity_id}
+              onStatusUpdate={fetchApplications}
+            />
+          </TabsContent>
+
+          <TabsContent value="md-review">
+            <PermitMDReviewTab 
+              applicationId={selectedApplication.id}
+              currentStatus={selectedApplication.status}
+              onStatusUpdate={fetchApplications}
+            />
+          </TabsContent>
+        </Tabs>
       )}
-    </>
+    </div>
   );
 }
