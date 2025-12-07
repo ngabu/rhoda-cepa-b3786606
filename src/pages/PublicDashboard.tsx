@@ -6,6 +6,7 @@ import { PublicSidebar } from '@/components/public/PublicSidebar';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { EntityManagement } from '@/components/public/EntityManagement';
 import { PermitManagement } from '@/components/public/PermitManagement';
+import { PermitRegistrationList } from '@/components/public/PermitRegistrationList';
 import { InvoiceManagement } from '@/components/public/InvoiceManagement';
 import { PaymentSummary } from '@/components/public/PaymentSummary';
 import { NotificationCenter } from '@/components/public/NotificationCenter';
@@ -112,23 +113,9 @@ export default function PublicDashboard() {
                 <IntentRegistrationList />
               </div>
             )}
-            {activeTab === 'permits' && (
-              <div className="max-w-7xl mx-auto">
-                <PermitManagement 
-                  onNavigateToNewApplication={() => {
-                    setSelectedApplicationId(null);
-                    setActiveTab('permit-application-new');
-                  }}
-                  onNavigateToEditApplication={(permitId) => {
-                    setSelectedApplicationId(permitId);
-                    setActiveTab('permit-application-new');
-                  }}
-                />
-              </div>
-            )}
             {activeTab === 'permit-registration-existing' && (
               <div className="max-w-7xl mx-auto">
-                <PermitManagement 
+                <PermitRegistrationList 
                   onNavigateToNewApplication={() => {
                     setSelectedApplicationId(null);
                     setActiveTab('permit-application-new');
