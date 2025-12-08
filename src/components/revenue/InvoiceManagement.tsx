@@ -160,13 +160,11 @@ export function InvoiceManagement() {
           setSelectedInvoice(null);
         }
       } else {
-        const errorMessage = typeof result.error === 'string' 
-          ? result.error 
-          : (result.error as any)?.message || 'An unexpected error occurred while suspending the invoice.';
         toast({
           title: 'Failed to Suspend Invoice',
-          description: errorMessage,
-          variant: 'destructive'
+          description: result.error || 'An unexpected error occurred while suspending the invoice.',
+          variant: 'destructive',
+          duration: 6000,
         });
       }
     } catch (error) {
