@@ -200,7 +200,11 @@ export function useInvoices() {
   const suspendInvoice = async (invoiceId: string, sourceDashboard?: string) => {
     // Only allow suspension if the invoice was created on the revenue dashboard
     if (sourceDashboard && sourceDashboard !== 'revenue') {
-      return { success: false, error: 'Can only suspend invoices created on the revenue dashboard' };
+      const dashboardName = sourceDashboard.charAt(0).toUpperCase() + sourceDashboard.slice(1);
+      return { 
+        success: false, 
+        error: `This invoice was created on the ${dashboardName} Dashboard and cannot be suspended from the Revenue Dashboard. Please contact the ${dashboardName} team to manage this invoice.` 
+      };
     }
     
     try {
@@ -212,14 +216,30 @@ export function useInvoices() {
         })
         .eq('id', invoiceId);
 
-      if (error) throw error;
+      if (error) {
+        // Parse Supabase error and return user-friendly message
+        let userMessage = 'Unable to suspend this invoice. ';
+        if (error.code === '42501' || error.message?.includes('permission')) {
+          userMessage += 'You do not have permission to suspend this invoice.';
+        } else if (error.code === '23503' || error.message?.includes('foreign key')) {
+          userMessage += 'This invoice has related records that prevent suspension.';
+        } else if (error.code === 'PGRST116') {
+          userMessage += 'Invoice not found or has already been modified.';
+        } else {
+          userMessage += 'Please try again or contact support if the issue persists.';
+        }
+        return { success: false, error: userMessage };
+      }
 
       // Refresh the invoices list
       fetchInvoices();
       return { success: true };
     } catch (error) {
       console.error('Error suspending invoice:', error);
-      return { success: false, error };
+      return { 
+        success: false, 
+        error: 'An unexpected error occurred while suspending the invoice. Please try again or contact support.' 
+      };
     }
   };
 
