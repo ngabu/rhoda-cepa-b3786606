@@ -35,7 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays, startOfMonth, endOfMonth, parseISO, differenceInDays } from "date-fns";
-import { useDateFilter, type DateFilterPeriod } from "@/hooks/useDateFilter";
+import { useDateFilter, getTrendLabelsForPeriod, getDataBucketIndex, type DateFilterPeriod } from "@/hooks/useDateFilter";
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899'];
 
@@ -163,36 +163,31 @@ const RegistryAnalyticsReports = () => {
     };
   }, [workflowData]);
 
-  // Monthly trends data
-  const monthlyTrends = useMemo(() => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const currentMonth = new Date().getMonth();
-    const last6Months = [];
+  // Application trends based on selected period
+  const applicationTrends = useMemo(() => {
+    const labels = getTrendLabelsForPeriod(selectedPeriod, dateRange);
     
-    for (let i = 5; i >= 0; i--) {
-      const monthIndex = (currentMonth - i + 12) % 12;
-      last6Months.push(months[monthIndex]);
-    }
-
-    return last6Months.map((month, idx) => {
-      const intentCount = intentsData?.filter(i => {
-        const date = new Date(i.created_at);
-        return date.getMonth() === (currentMonth - 5 + idx + 12) % 12;
-      }).length || 0;
+    return labels.map((label, idx) => {
+      let intents = 0;
+      let permits = 0;
       
-      const permitCount = permitsData?.filter(p => {
+      intentsData?.forEach(i => {
+        const date = new Date(i.created_at);
+        if (getDataBucketIndex(date, selectedPeriod, dateRange) === idx) {
+          intents++;
+        }
+      });
+      
+      permitsData?.forEach(p => {
         const date = new Date(p.created_at);
-        return date.getMonth() === (currentMonth - 5 + idx + 12) % 12;
-      }).length || 0;
-
-      return {
-        month,
-        intents: intentCount,
-        permits: permitCount,
-        total: intentCount + permitCount
-      };
+        if (getDataBucketIndex(date, selectedPeriod, dateRange) === idx) {
+          permits++;
+        }
+      });
+      
+      return { period: label, intents, permits, total: intents + permits };
     });
-  }, [intentsData, permitsData]);
+  }, [intentsData, permitsData, selectedPeriod, dateRange]);
 
   // Application status distribution
   const applicationStatusData = useMemo(() => {
@@ -317,6 +312,10 @@ const RegistryAnalyticsReports = () => {
                   <SelectItem value="monthly">Last 30 Days</SelectItem>
                   <SelectItem value="quarterly">Last Quarter</SelectItem>
                   <SelectItem value="yearly">Last Year</SelectItem>
+                  <SelectItem value="mtd">Month to Date</SelectItem>
+                  <SelectItem value="ytd">Year to Date</SelectItem>
+                  <SelectItem value="last-year">Previous Year</SelectItem>
+                  <SelectItem value="all-time">All Time</SelectItem>
                 </SelectContent>
               </Select>
               <Button variant="outline" size="sm">
@@ -417,9 +416,9 @@ const RegistryAnalyticsReports = () => {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={250}>
-                  <AreaChart data={monthlyTrends}>
+                  <AreaChart data={applicationTrends}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" fontSize={12} />
+                    <XAxis dataKey="period" fontSize={12} />
                     <YAxis fontSize={12} />
                     <Tooltip />
                     <Legend />

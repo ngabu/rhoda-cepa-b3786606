@@ -32,7 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays, differenceInDays, parseISO } from "date-fns";
-import { useDateFilter, filterByDateRange, type DateFilterPeriod } from "@/hooks/useDateFilter";
+import { useDateFilter, filterByDateRange, getTrendLabelsForPeriod, getDataBucketIndex, type DateFilterPeriod } from "@/hooks/useDateFilter";
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#ec4899'];
 
@@ -152,39 +152,32 @@ const RevenueAnalyticsReportsNew = () => {
     return (invoiceStats.collectedAmount / invoiceStats.totalAmount) * 100;
   }, [invoiceStats]);
 
-  // Monthly revenue trends
-  const monthlyRevenue = useMemo(() => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const currentMonth = new Date().getMonth();
-    const last6Months = [];
+  // Revenue trends based on selected period
+  const revenueTrends = useMemo(() => {
+    const labels = getTrendLabelsForPeriod(selectedPeriod, dateRange);
     
-    for (let i = 5; i >= 0; i--) {
-      const monthIndex = (currentMonth - i + 12) % 12;
-      last6Months.push(months[monthIndex]);
-    }
-
-    return last6Months.map((month, idx) => {
-      const targetMonth = (currentMonth - 5 + idx + 12) % 12;
+    return labels.map((label, idx) => {
+      let invoiced = 0;
+      let collected = 0;
       
-      const invoiced = invoicesData?.filter(i => {
+      invoicesData?.forEach(i => {
         const date = new Date(i.created_at);
-        return date.getMonth() === targetMonth;
-      }).reduce((sum, i) => sum + (i.amount || 0), 0) || 0;
+        if (getDataBucketIndex(date, selectedPeriod, dateRange) === idx) {
+          invoiced += (i.amount || 0);
+        }
+        
+        // For collected, use paid_date
+        if (i.status === 'paid' && i.paid_date) {
+          const paidDate = new Date(i.paid_date);
+          if (getDataBucketIndex(paidDate, selectedPeriod, dateRange) === idx) {
+            collected += (i.amount || 0);
+          }
+        }
+      });
       
-      const collected = invoicesData?.filter(i => {
-        if (i.status !== 'paid' || !i.paid_date) return false;
-        const date = new Date(i.paid_date);
-        return date.getMonth() === targetMonth;
-      }).reduce((sum, i) => sum + (i.amount || 0), 0) || 0;
-
-      return {
-        month,
-        invoiced,
-        collected,
-        outstanding: invoiced - collected
-      };
+      return { period: label, invoiced, collected, outstanding: invoiced - collected };
     });
-  }, [invoicesData]);
+  }, [invoicesData, selectedPeriod, dateRange]);
 
   // Invoice status distribution
   const invoiceStatusData = useMemo(() => {
@@ -365,6 +358,10 @@ const RevenueAnalyticsReportsNew = () => {
                   <SelectItem value="monthly">Last 30 Days</SelectItem>
                   <SelectItem value="quarterly">Last Quarter</SelectItem>
                   <SelectItem value="yearly">Last Year</SelectItem>
+                  <SelectItem value="mtd">Month to Date</SelectItem>
+                  <SelectItem value="ytd">Year to Date</SelectItem>
+                  <SelectItem value="last-year">Previous Year</SelectItem>
+                  <SelectItem value="all-time">All Time</SelectItem>
                 </SelectContent>
               </Select>
               <Button variant="outline" size="sm">
@@ -467,9 +464,9 @@ const RevenueAnalyticsReportsNew = () => {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={250}>
-                  <ComposedChart data={monthlyRevenue}>
+                  <ComposedChart data={revenueTrends}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" fontSize={12} />
+                    <XAxis dataKey="period" fontSize={12} />
                     <YAxis fontSize={12} tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
                     <Tooltip formatter={(value: number) => formatCurrency(value)} />
                     <Legend />
