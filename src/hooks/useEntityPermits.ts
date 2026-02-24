@@ -23,8 +23,8 @@ export function useEntityPermits(entityId: string | null) {
 
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('permit_applications')
+        const { data, error } = await (supabase as any)
+          .from('vw_permit_applications_list')
           .select('id, title, permit_number, permit_type, status, approval_date')
           .eq('entity_id', entityId)
           .eq('status', 'approved')

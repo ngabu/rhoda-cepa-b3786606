@@ -25,9 +25,9 @@ export function usePermitApplicationsByEntity(entityId: string | null) {
     const fetchApplications = async () => {
       setLoading(true);
       try {
-        // Fetch permit applications with approved and under review statuses
-        const { data: permits, error: permitsError } = await supabase
-          .from('permit_applications')
+        // Fetch permit applications with approved and under review statuses (use view)
+        const { data: permits, error: permitsError } = await (supabase as any)
+          .from('vw_permit_applications_list')
           .select('id, title, permit_number, permit_type, status, entity_id, entity_name')
           .eq('entity_id', entityId)
           .in('status', ['approved', 'submitted', 'under_review', 'pending'])
@@ -50,7 +50,7 @@ export function usePermitApplicationsByEntity(entityId: string | null) {
         }
 
         // Map permits to common format
-        const mappedPermits: PermitApplication[] = (permits || []).map(permit => ({
+        const mappedPermits: PermitApplication[] = ((permits || []) as any[]).map(permit => ({
           id: permit.id,
           title: permit.title,
           permit_number: permit.permit_number,

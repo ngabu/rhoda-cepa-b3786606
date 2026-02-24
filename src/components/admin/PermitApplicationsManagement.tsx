@@ -27,17 +27,19 @@ export function PermitApplicationsManagement() {
 
   const fetchApplications = async () => {
     try {
-      const { data, error } = await supabase
-        .from('permit_applications')
-        .select(`
-          *,
-          entities:entity_id (name, entity_type),
-          profiles:user_id (full_name, email)
-        `)
+      const { data, error } = await (supabase as any)
+        .from('vw_permit_applications_list')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setApplications(data || []);
+      // Map view data to expected format
+      const mappedData = (data || []).map((app: any) => ({
+        ...app,
+        entities: app.entity_id ? { name: app.entity_name, entity_type: app.entity_type } : null,
+        profiles: null // Not available in list view
+      }));
+      setApplications(mappedData);
     } catch (error: any) {
       toast.error('Failed to load applications');
     } finally {

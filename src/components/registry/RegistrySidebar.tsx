@@ -113,9 +113,9 @@ export function RegistrySidebar({ activeTab, onTabChange }: RegistrySidebarProps
     >
       <SidebarContent className="p-0 bg-gradient-to-b from-primary/90 to-primary/80 backdrop-blur-2xl">
         {/* Branding */}
-        <div className="p-4 md:p-6 pb-6 md:pb-8 bg-primary-glow/90 backdrop-blur-xl rounded-br-[3rem] md:rounded-br-[4rem] mb-4 shadow-glow">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-glow-accent p-1">
+        <div className={`pb-6 md:pb-8 bg-primary-glow/90 backdrop-blur-xl mb-4 shadow-glow ${isCollapsed ? 'p-2 rounded-br-[2rem]' : 'p-4 md:p-6 rounded-br-[3rem] md:rounded-br-[4rem]'}`}>
+          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
+            <div className={`bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-glow-accent p-1 ${isCollapsed ? 'w-8 h-8' : 'w-8 h-8 md:w-10 md:h-10'}`}>
               <img src={pngEmblem} alt="PNG Emblem" className="w-full h-full object-contain" />
             </div>
             {!isCollapsed && (
@@ -127,7 +127,7 @@ export function RegistrySidebar({ activeTab, onTabChange }: RegistrySidebarProps
           </div>
         </div>
         
-        <div className="px-4">
+        <div className={isCollapsed ? 'px-2' : 'px-4'}>
           <SidebarGroup>
             {!isCollapsed && <SidebarGroupLabel className="text-white/60 text-xs uppercase tracking-wider mb-2">Registry Operations</SidebarGroupLabel>}
           <SidebarGroupContent>

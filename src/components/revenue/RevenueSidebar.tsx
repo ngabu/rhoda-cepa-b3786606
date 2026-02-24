@@ -27,11 +27,14 @@ import {
   ChevronRight,
   Users,
   ClipboardList,
-  BookOpen
+  BookOpen,
+  Bell
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import pngEmblem from "@/assets/png-emblem.png"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { useUnitNotifications } from "@/hooks/useUnitNotifications"
+import { Badge } from "@/components/ui/badge"
 
 interface RevenueNavigationItem {
   title: string
@@ -63,6 +66,10 @@ const managementItems: RevenueNavigationItem[] = [
   { title: "User Guide", value: "user-guide", icon: BookOpen },
 ]
 
+const endMenuItems: RevenueNavigationItem[] = [
+  { title: "Notifications", value: "notifications", icon: Bell },
+]
+
 const accountItems: RevenueNavigationItem[] = [
   { title: "Profile", value: "profile", icon: User },
   { title: "Settings", value: "app-settings", icon: Cog },
@@ -75,8 +82,11 @@ interface RevenueSidebarProps {
 
 export function RevenueSidebar({ activeTab, onTabChange }: RevenueSidebarProps) {
   const { user, signOut, profile } = useAuth()
+  const { notifications } = useUnitNotifications('revenue')
   const { state, isMobile, setOpenMobile } = useSidebar()
   const [openSubMenus, setOpenSubMenus] = useState<string[]>([])
+  
+  const unreadCount = notifications.filter(n => !n.is_read).length
 
   const handleSignOut = async () => {
     try {
@@ -117,9 +127,9 @@ export function RevenueSidebar({ activeTab, onTabChange }: RevenueSidebarProps) 
     >
       <SidebarContent className="p-0 bg-gradient-to-b from-primary/90 to-primary/80 backdrop-blur-2xl">
         {/* Branding */}
-        <div className="p-6 pb-8 bg-primary-glow/90 backdrop-blur-xl rounded-br-[4rem] mb-4 shadow-glow">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-glow-accent p-1">
+        <div className={`pb-8 bg-primary-glow/90 backdrop-blur-xl mb-4 shadow-glow ${isCollapsed ? 'p-2 rounded-br-[2rem]' : 'p-6 rounded-br-[4rem]'}`}>
+          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
+            <div className={`bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-glow-accent p-1 ${isCollapsed ? 'w-8 h-8' : 'w-10 h-10'}`}>
               <img src={pngEmblem} alt="PNG Emblem" className="w-full h-full object-contain" />
             </div>
             {!isCollapsed && (
@@ -131,7 +141,7 @@ export function RevenueSidebar({ activeTab, onTabChange }: RevenueSidebarProps) 
           </div>
         </div>
         
-        <div className="px-4">
+        <div className={isCollapsed ? 'px-2' : 'px-4'}>
           <SidebarGroup>
             {!isCollapsed && <SidebarGroupLabel className="text-white/60 text-xs uppercase tracking-wider mb-2">Revenue Operations</SidebarGroupLabel>}
             <SidebarGroupContent>
@@ -249,6 +259,35 @@ export function RevenueSidebar({ activeTab, onTabChange }: RevenueSidebarProps) 
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   )
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <SidebarGroup className="mt-6">
+            {!isCollapsed && <SidebarGroupLabel className="text-white/60 text-xs uppercase tracking-wider mb-2">Notifications</SidebarGroupLabel>}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {endMenuItems.map((item) => (
+                  <SidebarMenuItem key={item.value}>
+                    <SidebarMenuButton asChild>
+                      <button
+                        onClick={() => handleTabChange(item.value)}
+                        className={`w-full ${getNavCls(activeTab === item.value)} relative`}
+                      >
+                        <item.icon className="w-5 h-5 shrink-0" />
+                        {!isCollapsed && <span className="ml-3 flex-1 text-left">{item.title}</span>}
+                        {unreadCount > 0 && (
+                          <Badge 
+                            variant="destructive" 
+                            className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} h-5 min-w-[1.25rem] rounded-full p-0 flex items-center justify-center text-xs`}
+                          >
+                            {unreadCount}
+                          </Badge>
+                        )}
+                      </button>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>

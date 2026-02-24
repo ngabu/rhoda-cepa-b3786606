@@ -173,10 +173,10 @@ export function BasicInfoReadOnly({ permit }: BasicInfoReadOnlyProps) {
                       <p className="font-medium">{(entityDetails as any).postal_address}</p>
                     </div>
                   )}
-                  {(entityDetails as any)['registered address'] && (
+                  {(entityDetails as any).registered_address && (
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Registered Address</label>
-                      <p className="font-medium">{(entityDetails as any)['registered address']}</p>
+                      <p className="font-medium">{(entityDetails as any).registered_address}</p>
                     </div>
                   )}
                   {(entityDetails as any).province && (

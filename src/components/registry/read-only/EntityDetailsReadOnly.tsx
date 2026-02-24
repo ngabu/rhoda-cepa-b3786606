@@ -37,7 +37,7 @@ export function EntityDetailsReadOnly({ entity }: EntityDetailsReadOnlyProps) {
           <ReadOnlyField label="Email" value={entity.email} />
           <ReadOnlyField label="Phone" value={entity.phone} />
           <ReadOnlyField label="Postal Address" value={entity.postal_address} />
-          <ReadOnlyField label="Registered Address" value={entity['registered address']} />
+          <ReadOnlyField label="Registered Address" value={entity.registered_address} />
         </div>
 
         <Separator />

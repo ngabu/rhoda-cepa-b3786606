@@ -20,19 +20,11 @@ export const useInspectionApplications = (applicationType: string) => {
 
       try {
         switch (applicationType) {
-          case 'permit': {
+        case 'permit': {
             // Fetch permit applications with under_review or approved status
-            const { data, error } = await supabase
-              .from('permit_applications')
-              .select(`
-                id,
-                title,
-                permit_number,
-                status,
-                province,
-                entity_id,
-                entities:entity_id (name)
-              `)
+            const { data, error } = await (supabase as any)
+              .from('vw_permit_applications_list')
+              .select('id, title, permit_number, status, province, entity_id, entity_name')
               .in('status', ['under_review', 'under_initial_review', 'under_technical_review', 'approved']);
 
             if (error) throw error;
@@ -43,7 +35,7 @@ export const useInspectionApplications = (applicationType: string) => {
                 label: app.permit_number || app.title || 'Untitled Permit',
                 province: app.province,
                 status: app.status,
-                entityName: app.entities?.name || 'Unknown Entity'
+                entityName: app.entity_name || 'Unknown Entity'
               }))
             );
             break;
@@ -100,16 +92,16 @@ export const useInspectionApplications = (applicationType: string) => {
                 let entityName = 'Unknown Entity';
 
                 if (amalg.permit_ids && amalg.permit_ids.length > 0) {
-                  const { data: permitData } = await supabase
-                    .from('permit_applications')
-                    .select('title, permit_number, province, entities:entity_id (name)')
+                  const { data: permitData } = await (supabase as any)
+                    .from('vw_permit_applications_list')
+                    .select('title, permit_number, province, entity_name')
                     .eq('id', amalg.permit_ids[0])
                     .single();
 
                   if (permitData) {
                     permitLabel = `Amalgamation: ${permitData.permit_number || permitData.title}`;
                     province = permitData.province || '';
-                    entityName = (permitData.entities as any)?.name || 'Unknown Entity';
+                    entityName = permitData.entity_name || 'Unknown Entity';
                   }
                 }
 

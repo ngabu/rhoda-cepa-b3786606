@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,7 @@ export function IntentComplianceReviewTab({ intentId, currentStatus, onStatusUpd
   const [status, setStatus] = useState(currentStatus);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [uploadedFiles, setUploadedFiles] = useState<{ name: string; path: string }[]>([]);
   
   // Validation checkboxes
@@ -34,11 +35,50 @@ export function IntentComplianceReviewTab({ intentId, currentStatus, onStatusUpd
   const [projectSiteVerified, setProjectSiteVerified] = useState(false);
   const [siteInspectionCompleted, setSiteInspectionCompleted] = useState(false);
   const [workplanConfirmed, setWorkplanConfirmed] = useState(false);
+  const [technicalComplianceAssessed, setTechnicalComplianceAssessed] = useState(false);
+  const [violationsAssessed, setViolationsAssessed] = useState(false);
 
   // Check if user can edit this tab (only compliance staff)
   const canEdit = profile?.staff_unit === 'compliance' || 
                   profile?.user_type === 'admin' || 
                   profile?.user_type === 'super_admin';
+
+  useEffect(() => {
+    fetchReviewData();
+  }, [intentId]);
+
+  const fetchReviewData = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('intent_reviews')
+        .select('*')
+        .eq('intent_registration_id', intentId)
+        .eq('review_stage', 'compliance')
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setAssessment(data.assessment || '');
+        setRemarks(data.remarks || '');
+        setProposedAction(data.proposed_action || '');
+        setUploadedFiles((data.uploaded_documents as { name: string; path: string }[]) || []);
+        
+        const validations = data.validation_checks as Record<string, boolean> || {};
+        setActivityLevelJustified(validations.activityLevelJustified || false);
+        setProjectSiteVerified(validations.projectSiteVerified || false);
+        setSiteInspectionCompleted(validations.siteInspectionCompleted || false);
+        setWorkplanConfirmed(validations.workplanConfirmed || false);
+        setTechnicalComplianceAssessed(validations.technicalComplianceAssessed || false);
+        setViolationsAssessed(validations.violationsAssessed || false);
+      }
+    } catch (error) {
+      console.error('Error fetching review data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!canEdit) return;
@@ -84,25 +124,46 @@ export function IntentComplianceReviewTab({ intentId, currentStatus, onStatusUpd
 
     setSubmitting(true);
     try {
+      // Save review data to intent_reviews table
       const reviewData = {
-        status,
-        compliance_review_status: status,
-        compliance_review_notes: JSON.stringify({
-          assessment,
-          remarks,
-          proposed_action: proposedAction,
-          documents: uploadedFiles,
-        }),
-        compliance_reviewed_by: profile?.user_id,
-        compliance_reviewed_at: new Date().toISOString()
+        intent_registration_id: intentId,
+        review_stage: 'compliance',
+        reviewer_id: profile?.user_id,
+        assessment,
+        remarks,
+        proposed_action: proposedAction,
+        validation_checks: {
+          activityLevelJustified,
+          projectSiteVerified,
+          siteInspectionCompleted,
+          workplanConfirmed,
+          technicalComplianceAssessed,
+          violationsAssessed
+        },
+        technical_compliance_checks: {
+          technical_compliance_assessed: technicalComplianceAssessed,
+          violations_assessed: violationsAssessed
+        },
+        uploaded_documents: uploadedFiles,
+        status: status === 'compliance_approved' ? 'completed' : 'pending',
+        reviewed_at: new Date().toISOString()
       };
 
-      const { error } = await supabase
+      const { error: reviewError } = await supabase
+        .from('intent_reviews')
+        .upsert(reviewData, { 
+          onConflict: 'intent_registration_id,review_stage'
+        });
+
+      if (reviewError) throw reviewError;
+
+      // Update intent registration status
+      const { error: intentError } = await supabase
         .from('intent_registrations')
-        .update(reviewData)
+        .update({ status })
         .eq('id', intentId);
 
-      if (error) throw error;
+      if (intentError) throw intentError;
 
       toast({ title: 'Success', description: 'Compliance review submitted successfully' });
       onStatusUpdate();
@@ -113,6 +174,19 @@ export function IntentComplianceReviewTab({ intentId, currentStatus, onStatusUpd
       setSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-8">
+          <div className="flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin mr-2" />
+            Loading review data...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -172,6 +246,28 @@ export function IntentComplianceReviewTab({ intentId, currentStatus, onStatusUpd
                 Workplan Confirmed
               </Label>
             </div>
+            <div className="flex items-center space-x-3">
+              <Checkbox
+                id="technicalComplianceAssessed"
+                checked={technicalComplianceAssessed}
+                onCheckedChange={(checked) => setTechnicalComplianceAssessed(!!checked)}
+                disabled={!canEdit}
+              />
+              <Label htmlFor="technicalComplianceAssessed" className="text-sm font-normal cursor-pointer">
+                Technical Compliance Assessment
+              </Label>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Checkbox
+                id="violationsAssessed"
+                checked={violationsAssessed}
+                onCheckedChange={(checked) => setViolationsAssessed(!!checked)}
+                disabled={!canEdit}
+              />
+              <Label htmlFor="violationsAssessed" className="text-sm font-normal cursor-pointer">
+                Violations & Non-Compliance Issues
+              </Label>
+            </div>
           </div>
         </div>
 
@@ -224,23 +320,7 @@ export function IntentComplianceReviewTab({ intentId, currentStatus, onStatusUpd
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="compliance-status">Update Status (for next workflow stage)</Label>
-          <Select value={status} onValueChange={setStatus} disabled={!canEdit}>
-            <SelectTrigger className={!canEdit ? 'bg-muted cursor-not-allowed' : ''}>
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="under_review">Under Review</SelectItem>
-              <SelectItem value="compliance_approved">Compliance Approved - Forward to MD</SelectItem>
-              <SelectItem value="compliance_issues">Compliance Issues Found</SelectItem>
-              <SelectItem value="requires_clarification">Requires Clarification</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Supporting Documents</Label>
+          <Label>Full Assessment Report</Label>
           <div className={`border-2 border-dashed border-border rounded-lg p-4 ${!canEdit ? 'bg-muted' : ''}`}>
             <Input
               type="file"
@@ -266,6 +346,23 @@ export function IntentComplianceReviewTab({ intentId, currentStatus, onStatusUpd
               ))}
             </div>
           )}
+        </div>
+
+        {/* Update Status - Moved to end */}
+        <div className="space-y-2">
+          <Label htmlFor="compliance-status">Update Status (for next workflow stage)</Label>
+          <Select value={status} onValueChange={setStatus} disabled={!canEdit}>
+            <SelectTrigger className={!canEdit ? 'bg-muted cursor-not-allowed' : ''}>
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="under_review">Under Review</SelectItem>
+              <SelectItem value="compliance_approved">Compliance Approved - Forward to MD</SelectItem>
+              <SelectItem value="compliance_issues">Compliance Issues Found</SelectItem>
+              <SelectItem value="requires_clarification">Requires Clarification</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {canEdit && (

@@ -17,6 +17,7 @@ import { PermitDetailsReadOnlyView } from './PermitDetailsReadOnlyView';
 interface Permit {
   id: string;
   permit_number?: string;
+  application_number?: string;
   permit_type: string;
   title: string;
   description?: string;
@@ -27,6 +28,12 @@ interface Permit {
   entity_id: string;
   entity_name?: string;
   entity_type?: string;
+  activity_level?: string;
+  fee_amount?: number;
+  fee_breakdown?: any;
+  uploaded_files?: any[];
+  document_uploads?: Record<string, any>;
+  public_consultation_proof?: any[];
 }
 
 interface PermitManagementProps {
@@ -50,7 +57,7 @@ export function PermitManagement({ onNavigateToNewApplication, onNavigateToEditA
 
     try {
       const { data, error } = await (supabase as any)
-        .from('permit_applications')
+        .from('vw_permit_applications_list')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -76,13 +83,11 @@ export function PermitManagement({ onNavigateToNewApplication, onNavigateToEditA
   const getStatusColor = (status: string) => {
     const colors = {
       draft: 'bg-gray-100 text-gray-800',
-      submitted: 'bg-blue-100 text-blue-800',
-      under_initial_review: 'bg-yellow-100 text-yellow-800',
-      under_technical_review: 'bg-orange-100 text-orange-800',
+      pending: 'bg-yellow-100 text-yellow-800',
+      under_review: 'bg-blue-100 text-blue-800',
       requires_clarification: 'bg-amber-100 text-amber-800',
       approved: 'bg-green-100 text-green-800',
       rejected: 'bg-red-100 text-red-800',
-      expired: 'bg-orange-100 text-orange-800',
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
@@ -105,7 +110,7 @@ export function PermitManagement({ onNavigateToNewApplication, onNavigateToEditA
   };
 
   const handleDeleteApplication = async (permit: Permit) => {
-    const allowedStatuses = ['draft', 'rejected', 'requires_clarification'];
+    const allowedStatuses = ['draft', 'pending', 'rejected', 'requires_clarification'];
     if (!allowedStatuses.includes(permit.status)) {
       toast({
         title: "Error",
@@ -229,7 +234,7 @@ export function PermitManagement({ onNavigateToNewApplication, onNavigateToEditA
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
-                          {(permit.status === 'draft' || permit.status === 'requires_clarification') ? (
+                          {(permit.status === 'draft' || permit.status === 'pending' || permit.status === 'requires_clarification') ? (
                             <>
                               <Button
                                 variant="secondary"
@@ -263,7 +268,7 @@ export function PermitManagement({ onNavigateToNewApplication, onNavigateToEditA
                             >
                               <Trash2 className="w-4 h-4 text-destructive" />
                             </Button>
-                          ) : permit.status !== 'under_technical_review' ? (
+                          ) : permit.status !== 'under_review' ? (
                             <Button
                               variant="secondary"
                               size="sm"

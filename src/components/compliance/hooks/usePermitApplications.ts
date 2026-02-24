@@ -10,12 +10,10 @@ export function usePermitApplications() {
 
   const fetchPermitApplications = async () => {
     try {
-      // Using type assertion since permit_applications table is newly created
+      // Use the vw_permit_applications_compliance view for compliance unit
       const { data, error } = await (supabase as any)
-        .from('permit_applications')
-        .select(`
-          *
-        `)
+        .from('vw_permit_applications_compliance')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -28,14 +26,17 @@ export function usePermitApplications() {
         application_date: app.application_date,
         permit_number: app.permit_number,
         assigned_officer_id: app.assigned_officer_id,
-        assigned_officer_name: app.assigned_officer_name,
-        assigned_officer_email: app.assigned_officer_email,
+        assigned_compliance_officer_id: app.assigned_compliance_officer_id,
+        assigned_officer_name: app.compliance_officer_name,
+        assigned_officer_email: app.compliance_officer_email,
+        entity_name: app.entity_name,
+        entity_type: app.entity_type,
         entity: {
           name: app.entity_name || 'Unknown Entity',
           entity_type: app.entity_type || 'Unknown'
         },
         created_at: app.created_at || new Date().toISOString(),
-        updated_at: app.updated_at || new Date().toISOString()
+        updated_at: app.created_at || new Date().toISOString()
       }));
 
       setApplications(formattedApplications);
@@ -54,5 +55,5 @@ export function usePermitApplications() {
     }
   }, [profile?.staff_unit]);
 
-  return { applications, loading };
+  return { applications, loading, refetch: fetchPermitApplications };
 }

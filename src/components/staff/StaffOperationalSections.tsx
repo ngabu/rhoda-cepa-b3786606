@@ -30,8 +30,8 @@ export function StaffOperationalSections() {
   useEffect(() => {
     const fetchRegistryQueue = async () => {
       try {
-        const { data } = await supabase
-          .from('permit_applications')
+        const { data } = await (supabase as any)
+          .from('vw_permit_applications_list')
           .select('id, title, permit_type, permit_number, status, created_at')
           .in('status', ['submitted', 'under_review'])
           .order('created_at', { ascending: true })

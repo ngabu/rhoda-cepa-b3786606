@@ -54,10 +54,8 @@ const Jobs = () => {
   const fetchApplications = async () => {
     try {
       let query = (supabase as any)
-        .from('permit_applications')
-        .select(`
-          *
-        `)
+        .from('vw_permit_applications_list')
+        .select('*')
         .order('application_date', { ascending: false });
 
       if (profile?.operational_unit === 'registry' || profile?.operational_unit === 'compliance' || profile?.operational_unit === 'revenue') {

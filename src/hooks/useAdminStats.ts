@@ -63,9 +63,9 @@ export function useAdminStats(period?: DateFilterPeriod) {
 
       if (userError) throw userError;
 
-      // Fetch application statistics with date filter
-      let appQuery = supabase
-        .from('permit_applications')
+      // Fetch application statistics with date filter - use view for read operations
+      let appQuery = (supabase as any)
+        .from('vw_permit_applications_list')
         .select('status, created_at');
       
       if (period && period !== 'all-time') {

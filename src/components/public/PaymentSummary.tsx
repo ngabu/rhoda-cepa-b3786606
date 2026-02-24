@@ -102,8 +102,8 @@ export function PaymentSummary() {
           // Get permit details for description
           let description = 'General Fee';
           if (invoice.permit_id) {
-            const { data: permitData } = await supabase
-              .from('permit_applications')
+            const { data: permitData } = await (supabase as any)
+              .from('vw_permit_applications_list')
               .select('title, permit_number')
               .eq('id', invoice.permit_id)
               .single();

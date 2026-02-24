@@ -13,8 +13,8 @@ export function PermitApplicationReadOnlyView({ applicationId }: PermitApplicati
       if (!applicationId) return;
       
       try {
-        const { data, error } = await supabase
-          .from('permit_applications')
+        const { data, error } = await (supabase as any)
+          .from('vw_permit_applications_full')
           .select('*')
           .eq('id', applicationId)
           .single();

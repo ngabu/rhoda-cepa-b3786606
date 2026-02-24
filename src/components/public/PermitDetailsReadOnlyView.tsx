@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 interface Permit {
   id: string;
   permit_number?: string;
+  application_number?: string;
   permit_type: string;
   title: string;
   description?: string;
@@ -37,6 +38,7 @@ interface Permit {
   environmental_impact?: string;
   mitigation_measures?: string;
   fee_amount?: number;
+  fee_breakdown?: any;
   application_fee?: number;
   payment_status?: string;
   commencement_date?: string;
@@ -50,6 +52,13 @@ interface Permit {
   permit_specific_fields?: any;
   legal_declaration_accepted?: boolean;
   compliance_commitment?: boolean;
+  // Documents
+  uploaded_files?: any[];
+  document_uploads?: Record<string, any>;
+  public_consultation_proof?: any[];
+  // Linked intent registration
+  intent_registration_id?: string;
+  existing_permit_id?: string;
 }
 
 interface PermitDetailsReadOnlyViewProps {
@@ -82,13 +91,30 @@ export function PermitDetailsReadOnlyView({ permit }: PermitDetailsReadOnlyViewP
       try {
         setLoading(true);
         
-        // Fetch documents
-        const { data: docsData } = await supabase
+        // Fetch documents associated with the permit
+        const { data: permitDocs } = await supabase
           .from('documents')
           .select('*')
           .eq('permit_id', permit.id);
         
-        if (docsData) setDocuments(docsData);
+        let allDocuments = permitDocs || [];
+        
+        // If there's a linked intent registration, also fetch those documents
+        if (permit.intent_registration_id) {
+          const { data: intentDocs } = await supabase
+            .from('documents')
+            .select('*')
+            .eq('intent_registration_id', permit.intent_registration_id);
+          
+          if (intentDocs) {
+            // Merge documents, avoiding duplicates by id
+            const existingIds = new Set(allDocuments.map(d => d.id));
+            const uniqueIntentDocs = intentDocs.filter(d => !existingIds.has(d.id));
+            allDocuments = [...allDocuments, ...uniqueIntentDocs];
+          }
+        }
+        
+        setDocuments(allDocuments);
         
         // Fetch entity details
         if (permit.entity_id) {
@@ -164,18 +190,16 @@ export function PermitDetailsReadOnlyView({ permit }: PermitDetailsReadOnlyViewP
     };
     
     fetchAllData();
-  }, [permit.id, permit.entity_id]);
+  }, [permit.id, permit.entity_id, permit.intent_registration_id]);
 
   const getStatusColor = (status: string) => {
     const colors = {
       draft: 'bg-gray-100 text-gray-800',
-      submitted: 'bg-blue-100 text-blue-800',
-      under_initial_review: 'bg-yellow-100 text-yellow-800',
-      under_technical_review: 'bg-orange-100 text-orange-800',
+      pending: 'bg-yellow-100 text-yellow-800',
+      under_review: 'bg-blue-100 text-blue-800',
       requires_clarification: 'bg-amber-100 text-amber-800',
       approved: 'bg-green-100 text-green-800',
       rejected: 'bg-red-100 text-red-800',
-      expired: 'bg-orange-100 text-orange-800',
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
@@ -201,6 +225,9 @@ export function PermitDetailsReadOnlyView({ permit }: PermitDetailsReadOnlyViewP
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-foreground">{permit.title}</h3>
+          {permit.application_number && (
+            <p className="text-sm text-muted-foreground">Application #{permit.application_number}</p>
+          )}
           {permit.permit_number && (
             <p className="text-sm text-muted-foreground">Permit #{permit.permit_number}</p>
           )}
@@ -399,21 +426,86 @@ export function PermitDetailsReadOnlyView({ permit }: PermitDetailsReadOnlyViewP
                   Supporting Documents
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                {documents.length > 0 ? (
-                  <div className="space-y-3">
-                    {documents.map((doc: any) => (
-                      <div key={doc.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{doc.filename}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {doc.document_type} • {new Date(doc.uploaded_at).toLocaleDateString()}
-                          </p>
+              <CardContent className="space-y-4">
+                {/* Documents from database */}
+                {documents.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-muted-foreground">Uploaded Documents</h4>
+                    <div className="space-y-2">
+                      {documents.map((doc: any) => (
+                        <div key={doc.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{doc.filename}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {doc.document_type} • {new Date(doc.uploaded_at).toLocaleDateString()}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                ) : (
+                )}
+
+                {/* Documents from document_uploads (EIA, EIS, etc.) */}
+                {permit.document_uploads && Object.keys(permit.document_uploads).length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-muted-foreground">Categorized Documents (EIA/EIS)</h4>
+                    <div className="space-y-2">
+                      {Object.entries(permit.document_uploads).map(([key, doc]: [string, any]) => (
+                        <div key={key} className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{doc.name || doc.filename}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </p>
+                          </div>
+                          <Badge variant="outline" className="text-blue-600">Categorized</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Documents from public_consultation_proof */}
+                {permit.public_consultation_proof && permit.public_consultation_proof.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-muted-foreground">Public Consultation Documents</h4>
+                    <div className="space-y-2">
+                      {permit.public_consultation_proof.map((doc: any, index: number) => (
+                        <div key={doc.id || index} className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{doc.name || doc.filename || 'Consultation Document'}</p>
+                            <p className="text-xs text-muted-foreground">Public Consultation Proof</p>
+                          </div>
+                          <Badge variant="outline" className="text-green-600">Consultation</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Documents from uploaded_files (general uploads) */}
+                {permit.uploaded_files && permit.uploaded_files.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-muted-foreground">General Attachments</h4>
+                    <div className="space-y-2">
+                      {permit.uploaded_files.map((file: any, index: number) => (
+                        <div key={file.id || index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{file.name || file.filename}</p>
+                            <p className="text-xs text-muted-foreground">General Attachment</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* No documents message */}
+                {documents.length === 0 && 
+                 (!permit.document_uploads || Object.keys(permit.document_uploads).length === 0) && 
+                 (!permit.public_consultation_proof || permit.public_consultation_proof.length === 0) && 
+                 (!permit.uploaded_files || permit.uploaded_files.length === 0) && (
                   <p className="text-sm text-muted-foreground">No documents uploaded</p>
                 )}
               </CardContent>
@@ -696,23 +788,86 @@ export function PermitDetailsReadOnlyView({ permit }: PermitDetailsReadOnlyViewP
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Application Fee</label>
-                      <p className="text-sm text-foreground">{formatCurrency(permit.application_fee)}</p>
+                  {/* Fee Calculation Details */}
+                  <div className="space-y-3">
+                    {/* Application Fee */}
+                    <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                      <span className="text-muted-foreground">Application Fee</span>
+                      <span className="font-medium text-foreground">
+                        {formatCurrency(permit.application_fee || permit.fee_breakdown?.administrationFee || 0)}
+                      </span>
                     </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Total Fee Amount</label>
-                      <p className="text-sm text-foreground">{formatCurrency(permit.fee_amount)}</p>
+                    
+                    {/* Composite Fee (if present) */}
+                    {permit.fee_breakdown?.compositeFee !== undefined && permit.fee_breakdown?.compositeFee > 0 && (
+                      <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
+                        <div>
+                          <span className="text-foreground">Composite Fee</span>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Environmental Permit processing fee
+                          </p>
+                        </div>
+                        <span className="font-medium text-green-700 dark:text-green-400">
+                          {formatCurrency(permit.fee_breakdown.compositeFee)}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Total Fee Payable */}
+                    <div className="flex justify-between items-center p-4 bg-primary/10 rounded-lg border border-primary/20">
+                      <span className="font-bold text-foreground">Total Fee Payable</span>
+                      <span className="font-bold text-lg text-primary">
+                        {formatCurrency(permit.fee_amount || permit.fee_breakdown?.totalFee || 0)}
+                      </span>
                     </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Payment Status</label>
+                  </div>
+
+                  {/* Additional Fee Details */}
+                  {permit.fee_breakdown && (
+                    <div className="mt-4 pt-4 border-t border-border">
+                      <h4 className="font-medium text-foreground mb-3 text-sm">Additional Fee Details</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {permit.fee_breakdown.processingDays !== undefined && (
+                          <div className="p-3 bg-muted/30 rounded-lg">
+                            <label className="text-sm text-muted-foreground">Processing Days</label>
+                            <p className="text-sm font-medium text-foreground">{permit.fee_breakdown.processingDays} days</p>
+                          </div>
+                        )}
+                        {permit.fee_breakdown.administrationForm && (
+                          <div className="p-3 bg-muted/30 rounded-lg">
+                            <label className="text-sm text-muted-foreground">Administration Form</label>
+                            <p className="text-sm font-medium text-foreground">{permit.fee_breakdown.administrationForm}</p>
+                          </div>
+                        )}
+                        {permit.fee_breakdown.technicalForm && (
+                          <div className="p-3 bg-muted/30 rounded-lg">
+                            <label className="text-sm text-muted-foreground">Technical Form</label>
+                            <p className="text-sm font-medium text-foreground">{permit.fee_breakdown.technicalForm}</p>
+                          </div>
+                        )}
+                        {permit.fee_breakdown.source && (
+                          <div className="p-3 bg-muted/30 rounded-lg">
+                            <label className="text-sm text-muted-foreground">Fee Source</label>
+                            <p className="text-sm font-medium text-foreground">{permit.fee_breakdown.source}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Payment Status */}
+                  <div className="mt-4 pt-4 border-t border-border">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-muted-foreground">Payment Status</span>
                       <Badge variant={permit.payment_status === 'paid' ? 'default' : 'secondary'}>
                         {permit.payment_status?.toUpperCase() || 'PENDING'}
                       </Badge>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-4">No fee payment records found in the system</p>
+                  
+                  {!permit.fee_breakdown && !permit.application_fee && !permit.fee_amount && (
+                    <p className="text-sm text-muted-foreground mt-4">No fee calculation details available</p>
+                  )}
                 </CardContent>
               </Card>
             )}

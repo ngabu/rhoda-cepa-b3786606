@@ -16,7 +16,7 @@ interface EntityDetail {
   email: string | null;
   phone: string | null;
   postal_address: string | null;
-  'registered address': string | null;
+  registered_address: string | null;
   registration_number: string | null;
   tax_number: string | null;
   contact_person: string | null;
@@ -144,7 +144,7 @@ export function EntityDetail() {
                   <MapPin className="h-4 w-4" />
                   Registered Address
                 </label>
-                <p className="text-base">{entity['registered address'] || '-'}</p>
+                <p className="text-base">{entity.registered_address || '-'}</p>
               </div>
               <div className="md:col-span-2">
                 <label className="text-sm font-medium text-muted-foreground flex items-center gap-1">

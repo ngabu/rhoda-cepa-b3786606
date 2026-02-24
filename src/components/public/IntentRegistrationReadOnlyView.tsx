@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Building, User, Calendar, MapPin, DollarSign, Users, FileText, Download, ChevronDown, ChevronRight, Eye } from 'lucide-react';
+import { Building, User, Calendar, MapPin, DollarSign, Users, FileText, Download, ChevronDown, ChevronRight, Eye, ClipboardList, Landmark } from 'lucide-react';
 import { format } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import { IntentRegistration } from '@/hooks/useIntentRegistrations';
@@ -30,7 +30,7 @@ interface EntityDetails {
   id: string;
   name: string;
   entity_type: string;
-  'registered address'?: string;
+  registered_address?: string;
   postal_address?: string;
   email?: string;
   phone?: string;
@@ -183,7 +183,7 @@ export function IntentRegistrationReadOnlyView({ intent, showFeedbackWithBlueHea
   const getEntityAddress = () => {
     if (entityDetails) {
       const parts = [
-        entityDetails['registered address'],
+        entityDetails.registered_address,
         entityDetails.district,
         entityDetails.province
       ].filter(Boolean);
@@ -201,41 +201,34 @@ export function IntentRegistrationReadOnlyView({ intent, showFeedbackWithBlueHea
   return (
     <div className="space-y-6">
       {/* Print-only A4 formatted content */}
-      <div className="hidden print:block print:mb-6" style={{ maxWidth: '100%', width: '100%', overflow: 'hidden' }}>
+      <div className="hidden print:block" style={{ maxWidth: '100%', width: '100%', overflow: 'hidden' }}>
         {/* Header with PNG Emblem and Authority Name */}
-        <div className="text-center mb-6">
+        <div className="text-center mb-4">
           <img 
             src="/images/cepa-header-crescent.png" 
             alt="CEPA Header" 
-            className="mx-auto h-20 mb-3"
-            style={{ maxHeight: '80px' }}
+            className="mx-auto mb-2"
+            style={{ height: '60px', maxHeight: '60px' }}
           />
-          <h1 className="text-lg font-bold text-gray-800">Conservation & Environment Protection Authority</h1>
-          <p className="text-sm text-gray-600">CEPA Registry Division</p>
+          <h1 className="text-sm font-bold text-gray-800">Conservation & Environment Protection Authority</h1>
+          <p className="text-xs text-gray-600">Intent Registration Record</p>
         </div>
 
-        {/* Title */}
-        <h2 className="text-base font-bold mb-3">Intent Registration Record - {intent.entity?.name || 'Unknown Entity'}</h2>
-
-        {/* Date */}
-        <div className="mb-3">
-          <span className="font-bold text-sm">Date:</span>
-          <span className="ml-2 text-sm">{format(new Date(intent.created_at), 'MMMM dd, yyyy')}</span>
+        {/* Title and Date */}
+        <div className="mb-3 pb-2 border-b border-gray-300">
+          <h2 className="text-sm font-bold">{intent.entity?.name || 'Unknown Entity'}</h2>
+          <p className="text-xs text-gray-600">Submitted: {format(new Date(intent.created_at), 'MMMM dd, yyyy')}</p>
         </div>
 
-        {/* Address and Attachment Ref side by side */}
-        <div className="flex gap-4 mb-4" style={{ width: '100%', boxSizing: 'border-box' }}>
-          <div className="flex items-start flex-1">
-            <span className="font-bold mr-3 text-sm" style={{ minWidth: '70px' }}>Address:</span>
-            <div className="border border-gray-400 p-2 flex-1 min-h-[50px]">
-              <p className="text-xs">{getEntityAddress()}</p>
-            </div>
+        {/* Entity Address */}
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className="print-field">
+            <p className="print-field-label">Entity Address</p>
+            <p className="print-field-value">{getEntityAddress()}</p>
           </div>
-          <div className="flex items-start flex-1">
-            <span className="font-bold mr-3 text-sm" style={{ minWidth: '100px' }}>Attachment Ref:</span>
-            <div className="border border-gray-400 p-2 flex-1 min-h-[50px]">
-              <p className="text-xs">{getAttachmentList()}</p>
-            </div>
+          <div className="print-field">
+            <p className="print-field-label">Attachments</p>
+            <p className="print-field-value">{documents.length > 0 ? `${documents.length} document(s)` : 'None'}</p>
           </div>
         </div>
 
@@ -246,6 +239,12 @@ export function IntentRegistrationReadOnlyView({ intent, showFeedbackWithBlueHea
             <div className="print-field mt-2">
               <p className="print-field-label">Prescribed Activity</p>
               <p className="print-field-value">{prescribedActivityDescription}</p>
+            </div>
+          )}
+          {intent.project_title && (
+            <div className="print-field mt-2">
+              <p className="print-field-label">Project Title</p>
+              <p className="print-field-value font-medium">{intent.project_title}</p>
             </div>
           )}
           <div className="print-field mt-2">
@@ -395,18 +394,17 @@ export function IntentRegistrationReadOnlyView({ intent, showFeedbackWithBlueHea
         <CardContent className="space-y-6 print:space-y-4">
           {/* Registration Details */}
           <Collapsible open={openSections.registration} onOpenChange={() => toggleSection('registration')}>
-            <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-muted/50 rounded-lg transition-colors print:hidden">
-              <h3 className="text-lg font-semibold">Registration Details</h3>
-              {openSections.registration ? (
-                <ChevronDown className="w-5 h-5 text-muted-foreground" />
-              ) : (
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              )}
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-muted/50 rounded-lg transition-colors border print:hidden">
+              <div className="flex items-center gap-2">
+                <ClipboardList className="w-4 h-4 text-primary" />
+                <span className="font-medium">Registration Details</span>
+              </div>
+              {openSections.registration ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
             </CollapsibleTrigger>
             <div className="hidden print:block mb-2">
               <h3 className="text-lg font-semibold border-b pb-2 mb-3">Registration Details</h3>
             </div>
-            <CollapsibleContent className="pt-4 space-y-4">
+            <CollapsibleContent className="pt-4 space-y-4 pl-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-muted-foreground">Entity</Label>
@@ -441,6 +439,13 @@ export function IntentRegistrationReadOnlyView({ intent, showFeedbackWithBlueHea
                   </div>
                 </div>
               )}
+
+              <div className="space-y-2">
+                <Label className="text-muted-foreground">Project Title</Label>
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <p className="text-sm font-medium">{intent.project_title || 'Not provided'}</p>
+                </div>
+              </div>
 
               <div className="space-y-2">
                 <Label className="text-muted-foreground">Project Description</Label>
@@ -481,19 +486,18 @@ export function IntentRegistrationReadOnlyView({ intent, showFeedbackWithBlueHea
           </Collapsible>
 
           {/* Project Site Information */}
-          <Collapsible open={openSections.projectSite} onOpenChange={() => toggleSection('projectSite')} className="pt-6 border-t border-glass print:border-t-0 print:pt-4">
-            <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-muted/50 rounded-lg transition-colors print:hidden">
-              <h3 className="text-lg font-semibold">Project Site Information</h3>
-              {openSections.projectSite ? (
-                <ChevronDown className="w-5 h-5 text-muted-foreground" />
-              ) : (
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              )}
+          <Collapsible open={openSections.projectSite} onOpenChange={() => toggleSection('projectSite')}>
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-muted/50 rounded-lg transition-colors border print:hidden">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-blue-600" />
+                <span className="font-medium">Project Site Information</span>
+              </div>
+              {openSections.projectSite ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
             </CollapsibleTrigger>
             <div className="hidden print:block mb-2">
               <h3 className="text-lg font-semibold border-b pb-2 mb-3">Project Site Information</h3>
             </div>
-            <CollapsibleContent className="pt-4 space-y-4">
+            <CollapsibleContent className="pt-4 space-y-4 pl-4">
               <div className="space-y-2">
                 <Label className="text-muted-foreground">Project Site Address</Label>
                 <div className="p-3 bg-primary/10 rounded-lg">
@@ -547,19 +551,18 @@ export function IntentRegistrationReadOnlyView({ intent, showFeedbackWithBlueHea
           </Collapsible>
 
           {/* Government & Stakeholder Engagement */}
-          <Collapsible open={openSections.stakeholder} onOpenChange={() => toggleSection('stakeholder')} className="pt-6 border-t border-glass print:border-t-0 print:pt-4">
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-muted/50 rounded-lg transition-colors print:hidden">
-                <h3 className="text-lg font-semibold">Government & Stakeholder Engagement</h3>
-                {openSections.stakeholder ? (
-                  <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                ) : (
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                )}
-              </CollapsibleTrigger>
+          <Collapsible open={openSections.stakeholder} onOpenChange={() => toggleSection('stakeholder')}>
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-muted/50 rounded-lg transition-colors border print:hidden">
+              <div className="flex items-center gap-2">
+                <Landmark className="w-4 h-4 text-purple-600" />
+                <span className="font-medium">Government & Stakeholder Engagement</span>
+              </div>
+              {openSections.stakeholder ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+            </CollapsibleTrigger>
               <div className="hidden print:block mb-2">
                 <h3 className="text-lg font-semibold border-b pb-2 mb-3">Government & Stakeholder Engagement</h3>
               </div>
-              <CollapsibleContent className="pt-4 space-y-4">
+              <CollapsibleContent className="pt-4 space-y-4 pl-4">
                 <div className="space-y-2">
                   <Label className="text-muted-foreground">Agreement with Government of PNG</Label>
                   <div className="p-3 bg-primary/10 rounded-lg">
@@ -591,19 +594,18 @@ export function IntentRegistrationReadOnlyView({ intent, showFeedbackWithBlueHea
             </Collapsible>
 
           {/* Financial Information */}
-          <Collapsible open={openSections.financial} onOpenChange={() => toggleSection('financial')} className="pt-6 border-t border-glass print:border-t-0 print:pt-4">
-              <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-muted/50 rounded-lg transition-colors print:hidden">
-                <h3 className="text-lg font-semibold">Project Financial Information</h3>
-                {openSections.financial ? (
-                  <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                ) : (
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                )}
-              </CollapsibleTrigger>
+          <Collapsible open={openSections.financial} onOpenChange={() => toggleSection('financial')}>
+            <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-muted/50 rounded-lg transition-colors border print:hidden">
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-emerald-600" />
+                <span className="font-medium">Project Financial Information</span>
+              </div>
+              {openSections.financial ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+            </CollapsibleTrigger>
               <div className="hidden print:block mb-2">
                 <h3 className="text-lg font-semibold border-b pb-2 mb-3">Project Financial Information</h3>
               </div>
-              <CollapsibleContent className="pt-4">
+              <CollapsibleContent className="pt-4 pl-4">
                 <div className="space-y-2">
                   <Label className="text-muted-foreground">Estimated Cost of Works</Label>
                   <div className="p-3 bg-primary/10 rounded-lg">

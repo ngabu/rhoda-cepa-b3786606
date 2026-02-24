@@ -14,73 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      activity_document_mapping: {
-        Row: {
-          conditional_trigger: string | null
-          id: string
-          level_override: number | null
-          prescribed_activity_id: string
-          required_document_id: string
-        }
-        Insert: {
-          conditional_trigger?: string | null
-          id?: string
-          level_override?: number | null
-          prescribed_activity_id: string
-          required_document_id: string
-        }
-        Update: {
-          conditional_trigger?: string | null
-          id?: string
-          level_override?: number | null
-          prescribed_activity_id?: string
-          required_document_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "activity_document_mapping_level_override_fkey"
-            columns: ["level_override"]
-            isOneToOne: false
-            referencedRelation: "activity_levels"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "activity_document_mapping_prescribed_activity_id_fkey"
-            columns: ["prescribed_activity_id"]
-            isOneToOne: false
-            referencedRelation: "activity_fee_view"
-            referencedColumns: ["activity_id"]
-          },
-          {
-            foreignKeyName: "activity_document_mapping_prescribed_activity_id_fkey"
-            columns: ["prescribed_activity_id"]
-            isOneToOne: false
-            referencedRelation: "prescribed_activities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "activity_document_mapping_prescribed_activity_id_fkey"
-            columns: ["prescribed_activity_id"]
-            isOneToOne: false
-            referencedRelation: "vw_activity_options"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "activity_document_mapping_prescribed_activity_id_fkey"
-            columns: ["prescribed_activity_id"]
-            isOneToOne: false
-            referencedRelation: "vw_activity_requirements"
-            referencedColumns: ["activity_id"]
-          },
-          {
-            foreignKeyName: "activity_document_mapping_required_document_id_fkey"
-            columns: ["required_document_id"]
-            isOneToOne: false
-            referencedRelation: "required_documents"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       activity_document_requirements: {
         Row: {
           activity_classification: string | null
@@ -143,13 +76,6 @@ export type Database = {
             referencedRelation: "vw_activity_options"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "activity_document_requirements_prescribed_activity_id_fkey"
-            columns: ["prescribed_activity_id"]
-            isOneToOne: false
-            referencedRelation: "vw_activity_requirements"
-            referencedColumns: ["activity_id"]
-          },
         ]
       }
       activity_fee_mapping: {
@@ -200,13 +126,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "activity_fee_mapping_activity_id_fkey"
-            columns: ["activity_id"]
-            isOneToOne: false
-            referencedRelation: "vw_activity_requirements"
-            referencedColumns: ["activity_id"]
-          },
-          {
             foreignKeyName: "activity_fee_mapping_fee_structure_id_fkey"
             columns: ["fee_structure_id"]
             isOneToOne: false
@@ -252,6 +171,7 @@ export type Database = {
           notes: string | null
           requirement_id: string
           status: string
+          updated_at: string | null
           uploaded_at: string | null
         }
         Insert: {
@@ -262,6 +182,7 @@ export type Database = {
           notes?: string | null
           requirement_id: string
           status?: string
+          updated_at?: string | null
           uploaded_at?: string | null
         }
         Update: {
@@ -272,6 +193,7 @@ export type Database = {
           notes?: string | null
           requirement_id?: string
           status?: string
+          updated_at?: string | null
           uploaded_at?: string | null
         }
         Relationships: [
@@ -279,7 +201,42 @@ export type Database = {
             foreignKeyName: "application_required_docs_application_id_fkey"
             columns: ["application_id"]
             isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_required_docs_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
             referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_required_docs_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_required_docs_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_required_docs_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_required_docs_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
             referencedColumns: ["id"]
           },
         ]
@@ -371,8 +328,22 @@ export type Database = {
             foreignKeyName: "application_workflow_state_entity_id_fkey"
             columns: ["entity_id"]
             isOneToOne: false
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_workflow_state_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
             referencedRelation: "entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_workflow_state_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
           },
         ]
       }
@@ -447,33 +418,6 @@ export type Database = {
           },
         ]
       }
-      audit_log: {
-        Row: {
-          changed_at: string | null
-          id: string
-          operation: string
-          row_data: Json | null
-          table_name: string
-          user_id: string | null
-        }
-        Insert: {
-          changed_at?: string | null
-          id?: string
-          operation: string
-          row_data?: Json | null
-          table_name: string
-          user_id?: string | null
-        }
-        Update: {
-          changed_at?: string | null
-          id?: string
-          operation?: string
-          row_data?: Json | null
-          table_name?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       audit_logs: {
         Row: {
           action: string
@@ -483,6 +427,7 @@ export type Database = {
           ip_address: unknown
           target_id: string | null
           target_type: string | null
+          target_uuid: string | null
           user_agent: string | null
           user_id: string | null
         }
@@ -494,6 +439,7 @@ export type Database = {
           ip_address?: unknown
           target_id?: string | null
           target_type?: string | null
+          target_uuid?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
@@ -505,6 +451,7 @@ export type Database = {
           ip_address?: unknown
           target_id?: string | null
           target_type?: string | null
+          target_uuid?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
@@ -615,7 +562,42 @@ export type Database = {
             foreignKeyName: "compliance_assessments_permit_application_id_fkey"
             columns: ["permit_application_id"]
             isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_assessments_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
             referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_assessments_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_assessments_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_assessments_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_assessments_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
             referencedColumns: ["id"]
           },
         ]
@@ -668,7 +650,42 @@ export type Database = {
             foreignKeyName: "compliance_reports_permit_id_fkey"
             columns: ["permit_id"]
             isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_reports_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
             referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_reports_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_reports_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_reports_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_reports_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
             referencedColumns: ["id"]
           },
         ]
@@ -750,7 +767,49 @@ export type Database = {
             foreignKeyName: "compliance_tasks_related_permit_id_fkey"
             columns: ["related_permit_id"]
             isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_tasks_related_permit_id_fkey"
+            columns: ["related_permit_id"]
+            isOneToOne: false
             referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_tasks_related_permit_id_fkey"
+            columns: ["related_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_tasks_related_permit_id_fkey"
+            columns: ["related_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_tasks_related_permit_id_fkey"
+            columns: ["related_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_tasks_related_permit_id_fkey"
+            columns: ["related_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_compliance_tasks_inspection"
+            columns: ["related_inspection_id"]
+            isOneToOne: false
+            referencedRelation: "inspections"
             referencedColumns: ["id"]
           },
         ]
@@ -889,7 +948,42 @@ export type Database = {
             foreignKeyName: "directorate_approvals_application_id_fkey"
             columns: ["application_id"]
             isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "directorate_approvals_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
             referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "directorate_approvals_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "directorate_approvals_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "directorate_approvals_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "directorate_approvals_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
             referencedColumns: ["id"]
           },
           {
@@ -946,7 +1040,42 @@ export type Database = {
             foreignKeyName: "directorate_notifications_related_application_id_fkey"
             columns: ["related_application_id"]
             isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "directorate_notifications_related_application_id_fkey"
+            columns: ["related_application_id"]
+            isOneToOne: false
             referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "directorate_notifications_related_application_id_fkey"
+            columns: ["related_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "directorate_notifications_related_application_id_fkey"
+            columns: ["related_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "directorate_notifications_related_application_id_fkey"
+            columns: ["related_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "directorate_notifications_related_application_id_fkey"
+            columns: ["related_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
             referencedColumns: ["id"]
           },
           {
@@ -999,7 +1128,6 @@ export type Database = {
       }
       documents: {
         Row: {
-          activity_id: string | null
           document_type: string | null
           entity_id: string | null
           file_path: string
@@ -1014,7 +1142,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          activity_id?: string | null
           document_type?: string | null
           entity_id?: string | null
           file_path: string
@@ -1029,7 +1156,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          activity_id?: string | null
           document_type?: string | null
           entity_id?: string | null
           file_path?: string
@@ -1045,10 +1171,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "documents_activity_id_fkey"
-            columns: ["activity_id"]
+            foreignKeyName: "documents_entity_id_fkey"
+            columns: ["entity_id"]
             isOneToOne: false
-            referencedRelation: "permit_activities"
+            referencedRelation: "active_entities"
             referencedColumns: ["id"]
           },
           {
@@ -1057,6 +1183,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
           },
           {
             foreignKeyName: "documents_intent_registration_draft_id_fkey"
@@ -1072,6 +1205,69 @@ export type Database = {
             referencedRelation: "intent_registrations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "documents_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_documents_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_documents_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_documents_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
+          },
         ]
       }
       entities: {
@@ -1080,6 +1276,8 @@ export type Database = {
           contact_person_email: string | null
           contact_person_phone: number | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           district: string | null
           email: string | null
           entity_type: string
@@ -1089,7 +1287,7 @@ export type Database = {
           phone: string | null
           postal_address: string | null
           province: string | null
-          "registered address": string | null
+          registered_address: string | null
           registration_number: string | null
           tax_number: string | null
           updated_at: string
@@ -1100,6 +1298,8 @@ export type Database = {
           contact_person_email?: string | null
           contact_person_phone?: number | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           district?: string | null
           email?: string | null
           entity_type: string
@@ -1109,7 +1309,7 @@ export type Database = {
           phone?: string | null
           postal_address?: string | null
           province?: string | null
-          "registered address"?: string | null
+          registered_address?: string | null
           registration_number?: string | null
           tax_number?: string | null
           updated_at?: string
@@ -1120,6 +1320,8 @@ export type Database = {
           contact_person_email?: string | null
           contact_person_phone?: number | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           district?: string | null
           email?: string | null
           entity_type?: string
@@ -1129,7 +1331,7 @@ export type Database = {
           phone?: string | null
           postal_address?: string | null
           province?: string | null
-          "registered address"?: string | null
+          registered_address?: string | null
           registration_number?: string | null
           tax_number?: string | null
           updated_at?: string
@@ -1182,7 +1384,42 @@ export type Database = {
             foreignKeyName: "fee_calculation_audit_permit_application_id_fkey"
             columns: ["permit_application_id"]
             isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_calculation_audit_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
             referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_calculation_audit_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_calculation_audit_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_calculation_audit_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_calculation_audit_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
             referencedColumns: ["id"]
           },
         ]
@@ -1274,7 +1511,42 @@ export type Database = {
             foreignKeyName: "fee_payments_permit_application_id_fkey"
             columns: ["permit_application_id"]
             isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_payments_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
             referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_payments_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_payments_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_payments_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_payments_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
             referencedColumns: ["id"]
           },
         ]
@@ -1426,7 +1698,134 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "financial_transactions_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_fin_trans_application"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_fin_trans_application"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_fin_trans_application"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_fin_trans_application"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_fin_trans_application"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_fin_trans_application"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gis_data: {
         Row: {
@@ -1555,7 +1954,42 @@ export type Database = {
             foreignKeyName: "inspections_permit_application_id_fkey"
             columns: ["permit_application_id"]
             isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspections_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
             referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspections_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspections_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspections_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspections_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
             referencedColumns: ["id"]
           },
         ]
@@ -1585,6 +2019,7 @@ export type Database = {
           project_boundary: Json | null
           project_site_address: string | null
           project_site_description: string | null
+          project_title: string | null
           province: string | null
           site_ownership_details: string | null
           total_area_sqkm: number | null
@@ -1615,6 +2050,7 @@ export type Database = {
           project_boundary?: Json | null
           project_site_address?: string | null
           project_site_description?: string | null
+          project_title?: string | null
           province?: string | null
           site_ownership_details?: string | null
           total_area_sqkm?: number | null
@@ -1645,6 +2081,7 @@ export type Database = {
           project_boundary?: Json | null
           project_site_address?: string | null
           project_site_description?: string | null
+          project_title?: string | null
           province?: string | null
           site_ownership_details?: string | null
           total_area_sqkm?: number | null
@@ -1653,6 +2090,34 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_intent_drafts_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_intent_drafts_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_intent_drafts_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
+          },
+          {
+            foreignKeyName: "intent_registration_drafts_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "intent_registration_drafts_entity_id_fkey"
             columns: ["entity_id"]
             isOneToOne: false
@@ -1660,10 +2125,52 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "intent_registration_drafts_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
+          },
+          {
+            foreignKeyName: "intent_registration_drafts_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "intent_registration_drafts_existing_permit_id_fkey"
             columns: ["existing_permit_id"]
             isOneToOne: false
             referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intent_registration_drafts_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intent_registration_drafts_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intent_registration_drafts_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intent_registration_drafts_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
             referencedColumns: ["id"]
           },
           {
@@ -1687,13 +2194,6 @@ export type Database = {
             referencedRelation: "vw_activity_options"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "intent_registration_drafts_prescribed_activity_id_fkey"
-            columns: ["prescribed_activity_id"]
-            isOneToOne: false
-            referencedRelation: "vw_activity_requirements"
-            referencedColumns: ["activity_id"]
-          },
         ]
       }
       intent_registrations: {
@@ -1712,6 +2212,8 @@ export type Database = {
           compliance_reviewed_by: string | null
           compliance_score: number | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           departments_approached: string | null
           district: string | null
           docusign_envelope_id: string | null
@@ -1735,6 +2237,7 @@ export type Database = {
           project_boundary: Json | null
           project_site_address: string | null
           project_site_description: string | null
+          project_title: string | null
           province: string | null
           registry_assigned_at: string | null
           registry_officer_id: string | null
@@ -1767,6 +2270,8 @@ export type Database = {
           compliance_reviewed_by?: string | null
           compliance_score?: number | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           departments_approached?: string | null
           district?: string | null
           docusign_envelope_id?: string | null
@@ -1790,6 +2295,7 @@ export type Database = {
           project_boundary?: Json | null
           project_site_address?: string | null
           project_site_description?: string | null
+          project_title?: string | null
           province?: string | null
           registry_assigned_at?: string | null
           registry_officer_id?: string | null
@@ -1822,6 +2328,8 @@ export type Database = {
           compliance_reviewed_by?: string | null
           compliance_score?: number | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           departments_approached?: string | null
           district?: string | null
           docusign_envelope_id?: string | null
@@ -1845,6 +2353,7 @@ export type Database = {
           project_boundary?: Json | null
           project_site_address?: string | null
           project_site_description?: string | null
+          project_title?: string | null
           province?: string | null
           registry_assigned_at?: string | null
           registry_officer_id?: string | null
@@ -1864,6 +2373,34 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_intent_reg_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_intent_reg_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_intent_reg_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
+          },
+          {
+            foreignKeyName: "intent_registrations_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "intent_registrations_entity_id_fkey"
             columns: ["entity_id"]
             isOneToOne: false
@@ -1871,10 +2408,52 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "intent_registrations_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
+          },
+          {
+            foreignKeyName: "intent_registrations_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "intent_registrations_existing_permit_id_fkey"
             columns: ["existing_permit_id"]
             isOneToOne: false
             referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intent_registrations_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intent_registrations_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intent_registrations_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intent_registrations_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
             referencedColumns: ["id"]
           },
           {
@@ -1898,12 +2477,82 @@ export type Database = {
             referencedRelation: "vw_activity_options"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      intent_reviews: {
+        Row: {
+          assessment: string | null
+          compliance_score: number | null
+          created_at: string
+          decision: string | null
+          decision_notes: string | null
+          id: string
+          intent_registration_id: string
+          next_review_date: string | null
+          proposed_action: string | null
+          recommendations: string | null
+          remarks: string | null
+          review_stage: string
+          reviewed_at: string | null
+          reviewer_id: string | null
+          status: string | null
+          technical_compliance_checks: Json | null
+          updated_at: string
+          uploaded_documents: Json | null
+          validation_checks: Json | null
+          violations_found: string[] | null
+        }
+        Insert: {
+          assessment?: string | null
+          compliance_score?: number | null
+          created_at?: string
+          decision?: string | null
+          decision_notes?: string | null
+          id?: string
+          intent_registration_id: string
+          next_review_date?: string | null
+          proposed_action?: string | null
+          recommendations?: string | null
+          remarks?: string | null
+          review_stage: string
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          status?: string | null
+          technical_compliance_checks?: Json | null
+          updated_at?: string
+          uploaded_documents?: Json | null
+          validation_checks?: Json | null
+          violations_found?: string[] | null
+        }
+        Update: {
+          assessment?: string | null
+          compliance_score?: number | null
+          created_at?: string
+          decision?: string | null
+          decision_notes?: string | null
+          id?: string
+          intent_registration_id?: string
+          next_review_date?: string | null
+          proposed_action?: string | null
+          recommendations?: string | null
+          remarks?: string | null
+          review_stage?: string
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          status?: string | null
+          technical_compliance_checks?: Json | null
+          updated_at?: string
+          uploaded_documents?: Json | null
+          validation_checks?: Json | null
+          violations_found?: string[] | null
+        }
+        Relationships: [
           {
-            foreignKeyName: "intent_registrations_prescribed_activity_id_fkey"
-            columns: ["prescribed_activity_id"]
+            foreignKeyName: "intent_reviews_intent_registration_id_fkey"
+            columns: ["intent_registration_id"]
             isOneToOne: false
-            referencedRelation: "vw_activity_requirements"
-            referencedColumns: ["activity_id"]
+            referencedRelation: "intent_registrations"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -2015,6 +2664,104 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_invoices_activity"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activity_fee_view"
+            referencedColumns: ["activity_id"]
+          },
+          {
+            foreignKeyName: "fk_invoices_activity"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "prescribed_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_invoices_activity"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_activity_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_invoices_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_invoices_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_invoices_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
+          },
+          {
+            foreignKeyName: "fk_invoices_inspection"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "inspections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_invoices_intent"
+            columns: ["intent_registration_id"]
+            isOneToOne: false
+            referencedRelation: "intent_registrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_invoices_permit"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_invoices_permit"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_invoices_permit"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_invoices_permit"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_invoices_permit"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_invoices_permit"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "invoices_activity_id_fkey"
             columns: ["activity_id"]
             isOneToOne: false
@@ -2025,8 +2772,22 @@ export type Database = {
             foreignKeyName: "invoices_entity_id_fkey"
             columns: ["entity_id"]
             isOneToOne: false
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
             referencedRelation: "entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
           },
           {
             foreignKeyName: "invoices_inspection_id_fkey"
@@ -2040,6 +2801,48 @@ export type Database = {
             columns: ["intent_registration_id"]
             isOneToOne: false
             referencedRelation: "intent_registrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
             referencedColumns: ["id"]
           },
         ]
@@ -2122,6 +2925,48 @@ export type Database = {
             referencedRelation: "permit_activities"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "notifications_related_permit_id_fkey"
+            columns: ["related_permit_id"]
+            isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_related_permit_id_fkey"
+            columns: ["related_permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_related_permit_id_fkey"
+            columns: ["related_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_related_permit_id_fkey"
+            columns: ["related_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_related_permit_id_fkey"
+            columns: ["related_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_related_permit_id_fkey"
+            columns: ["related_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
         ]
       }
       permit_activities: {
@@ -2152,7 +2997,50 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "permit_activities_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_activities_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_activities_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_activities_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_activities_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_activities_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       permit_amalgamations: {
         Row: {
@@ -2247,325 +3135,228 @@ export type Database = {
             foreignKeyName: "permit_amendments_permit_id_fkey"
             columns: ["permit_id"]
             isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_amendments_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
             referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_amendments_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_amendments_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_amendments_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_amendments_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
             referencedColumns: ["id"]
           },
         ]
       }
       permit_applications: {
         Row: {
-          activity_category: string | null
-          activity_classification: string | null
           activity_id: string | null
-          activity_level: string | null
           activity_location: string | null
-          activity_subcategory: string | null
-          air_emission_details: Json | null
+          administration_form: string | null
           application_date: string | null
-          application_fee: number | null
           application_number: string | null
           approval_date: string | null
-          aquaculture_details: Json | null
           assigned_compliance_officer_id: string | null
-          assigned_officer_email: string | null
           assigned_officer_id: string | null
-          assigned_officer_name: string | null
-          biodiversity_abs_details: Json | null
-          carbon_offset_details: Json | null
-          chemical_storage_details: Json | null
-          commencement_date: string | null
           completed_steps: Json | null
-          completion_date: string | null
-          compliance_checks: Json | null
-          compliance_commitment: boolean | null
-          consultation_period_end: string | null
-          consultation_period_start: string | null
-          consulted_departments: string | null
-          coordinates: Json | null
           created_at: string
           current_step: number | null
+          deleted_at: string | null
+          deleted_by: string | null
           description: string | null
-          district: string | null
-          dredging_details: Json | null
-          effluent_discharge_details: Json | null
-          eia_required: boolean | null
-          eis_required: boolean | null
+          document_uploads: Json | null
           entity_id: string | null
-          entity_name: string | null
-          entity_type: string | null
-          environmental_impact: string | null
-          estimated_cost_kina: number | null
           existing_permit_id: string | null
           existing_permits_details: string | null
           expiry_date: string | null
-          fee_amount: number | null
-          fee_breakdown: Json | null
-          forest_product_details: Json | null
           frozen_reason: string | null
-          fuel_storage_details: Json | null
-          ghg_emission_details: Json | null
-          government_agreements_details: string | null
-          hazardous_material_details: Json | null
-          hazardous_waste_details: Json | null
           id: string
           industrial_sector_id: string | null
-          infrastructure_details: Json | null
           intent_registration_id: string | null
           is_draft: boolean | null
           is_frozen: boolean | null
-          land_clearing_details: Json | null
-          landowner_negotiation_status: string | null
-          legal_declaration_accepted: boolean | null
           mandatory_fields_complete: boolean | null
-          marine_dumping_details: Json | null
-          mining_chemical_details: Json | null
-          mining_permit_details: Json | null
-          mitigation_measures: string | null
-          monitoring_license_details: Json | null
-          noise_emission_details: Json | null
-          ods_details: Json | null
-          ods_quota_allocation: string | null
-          operating_hours: string | null
-          operational_capacity: string | null
-          operational_details: string | null
-          payment_status: string | null
-          permit_category: string | null
+          owner_name: string | null
           permit_number: string | null
           permit_period: string | null
           permit_type: string
           permit_type_id: string | null
-          permit_type_specific: string | null
-          pesticide_details: Json | null
-          project_description: string | null
-          project_end_date: string | null
-          project_start_date: string | null
-          province: string | null
-          public_consultation_proof: Json | null
-          rehabilitation_details: Json | null
-          renewable_energy_details: Json | null
-          required_approvals: string | null
-          research_details: Json | null
-          soil_extraction_details: Json | null
-          solid_waste_details: Json | null
           status: string
-          stormwater_details: Json | null
+          technical_form: string | null
           title: string
           updated_at: string
           uploaded_files: Json | null
           user_id: string
-          waste_contaminant_details: Json | null
-          water_extraction_details: Json | null
-          wildlife_trade_details: Json | null
         }
         Insert: {
-          activity_category?: string | null
-          activity_classification?: string | null
           activity_id?: string | null
-          activity_level?: string | null
           activity_location?: string | null
-          activity_subcategory?: string | null
-          air_emission_details?: Json | null
+          administration_form?: string | null
           application_date?: string | null
-          application_fee?: number | null
           application_number?: string | null
           approval_date?: string | null
-          aquaculture_details?: Json | null
           assigned_compliance_officer_id?: string | null
-          assigned_officer_email?: string | null
           assigned_officer_id?: string | null
-          assigned_officer_name?: string | null
-          biodiversity_abs_details?: Json | null
-          carbon_offset_details?: Json | null
-          chemical_storage_details?: Json | null
-          commencement_date?: string | null
           completed_steps?: Json | null
-          completion_date?: string | null
-          compliance_checks?: Json | null
-          compliance_commitment?: boolean | null
-          consultation_period_end?: string | null
-          consultation_period_start?: string | null
-          consulted_departments?: string | null
-          coordinates?: Json | null
           created_at?: string
           current_step?: number | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
-          district?: string | null
-          dredging_details?: Json | null
-          effluent_discharge_details?: Json | null
-          eia_required?: boolean | null
-          eis_required?: boolean | null
+          document_uploads?: Json | null
           entity_id?: string | null
-          entity_name?: string | null
-          entity_type?: string | null
-          environmental_impact?: string | null
-          estimated_cost_kina?: number | null
           existing_permit_id?: string | null
           existing_permits_details?: string | null
           expiry_date?: string | null
-          fee_amount?: number | null
-          fee_breakdown?: Json | null
-          forest_product_details?: Json | null
           frozen_reason?: string | null
-          fuel_storage_details?: Json | null
-          ghg_emission_details?: Json | null
-          government_agreements_details?: string | null
-          hazardous_material_details?: Json | null
-          hazardous_waste_details?: Json | null
           id?: string
           industrial_sector_id?: string | null
-          infrastructure_details?: Json | null
           intent_registration_id?: string | null
           is_draft?: boolean | null
           is_frozen?: boolean | null
-          land_clearing_details?: Json | null
-          landowner_negotiation_status?: string | null
-          legal_declaration_accepted?: boolean | null
           mandatory_fields_complete?: boolean | null
-          marine_dumping_details?: Json | null
-          mining_chemical_details?: Json | null
-          mining_permit_details?: Json | null
-          mitigation_measures?: string | null
-          monitoring_license_details?: Json | null
-          noise_emission_details?: Json | null
-          ods_details?: Json | null
-          ods_quota_allocation?: string | null
-          operating_hours?: string | null
-          operational_capacity?: string | null
-          operational_details?: string | null
-          payment_status?: string | null
-          permit_category?: string | null
+          owner_name?: string | null
           permit_number?: string | null
           permit_period?: string | null
           permit_type: string
           permit_type_id?: string | null
-          permit_type_specific?: string | null
-          pesticide_details?: Json | null
-          project_description?: string | null
-          project_end_date?: string | null
-          project_start_date?: string | null
-          province?: string | null
-          public_consultation_proof?: Json | null
-          rehabilitation_details?: Json | null
-          renewable_energy_details?: Json | null
-          required_approvals?: string | null
-          research_details?: Json | null
-          soil_extraction_details?: Json | null
-          solid_waste_details?: Json | null
           status?: string
-          stormwater_details?: Json | null
+          technical_form?: string | null
           title: string
           updated_at?: string
           uploaded_files?: Json | null
           user_id: string
-          waste_contaminant_details?: Json | null
-          water_extraction_details?: Json | null
-          wildlife_trade_details?: Json | null
         }
         Update: {
-          activity_category?: string | null
-          activity_classification?: string | null
           activity_id?: string | null
-          activity_level?: string | null
           activity_location?: string | null
-          activity_subcategory?: string | null
-          air_emission_details?: Json | null
+          administration_form?: string | null
           application_date?: string | null
-          application_fee?: number | null
           application_number?: string | null
           approval_date?: string | null
-          aquaculture_details?: Json | null
           assigned_compliance_officer_id?: string | null
-          assigned_officer_email?: string | null
           assigned_officer_id?: string | null
-          assigned_officer_name?: string | null
-          biodiversity_abs_details?: Json | null
-          carbon_offset_details?: Json | null
-          chemical_storage_details?: Json | null
-          commencement_date?: string | null
           completed_steps?: Json | null
-          completion_date?: string | null
-          compliance_checks?: Json | null
-          compliance_commitment?: boolean | null
-          consultation_period_end?: string | null
-          consultation_period_start?: string | null
-          consulted_departments?: string | null
-          coordinates?: Json | null
           created_at?: string
           current_step?: number | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
-          district?: string | null
-          dredging_details?: Json | null
-          effluent_discharge_details?: Json | null
-          eia_required?: boolean | null
-          eis_required?: boolean | null
+          document_uploads?: Json | null
           entity_id?: string | null
-          entity_name?: string | null
-          entity_type?: string | null
-          environmental_impact?: string | null
-          estimated_cost_kina?: number | null
           existing_permit_id?: string | null
           existing_permits_details?: string | null
           expiry_date?: string | null
-          fee_amount?: number | null
-          fee_breakdown?: Json | null
-          forest_product_details?: Json | null
           frozen_reason?: string | null
-          fuel_storage_details?: Json | null
-          ghg_emission_details?: Json | null
-          government_agreements_details?: string | null
-          hazardous_material_details?: Json | null
-          hazardous_waste_details?: Json | null
           id?: string
           industrial_sector_id?: string | null
-          infrastructure_details?: Json | null
           intent_registration_id?: string | null
           is_draft?: boolean | null
           is_frozen?: boolean | null
-          land_clearing_details?: Json | null
-          landowner_negotiation_status?: string | null
-          legal_declaration_accepted?: boolean | null
           mandatory_fields_complete?: boolean | null
-          marine_dumping_details?: Json | null
-          mining_chemical_details?: Json | null
-          mining_permit_details?: Json | null
-          mitigation_measures?: string | null
-          monitoring_license_details?: Json | null
-          noise_emission_details?: Json | null
-          ods_details?: Json | null
-          ods_quota_allocation?: string | null
-          operating_hours?: string | null
-          operational_capacity?: string | null
-          operational_details?: string | null
-          payment_status?: string | null
-          permit_category?: string | null
+          owner_name?: string | null
           permit_number?: string | null
           permit_period?: string | null
           permit_type?: string
           permit_type_id?: string | null
-          permit_type_specific?: string | null
-          pesticide_details?: Json | null
-          project_description?: string | null
-          project_end_date?: string | null
-          project_start_date?: string | null
-          province?: string | null
-          public_consultation_proof?: Json | null
-          rehabilitation_details?: Json | null
-          renewable_energy_details?: Json | null
-          required_approvals?: string | null
-          research_details?: Json | null
-          soil_extraction_details?: Json | null
-          solid_waste_details?: Json | null
           status?: string
-          stormwater_details?: Json | null
+          technical_form?: string | null
           title?: string
           updated_at?: string
           uploaded_files?: Json | null
           user_id?: string
-          waste_contaminant_details?: Json | null
-          water_extraction_details?: Json | null
-          wildlife_trade_details?: Json | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_permit_apps_activity"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activity_fee_view"
+            referencedColumns: ["activity_id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_activity"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "prescribed_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_activity"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_activity_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_industrial_sector"
+            columns: ["industrial_sector_id"]
+            isOneToOne: false
+            referencedRelation: "industrial_sectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_intent_reg"
+            columns: ["intent_registration_id"]
+            isOneToOne: false
+            referencedRelation: "intent_registrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_permit_type"
+            columns: ["permit_type_id"]
+            isOneToOne: false
+            referencedRelation: "permit_types"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "permit_applications_activity_id_fkey"
             columns: ["activity_id"]
@@ -2588,11 +3379,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "permit_applications_activity_id_fkey"
-            columns: ["activity_id"]
+            foreignKeyName: "permit_applications_entity_id_fkey"
+            columns: ["entity_id"]
             isOneToOne: false
-            referencedRelation: "vw_activity_requirements"
-            referencedColumns: ["activity_id"]
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "permit_applications_entity_id_fkey"
@@ -2602,10 +3393,52 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "permit_applications_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
+          },
+          {
+            foreignKeyName: "permit_applications_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "permit_applications_existing_permit_id_fkey"
             columns: ["existing_permit_id"]
             isOneToOne: false
             referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
             referencedColumns: ["id"]
           },
           {
@@ -2620,6 +3453,1718 @@ export type Database = {
             columns: ["intent_registration_id"]
             isOneToOne: false
             referencedRelation: "intent_registrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_permit_type_id_fkey"
+            columns: ["permit_type_id"]
+            isOneToOne: false
+            referencedRelation: "permit_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permit_chemical_details: {
+        Row: {
+          chemical_storage_details: Json | null
+          created_at: string
+          fuel_storage_details: Json | null
+          hazardous_material_details: Json | null
+          id: string
+          mining_chemical_details: Json | null
+          ods_details: Json | null
+          permit_application_id: string
+          pesticide_details: Json | null
+          updated_at: string
+        }
+        Insert: {
+          chemical_storage_details?: Json | null
+          created_at?: string
+          fuel_storage_details?: Json | null
+          hazardous_material_details?: Json | null
+          id?: string
+          mining_chemical_details?: Json | null
+          ods_details?: Json | null
+          permit_application_id: string
+          pesticide_details?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          chemical_storage_details?: Json | null
+          created_at?: string
+          fuel_storage_details?: Json | null
+          hazardous_material_details?: Json | null
+          id?: string
+          mining_chemical_details?: Json | null
+          ods_details?: Json | null
+          permit_application_id?: string
+          pesticide_details?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_permit_chem_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_chem_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_chem_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_chem_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_chem_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_chem_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_chemical_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_chemical_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_chemical_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_chemical_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_chemical_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_chemical_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_chemical_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_chemical_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_chemical_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_chemical_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_chemical_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_chemical_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permit_classification_details: {
+        Row: {
+          activity_category: string | null
+          activity_classification: string | null
+          activity_level: string | null
+          activity_subcategory: string | null
+          created_at: string
+          eia_required: boolean | null
+          eis_required: boolean | null
+          id: string
+          ods_quota_allocation: string | null
+          permit_application_id: string
+          permit_category: string | null
+          permit_type_specific: string | null
+          permit_type_specific_data: Json | null
+          updated_at: string
+        }
+        Insert: {
+          activity_category?: string | null
+          activity_classification?: string | null
+          activity_level?: string | null
+          activity_subcategory?: string | null
+          created_at?: string
+          eia_required?: boolean | null
+          eis_required?: boolean | null
+          id?: string
+          ods_quota_allocation?: string | null
+          permit_application_id: string
+          permit_category?: string | null
+          permit_type_specific?: string | null
+          permit_type_specific_data?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          activity_category?: string | null
+          activity_classification?: string | null
+          activity_level?: string | null
+          activity_subcategory?: string | null
+          created_at?: string
+          eia_required?: boolean | null
+          eis_required?: boolean | null
+          id?: string
+          ods_quota_allocation?: string | null
+          permit_application_id?: string
+          permit_category?: string | null
+          permit_type_specific?: string | null
+          permit_type_specific_data?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_permit_classification_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_classification_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_classification_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_classification_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_classification_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_classification_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_classification_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_classification_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_classification_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_classification_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_classification_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_classification_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_classification_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_classification_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_classification_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_classification_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_classification_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_classification_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permit_compliance_details: {
+        Row: {
+          compliance_checks: Json | null
+          compliance_commitment: boolean | null
+          compliance_commitment_accepted_at: string | null
+          created_at: string
+          id: string
+          legal_declaration_accepted: boolean | null
+          legal_declaration_accepted_at: string | null
+          permit_application_id: string
+          updated_at: string
+        }
+        Insert: {
+          compliance_checks?: Json | null
+          compliance_commitment?: boolean | null
+          compliance_commitment_accepted_at?: string | null
+          created_at?: string
+          id?: string
+          legal_declaration_accepted?: boolean | null
+          legal_declaration_accepted_at?: string | null
+          permit_application_id: string
+          updated_at?: string
+        }
+        Update: {
+          compliance_checks?: Json | null
+          compliance_commitment?: boolean | null
+          compliance_commitment_accepted_at?: string | null
+          created_at?: string
+          id?: string
+          legal_declaration_accepted?: boolean | null
+          legal_declaration_accepted_at?: string | null
+          permit_application_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_permit_compliance_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_compliance_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_compliance_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_compliance_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_compliance_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_compliance_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_compliance_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_compliance_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_compliance_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_compliance_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_compliance_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_compliance_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_compliance_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_compliance_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_compliance_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_compliance_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_compliance_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_compliance_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permit_consultation_details: {
+        Row: {
+          consultation_period_end: string | null
+          consultation_period_start: string | null
+          consulted_departments: string | null
+          created_at: string
+          government_agreements_details: string | null
+          id: string
+          landowner_negotiation_status: string | null
+          permit_application_id: string
+          public_consultation_proof: Json | null
+          required_approvals: string | null
+          updated_at: string
+        }
+        Insert: {
+          consultation_period_end?: string | null
+          consultation_period_start?: string | null
+          consulted_departments?: string | null
+          created_at?: string
+          government_agreements_details?: string | null
+          id?: string
+          landowner_negotiation_status?: string | null
+          permit_application_id: string
+          public_consultation_proof?: Json | null
+          required_approvals?: string | null
+          updated_at?: string
+        }
+        Update: {
+          consultation_period_end?: string | null
+          consultation_period_start?: string | null
+          consulted_departments?: string | null
+          created_at?: string
+          government_agreements_details?: string | null
+          id?: string
+          landowner_negotiation_status?: string | null
+          permit_application_id?: string
+          public_consultation_proof?: Json | null
+          required_approvals?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_permit_consultation_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_consultation_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_consultation_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_consultation_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_consultation_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_consultation_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_consultation_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_consultation_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_consultation_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_consultation_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_consultation_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_consultation_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_consultation_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_consultation_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_consultation_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_consultation_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_consultation_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_consultation_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permit_emission_details: {
+        Row: {
+          air_emission_details: Json | null
+          created_at: string
+          ghg_emission_details: Json | null
+          id: string
+          noise_emission_details: Json | null
+          permit_application_id: string
+          updated_at: string
+        }
+        Insert: {
+          air_emission_details?: Json | null
+          created_at?: string
+          ghg_emission_details?: Json | null
+          id?: string
+          noise_emission_details?: Json | null
+          permit_application_id: string
+          updated_at?: string
+        }
+        Update: {
+          air_emission_details?: Json | null
+          created_at?: string
+          ghg_emission_details?: Json | null
+          id?: string
+          noise_emission_details?: Json | null
+          permit_application_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_permit_emission_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_emission_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_emission_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_emission_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_emission_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_emission_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_emission_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_emission_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_emission_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_emission_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_emission_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_emission_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_emission_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_emission_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_emission_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_emission_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_emission_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_emission_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permit_environmental_details: {
+        Row: {
+          biodiversity_abs_details: Json | null
+          carbon_offset_details: Json | null
+          created_at: string
+          id: string
+          land_clearing_details: Json | null
+          permit_application_id: string
+          rehabilitation_details: Json | null
+          soil_extraction_details: Json | null
+          updated_at: string
+          wildlife_trade_details: Json | null
+        }
+        Insert: {
+          biodiversity_abs_details?: Json | null
+          carbon_offset_details?: Json | null
+          created_at?: string
+          id?: string
+          land_clearing_details?: Json | null
+          permit_application_id: string
+          rehabilitation_details?: Json | null
+          soil_extraction_details?: Json | null
+          updated_at?: string
+          wildlife_trade_details?: Json | null
+        }
+        Update: {
+          biodiversity_abs_details?: Json | null
+          carbon_offset_details?: Json | null
+          created_at?: string
+          id?: string
+          land_clearing_details?: Json | null
+          permit_application_id?: string
+          rehabilitation_details?: Json | null
+          soil_extraction_details?: Json | null
+          updated_at?: string
+          wildlife_trade_details?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_permit_env_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_env_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_env_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_env_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_env_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_env_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_environmental_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_environmental_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_environmental_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_environmental_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_environmental_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_environmental_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_environmental_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_environmental_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_environmental_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_environmental_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_environmental_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_environmental_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permit_fee_details: {
+        Row: {
+          application_fee: number | null
+          composite_fee: number | null
+          created_at: string
+          fee_amount: number | null
+          fee_breakdown: Json | null
+          fee_source: string | null
+          id: string
+          payment_status: string | null
+          permit_application_id: string
+          processing_days: number | null
+          updated_at: string
+        }
+        Insert: {
+          application_fee?: number | null
+          composite_fee?: number | null
+          created_at?: string
+          fee_amount?: number | null
+          fee_breakdown?: Json | null
+          fee_source?: string | null
+          id?: string
+          payment_status?: string | null
+          permit_application_id: string
+          processing_days?: number | null
+          updated_at?: string
+        }
+        Update: {
+          application_fee?: number | null
+          composite_fee?: number | null
+          created_at?: string
+          fee_amount?: number | null
+          fee_breakdown?: Json | null
+          fee_source?: string | null
+          id?: string
+          payment_status?: string | null
+          permit_application_id?: string
+          processing_days?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_permit_fee_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_fee_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_fee_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_fee_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_fee_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_fee_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_fee_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_fee_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_fee_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_fee_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_fee_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_fee_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_fee_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_fee_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_fee_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_fee_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_fee_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_fee_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permit_industry_details: {
+        Row: {
+          aquaculture_details: Json | null
+          created_at: string
+          dredging_details: Json | null
+          forest_product_details: Json | null
+          id: string
+          infrastructure_details: Json | null
+          mining_permit_details: Json | null
+          monitoring_license_details: Json | null
+          permit_application_id: string
+          renewable_energy_details: Json | null
+          research_details: Json | null
+          updated_at: string
+        }
+        Insert: {
+          aquaculture_details?: Json | null
+          created_at?: string
+          dredging_details?: Json | null
+          forest_product_details?: Json | null
+          id?: string
+          infrastructure_details?: Json | null
+          mining_permit_details?: Json | null
+          monitoring_license_details?: Json | null
+          permit_application_id: string
+          renewable_energy_details?: Json | null
+          research_details?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          aquaculture_details?: Json | null
+          created_at?: string
+          dredging_details?: Json | null
+          forest_product_details?: Json | null
+          id?: string
+          infrastructure_details?: Json | null
+          mining_permit_details?: Json | null
+          monitoring_license_details?: Json | null
+          permit_application_id?: string
+          renewable_energy_details?: Json | null
+          research_details?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_permit_industry_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_industry_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_industry_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_industry_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_industry_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_industry_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_industry_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_industry_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_industry_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_industry_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_industry_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_industry_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_industry_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_industry_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_industry_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_industry_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_industry_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_industry_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permit_location_details: {
+        Row: {
+          coordinates: Json | null
+          created_at: string
+          district: string | null
+          id: string
+          land_type: string | null
+          legal_description: string | null
+          llg: string | null
+          permit_application_id: string
+          project_boundary: Json | null
+          project_site_description: string | null
+          province: string | null
+          site_ownership_details: string | null
+          tenure: string | null
+          total_area_sqkm: number | null
+          updated_at: string
+        }
+        Insert: {
+          coordinates?: Json | null
+          created_at?: string
+          district?: string | null
+          id?: string
+          land_type?: string | null
+          legal_description?: string | null
+          llg?: string | null
+          permit_application_id: string
+          project_boundary?: Json | null
+          project_site_description?: string | null
+          province?: string | null
+          site_ownership_details?: string | null
+          tenure?: string | null
+          total_area_sqkm?: number | null
+          updated_at?: string
+        }
+        Update: {
+          coordinates?: Json | null
+          created_at?: string
+          district?: string | null
+          id?: string
+          land_type?: string | null
+          legal_description?: string | null
+          llg?: string | null
+          permit_application_id?: string
+          project_boundary?: Json | null
+          project_site_description?: string | null
+          province?: string | null
+          site_ownership_details?: string | null
+          tenure?: string | null
+          total_area_sqkm?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_permit_location_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_location_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_location_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_location_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_location_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_location_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_location_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_location_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_location_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_location_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_location_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_location_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_location_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_location_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_location_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_location_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_location_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_location_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permit_project_details: {
+        Row: {
+          commencement_date: string | null
+          completion_date: string | null
+          created_at: string
+          environmental_impact: string | null
+          estimated_cost_kina: number | null
+          id: string
+          mitigation_measures: string | null
+          operating_hours: string | null
+          operational_capacity: string | null
+          operational_details: string | null
+          permit_application_id: string
+          project_description: string | null
+          project_end_date: string | null
+          project_start_date: string | null
+          proposed_works_description: string | null
+          updated_at: string
+        }
+        Insert: {
+          commencement_date?: string | null
+          completion_date?: string | null
+          created_at?: string
+          environmental_impact?: string | null
+          estimated_cost_kina?: number | null
+          id?: string
+          mitigation_measures?: string | null
+          operating_hours?: string | null
+          operational_capacity?: string | null
+          operational_details?: string | null
+          permit_application_id: string
+          project_description?: string | null
+          project_end_date?: string | null
+          project_start_date?: string | null
+          proposed_works_description?: string | null
+          updated_at?: string
+        }
+        Update: {
+          commencement_date?: string | null
+          completion_date?: string | null
+          created_at?: string
+          environmental_impact?: string | null
+          estimated_cost_kina?: number | null
+          id?: string
+          mitigation_measures?: string | null
+          operating_hours?: string | null
+          operational_capacity?: string | null
+          operational_details?: string | null
+          permit_application_id?: string
+          project_description?: string | null
+          project_end_date?: string | null
+          project_start_date?: string | null
+          proposed_works_description?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_permit_project_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_project_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_project_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_project_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_project_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_project_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_project_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_project_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_project_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_project_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_project_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_project_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_project_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_project_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_project_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_project_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_project_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_project_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
             referencedColumns: ["id"]
           },
         ]
@@ -2672,7 +5217,148 @@ export type Database = {
             foreignKeyName: "permit_renewals_permit_id_fkey"
             columns: ["permit_id"]
             isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_renewals_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
             referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_renewals_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_renewals_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_renewals_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_renewals_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permit_reviews: {
+        Row: {
+          assessment: string | null
+          compliance_score: number | null
+          created_at: string
+          id: string
+          next_review_date: string | null
+          permit_application_id: string
+          proposed_action: string | null
+          recommendations: string | null
+          remarks: string | null
+          review_stage: string
+          reviewed_at: string | null
+          reviewer_id: string | null
+          status: string | null
+          technical_compliance_checks: Json | null
+          updated_at: string
+          uploaded_documents: Json | null
+          validation_checks: Json | null
+          violations_found: string[] | null
+        }
+        Insert: {
+          assessment?: string | null
+          compliance_score?: number | null
+          created_at?: string
+          id?: string
+          next_review_date?: string | null
+          permit_application_id: string
+          proposed_action?: string | null
+          recommendations?: string | null
+          remarks?: string | null
+          review_stage: string
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          status?: string | null
+          technical_compliance_checks?: Json | null
+          updated_at?: string
+          uploaded_documents?: Json | null
+          validation_checks?: Json | null
+          violations_found?: string[] | null
+        }
+        Update: {
+          assessment?: string | null
+          compliance_score?: number | null
+          created_at?: string
+          id?: string
+          next_review_date?: string | null
+          permit_application_id?: string
+          proposed_action?: string | null
+          recommendations?: string | null
+          remarks?: string | null
+          review_stage?: string
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          status?: string | null
+          technical_compliance_checks?: Json | null
+          updated_at?: string
+          uploaded_documents?: Json | null
+          validation_checks?: Json | null
+          violations_found?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permit_reviews_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_reviews_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_reviews_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_reviews_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_reviews_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_reviews_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
             referencedColumns: ["id"]
           },
         ]
@@ -2725,7 +5411,42 @@ export type Database = {
             foreignKeyName: "permit_surrenders_permit_id_fkey"
             columns: ["permit_id"]
             isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_surrenders_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
             referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_surrenders_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_surrenders_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_surrenders_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_surrenders_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
             referencedColumns: ["id"]
           },
         ]
@@ -2778,7 +5499,49 @@ export type Database = {
             foreignKeyName: "permit_transfers_permit_id_fkey"
             columns: ["permit_id"]
             isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_transfers_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
             referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_transfers_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_transfers_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_transfers_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_transfers_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_transfers_transferee_entity_id_fkey"
+            columns: ["transferee_entity_id"]
+            isOneToOne: false
+            referencedRelation: "active_entities"
             referencedColumns: ["id"]
           },
           {
@@ -2787,6 +5550,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "entities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_transfers_transferee_entity_id_fkey"
+            columns: ["transferee_entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
           },
         ]
       }
@@ -2895,6 +5665,175 @@ export type Database = {
             columns: ["industrial_sector"]
             isOneToOne: false
             referencedRelation: "industrial_sectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permit_water_waste_details: {
+        Row: {
+          created_at: string
+          effluent_discharge_details: Json | null
+          hazardous_waste_details: Json | null
+          id: string
+          marine_dumping_details: Json | null
+          permit_application_id: string
+          solid_waste_details: Json | null
+          stormwater_details: Json | null
+          updated_at: string
+          waste_contaminant_details: Json | null
+          water_extraction_details: Json | null
+        }
+        Insert: {
+          created_at?: string
+          effluent_discharge_details?: Json | null
+          hazardous_waste_details?: Json | null
+          id?: string
+          marine_dumping_details?: Json | null
+          permit_application_id: string
+          solid_waste_details?: Json | null
+          stormwater_details?: Json | null
+          updated_at?: string
+          waste_contaminant_details?: Json | null
+          water_extraction_details?: Json | null
+        }
+        Update: {
+          created_at?: string
+          effluent_discharge_details?: Json | null
+          hazardous_waste_details?: Json | null
+          id?: string
+          marine_dumping_details?: Json | null
+          permit_application_id?: string
+          solid_waste_details?: Json | null
+          stormwater_details?: Json | null
+          updated_at?: string
+          waste_contaminant_details?: Json | null
+          water_extraction_details?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_permit_water_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_water_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_water_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_water_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_water_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_water_app"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_water_waste_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_water_waste_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_water_waste_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_water_waste_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_water_waste_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_water_waste_details_application"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_water_waste_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_water_waste_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_water_waste_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_water_waste_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_water_waste_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_water_waste_details_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: true
+            referencedRelation: "vw_permit_applications_registry"
             referencedColumns: ["id"]
           },
         ]
@@ -3085,7 +6024,42 @@ export type Database = {
             foreignKeyName: "registry_audit_trail_permit_application_id_fkey"
             columns: ["permit_application_id"]
             isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registry_audit_trail_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
             referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registry_audit_trail_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registry_audit_trail_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registry_audit_trail_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registry_audit_trail_permit_application_id_fkey"
+            columns: ["permit_application_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
             referencedColumns: ["id"]
           },
         ]
@@ -3147,7 +6121,42 @@ export type Database = {
             foreignKeyName: "registry_tasks_related_permit_id_fkey"
             columns: ["related_permit_id"]
             isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registry_tasks_related_permit_id_fkey"
+            columns: ["related_permit_id"]
+            isOneToOne: false
             referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registry_tasks_related_permit_id_fkey"
+            columns: ["related_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registry_tasks_related_permit_id_fkey"
+            columns: ["related_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registry_tasks_related_permit_id_fkey"
+            columns: ["related_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "registry_tasks_related_permit_id_fkey"
+            columns: ["related_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
             referencedColumns: ["id"]
           },
         ]
@@ -3289,222 +6298,366 @@ export type Database = {
         }
         Relationships: []
       }
-      unified_notifications: {
-        Row: {
-          action_label: string | null
-          action_url: string | null
-          application_id: string | null
-          application_type:
-            | Database["public"]["Enums"]["application_category"]
-            | null
-          created_at: string
-          id: string
-          is_read: boolean
-          message: string
-          metadata: Json | null
-          notification_type: string
-          priority: string | null
-          read_at: string | null
-          recipient_id: string
-          recipient_type: string
-          requires_action: boolean | null
-          title: string
-          workflow_state_id: string | null
-        }
-        Insert: {
-          action_label?: string | null
-          action_url?: string | null
-          application_id?: string | null
-          application_type?:
-            | Database["public"]["Enums"]["application_category"]
-            | null
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          message: string
-          metadata?: Json | null
-          notification_type: string
-          priority?: string | null
-          read_at?: string | null
-          recipient_id: string
-          recipient_type: string
-          requires_action?: boolean | null
-          title: string
-          workflow_state_id?: string | null
-        }
-        Update: {
-          action_label?: string | null
-          action_url?: string | null
-          application_id?: string | null
-          application_type?:
-            | Database["public"]["Enums"]["application_category"]
-            | null
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          message?: string
-          metadata?: Json | null
-          notification_type?: string
-          priority?: string | null
-          read_at?: string | null
-          recipient_id?: string
-          recipient_type?: string
-          requires_action?: boolean | null
-          title?: string
-          workflow_state_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "unified_notifications_workflow_state_id_fkey"
-            columns: ["workflow_state_id"]
-            isOneToOne: false
-            referencedRelation: "application_workflow_state"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      workflow_fees: {
-        Row: {
-          administration_fee: number
-          amount_paid: number | null
-          approved_at: string | null
-          approved_by: string | null
-          calculated_at: string | null
-          calculated_by: string | null
-          calculation_method: string | null
-          created_at: string
-          id: string
-          invoice_id: string | null
-          invoice_issued: boolean | null
-          invoice_issued_at: string | null
-          paid_at: string | null
-          payment_reference: string | null
-          payment_status: string | null
-          technical_fee: number
-          total_fee: number
-          updated_at: string
-          workflow_state_id: string
-        }
-        Insert: {
-          administration_fee?: number
-          amount_paid?: number | null
-          approved_at?: string | null
-          approved_by?: string | null
-          calculated_at?: string | null
-          calculated_by?: string | null
-          calculation_method?: string | null
-          created_at?: string
-          id?: string
-          invoice_id?: string | null
-          invoice_issued?: boolean | null
-          invoice_issued_at?: string | null
-          paid_at?: string | null
-          payment_reference?: string | null
-          payment_status?: string | null
-          technical_fee?: number
-          total_fee?: number
-          updated_at?: string
-          workflow_state_id: string
-        }
-        Update: {
-          administration_fee?: number
-          amount_paid?: number | null
-          approved_at?: string | null
-          approved_by?: string | null
-          calculated_at?: string | null
-          calculated_by?: string | null
-          calculation_method?: string | null
-          created_at?: string
-          id?: string
-          invoice_id?: string | null
-          invoice_issued?: boolean | null
-          invoice_issued_at?: string | null
-          paid_at?: string | null
-          payment_reference?: string | null
-          payment_status?: string | null
-          technical_fee?: number
-          total_fee?: number
-          updated_at?: string
-          workflow_state_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "workflow_fees_invoice_id_fkey"
-            columns: ["invoice_id"]
-            isOneToOne: false
-            referencedRelation: "invoices"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "workflow_fees_workflow_state_id_fkey"
-            columns: ["workflow_state_id"]
-            isOneToOne: false
-            referencedRelation: "application_workflow_state"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      workflow_transitions: {
-        Row: {
-          attachments: Json | null
-          auto_transition: boolean | null
-          created_at: string
-          from_stage: Database["public"]["Enums"]["workflow_stage"] | null
-          id: string
-          notes: string | null
-          performed_by: string
-          performer_position:
-            | Database["public"]["Enums"]["staff_position"]
-            | null
-          performer_role: Database["public"]["Enums"]["staff_unit"] | null
-          to_stage: Database["public"]["Enums"]["workflow_stage"]
-          transition_type: string
-          workflow_state_id: string
-        }
-        Insert: {
-          attachments?: Json | null
-          auto_transition?: boolean | null
-          created_at?: string
-          from_stage?: Database["public"]["Enums"]["workflow_stage"] | null
-          id?: string
-          notes?: string | null
-          performed_by: string
-          performer_position?:
-            | Database["public"]["Enums"]["staff_position"]
-            | null
-          performer_role?: Database["public"]["Enums"]["staff_unit"] | null
-          to_stage: Database["public"]["Enums"]["workflow_stage"]
-          transition_type: string
-          workflow_state_id: string
-        }
-        Update: {
-          attachments?: Json | null
-          auto_transition?: boolean | null
-          created_at?: string
-          from_stage?: Database["public"]["Enums"]["workflow_stage"] | null
-          id?: string
-          notes?: string | null
-          performed_by?: string
-          performer_position?:
-            | Database["public"]["Enums"]["staff_position"]
-            | null
-          performer_role?: Database["public"]["Enums"]["staff_unit"] | null
-          to_stage?: Database["public"]["Enums"]["workflow_stage"]
-          transition_type?: string
-          workflow_state_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "workflow_transitions_workflow_state_id_fkey"
-            columns: ["workflow_state_id"]
-            isOneToOne: false
-            referencedRelation: "application_workflow_state"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
+      active_entities: {
+        Row: {
+          contact_person: string | null
+          contact_person_email: string | null
+          contact_person_phone: number | null
+          created_at: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          district: string | null
+          email: string | null
+          entity_type: string | null
+          id: string | null
+          is_suspended: boolean | null
+          name: string | null
+          phone: string | null
+          postal_address: string | null
+          province: string | null
+          registered_address: string | null
+          registration_number: string | null
+          tax_number: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          contact_person?: string | null
+          contact_person_email?: string | null
+          contact_person_phone?: number | null
+          created_at?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          district?: string | null
+          email?: string | null
+          entity_type?: string | null
+          id?: string | null
+          is_suspended?: boolean | null
+          name?: string | null
+          phone?: string | null
+          postal_address?: string | null
+          province?: string | null
+          registered_address?: string | null
+          registration_number?: string | null
+          tax_number?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          contact_person?: string | null
+          contact_person_email?: string | null
+          contact_person_phone?: number | null
+          created_at?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          district?: string | null
+          email?: string | null
+          entity_type?: string | null
+          id?: string | null
+          is_suspended?: boolean | null
+          name?: string | null
+          phone?: string | null
+          postal_address?: string | null
+          province?: string | null
+          registered_address?: string | null
+          registration_number?: string | null
+          tax_number?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      active_permit_applications: {
+        Row: {
+          activity_id: string | null
+          activity_location: string | null
+          administration_form: string | null
+          application_date: string | null
+          application_number: string | null
+          approval_date: string | null
+          assigned_compliance_officer_id: string | null
+          assigned_officer_id: string | null
+          completed_steps: Json | null
+          created_at: string | null
+          current_step: number | null
+          deleted_at: string | null
+          deleted_by: string | null
+          description: string | null
+          document_uploads: Json | null
+          entity_id: string | null
+          existing_permit_id: string | null
+          existing_permits_details: string | null
+          expiry_date: string | null
+          frozen_reason: string | null
+          id: string | null
+          industrial_sector_id: string | null
+          intent_registration_id: string | null
+          is_draft: boolean | null
+          is_frozen: boolean | null
+          mandatory_fields_complete: boolean | null
+          owner_name: string | null
+          permit_number: string | null
+          permit_period: string | null
+          permit_type: string | null
+          permit_type_id: string | null
+          status: string | null
+          technical_form: string | null
+          title: string | null
+          updated_at: string | null
+          uploaded_files: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          activity_id?: string | null
+          activity_location?: string | null
+          administration_form?: string | null
+          application_date?: string | null
+          application_number?: string | null
+          approval_date?: string | null
+          assigned_compliance_officer_id?: string | null
+          assigned_officer_id?: string | null
+          completed_steps?: Json | null
+          created_at?: string | null
+          current_step?: number | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          description?: string | null
+          document_uploads?: Json | null
+          entity_id?: string | null
+          existing_permit_id?: string | null
+          existing_permits_details?: string | null
+          expiry_date?: string | null
+          frozen_reason?: string | null
+          id?: string | null
+          industrial_sector_id?: string | null
+          intent_registration_id?: string | null
+          is_draft?: boolean | null
+          is_frozen?: boolean | null
+          mandatory_fields_complete?: boolean | null
+          owner_name?: string | null
+          permit_number?: string | null
+          permit_period?: string | null
+          permit_type?: string | null
+          permit_type_id?: string | null
+          status?: string | null
+          technical_form?: string | null
+          title?: string | null
+          updated_at?: string | null
+          uploaded_files?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          activity_id?: string | null
+          activity_location?: string | null
+          administration_form?: string | null
+          application_date?: string | null
+          application_number?: string | null
+          approval_date?: string | null
+          assigned_compliance_officer_id?: string | null
+          assigned_officer_id?: string | null
+          completed_steps?: Json | null
+          created_at?: string | null
+          current_step?: number | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          description?: string | null
+          document_uploads?: Json | null
+          entity_id?: string | null
+          existing_permit_id?: string | null
+          existing_permits_details?: string | null
+          expiry_date?: string | null
+          frozen_reason?: string | null
+          id?: string | null
+          industrial_sector_id?: string | null
+          intent_registration_id?: string | null
+          is_draft?: boolean | null
+          is_frozen?: boolean | null
+          mandatory_fields_complete?: boolean | null
+          owner_name?: string | null
+          permit_number?: string | null
+          permit_period?: string | null
+          permit_type?: string | null
+          permit_type_id?: string | null
+          status?: string | null
+          technical_form?: string | null
+          title?: string | null
+          updated_at?: string | null
+          uploaded_files?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_permit_apps_activity"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activity_fee_view"
+            referencedColumns: ["activity_id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_activity"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "prescribed_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_activity"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_activity_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_industrial_sector"
+            columns: ["industrial_sector_id"]
+            isOneToOne: false
+            referencedRelation: "industrial_sectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_intent_reg"
+            columns: ["intent_registration_id"]
+            isOneToOne: false
+            referencedRelation: "intent_registrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_permit_type"
+            columns: ["permit_type_id"]
+            isOneToOne: false
+            referencedRelation: "permit_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activity_fee_view"
+            referencedColumns: ["activity_id"]
+          },
+          {
+            foreignKeyName: "permit_applications_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "prescribed_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_activity_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
+          },
+          {
+            foreignKeyName: "permit_applications_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_industrial_sector_id_fkey"
+            columns: ["industrial_sector_id"]
+            isOneToOne: false
+            referencedRelation: "industrial_sectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_intent_registration_id_fkey"
+            columns: ["intent_registration_id"]
+            isOneToOne: false
+            referencedRelation: "intent_registrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_permit_type_id_fkey"
+            columns: ["permit_type_id"]
+            isOneToOne: false
+            referencedRelation: "permit_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activity_fee_view: {
         Row: {
           activity_description: string | null
@@ -3545,17 +6698,642 @@ export type Database = {
         }
         Relationships: []
       }
-      vw_activity_requirements: {
+      vw_compliance_reports_list: {
         Row: {
-          activity_description: string | null
+          activity_classification: string | null
+          activity_level: string | null
+          created_at: string | null
+          description: string | null
+          district: string | null
+          entity_id: string | null
+          entity_name: string | null
+          entity_type: string | null
+          file_path: string | null
+          id: string | null
+          permit_category: string | null
+          permit_id: string | null
+          permit_number: string | null
+          permit_type: string | null
+          project_description: string | null
+          project_title: string | null
+          province: string | null
+          report_date: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_email: string | null
+          reviewer_name: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_reports_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_reports_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_reports_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_reports_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_reports_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_reports_permit_id_fkey"
+            columns: ["permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vw_permit_applications_compliance: {
+        Row: {
+          activity_classification: string | null
+          activity_level: string | null
+          application_date: string | null
+          assigned_compliance_officer_id: string | null
+          compliance_checks: Json | null
+          compliance_commitment: boolean | null
+          compliance_officer_email: string | null
+          compliance_officer_name: string | null
+          created_at: string | null
+          district: string | null
+          eia_required: boolean | null
+          eis_required: boolean | null
+          entity_id: string | null
+          entity_name: string | null
+          entity_type: string | null
+          id: string | null
+          legal_declaration_accepted: boolean | null
+          permit_number: string | null
+          permit_type: string | null
+          province: string | null
+          status: string | null
+          title: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_permit_apps_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
+          },
+          {
+            foreignKeyName: "permit_applications_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
+          },
+        ]
+      }
+      vw_permit_applications_full: {
+        Row: {
+          activity_category: string | null
+          activity_category_number: string | null
+          activity_classification: string | null
           activity_id: string | null
           activity_level: string | null
-          conditional_trigger: string | null
-          document_name: string | null
-          is_mandatory: boolean | null
-          reference: string | null
+          activity_level_number: number | null
+          activity_location: string | null
+          activity_subcategory: string | null
+          air_emission_details: Json | null
+          application_date: string | null
+          application_fee: number | null
+          application_number: string | null
+          approval_date: string | null
+          aquaculture_details: Json | null
+          biodiversity_abs_details: Json | null
+          carbon_offset_details: Json | null
+          chemical_details_id: string | null
+          chemical_storage_details: Json | null
+          classification_details_id: string | null
+          commencement_date: string | null
+          completion_date: string | null
+          compliance_checks: Json | null
+          compliance_commitment: boolean | null
+          compliance_commitment_accepted_at: string | null
+          compliance_details_id: string | null
+          composite_fee: number | null
+          consultation_details_id: string | null
+          consultation_period_end: string | null
+          consultation_period_start: string | null
+          consulted_departments: string | null
+          contact_person: string | null
+          contact_person_email: string | null
+          contact_person_phone: number | null
+          coordinates: Json | null
+          created_at: string | null
+          current_step: number | null
+          description: string | null
+          district: string | null
+          document_uploads: Json | null
+          dredging_details: Json | null
+          effluent_discharge_details: Json | null
+          eia_required: boolean | null
+          eis_required: boolean | null
+          emission_details_id: string | null
+          entity_email: string | null
+          entity_id: string | null
+          entity_name: string | null
+          entity_phone: string | null
+          entity_type: string | null
+          environmental_details_id: string | null
+          environmental_impact: string | null
+          estimated_cost_kina: number | null
+          existing_permit_id: string | null
+          expiry_date: string | null
+          fee_amount: number | null
+          fee_breakdown: Json | null
+          fee_details_id: string | null
+          fee_payment_status: string | null
+          fee_source: string | null
+          forest_product_details: Json | null
+          fuel_storage_details: Json | null
+          ghg_emission_details: Json | null
+          government_agreements_details: string | null
+          hazardous_material_details: Json | null
+          hazardous_waste_details: Json | null
+          id: string | null
+          industrial_sector_id: string | null
+          industry_details_id: string | null
+          infrastructure_details: Json | null
+          intent_registration_id: string | null
+          is_draft: boolean | null
+          land_clearing_details: Json | null
+          land_type: string | null
+          landowner_negotiation_status: string | null
+          legal_declaration_accepted: boolean | null
+          legal_declaration_accepted_at: string | null
+          legal_description: string | null
+          llg: string | null
+          location_details_id: string | null
+          mandatory_fields_complete: boolean | null
+          marine_dumping_details: Json | null
+          mining_chemical_details: Json | null
+          mining_permit_details: Json | null
+          mitigation_measures: string | null
+          monitoring_license_details: Json | null
+          noise_emission_details: Json | null
+          ods_details: Json | null
+          ods_quota_allocation: string | null
+          operating_hours: string | null
+          operational_capacity: string | null
+          operational_details: string | null
+          owner_name: string | null
+          permit_category: string | null
+          permit_number: string | null
+          permit_period: string | null
+          permit_type: string | null
+          permit_type_id: string | null
+          permit_type_specific: string | null
+          permit_type_specific_data: Json | null
+          pesticide_details: Json | null
+          postal_address: string | null
+          prescribed_activity_description: string | null
+          processing_days: number | null
+          project_boundary: Json | null
+          project_description: string | null
+          project_details_id: string | null
+          project_end_date: string | null
+          project_site_description: string | null
+          project_start_date: string | null
+          proposed_works_description: string | null
+          province: string | null
+          public_consultation_proof: Json | null
+          registered_address: string | null
+          registration_number: string | null
+          rehabilitation_details: Json | null
+          renewable_energy_details: Json | null
+          required_approvals: string | null
+          research_details: Json | null
+          site_ownership_details: string | null
+          soil_extraction_details: Json | null
+          solid_waste_details: Json | null
+          status: string | null
+          stormwater_details: Json | null
+          tax_number: string | null
+          tenure: string | null
+          title: string | null
+          total_area_sqkm: number | null
+          updated_at: string | null
+          uploaded_files: Json | null
+          user_id: string | null
+          waste_contaminant_details: Json | null
+          water_extraction_details: Json | null
+          water_waste_details_id: string | null
+          wildlife_trade_details: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_permit_apps_activity"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activity_fee_view"
+            referencedColumns: ["activity_id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_activity"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "prescribed_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_activity"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_activity_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_industrial_sector"
+            columns: ["industrial_sector_id"]
+            isOneToOne: false
+            referencedRelation: "industrial_sectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_intent_reg"
+            columns: ["intent_registration_id"]
+            isOneToOne: false
+            referencedRelation: "intent_registrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_permit_type"
+            columns: ["permit_type_id"]
+            isOneToOne: false
+            referencedRelation: "permit_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activity_fee_view"
+            referencedColumns: ["activity_id"]
+          },
+          {
+            foreignKeyName: "permit_applications_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "prescribed_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_activity_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
+          },
+          {
+            foreignKeyName: "permit_applications_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "active_permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "permit_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_compliance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_full"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_list"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_existing_permit_id_fkey"
+            columns: ["existing_permit_id"]
+            isOneToOne: false
+            referencedRelation: "vw_permit_applications_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_industrial_sector_id_fkey"
+            columns: ["industrial_sector_id"]
+            isOneToOne: false
+            referencedRelation: "industrial_sectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_intent_registration_id_fkey"
+            columns: ["intent_registration_id"]
+            isOneToOne: false
+            referencedRelation: "intent_registrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_permit_type_id_fkey"
+            columns: ["permit_type_id"]
+            isOneToOne: false
+            referencedRelation: "permit_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vw_permit_applications_list: {
+        Row: {
+          activity_id: string | null
+          activity_level: string | null
+          application_number: string | null
+          approval_date: string | null
+          created_at: string | null
+          description: string | null
+          entity_id: string | null
+          entity_name: string | null
+          entity_type: string | null
+          id: string | null
+          permit_number: string | null
+          permit_type: string | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_permit_apps_activity"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activity_fee_view"
+            referencedColumns: ["activity_id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_activity"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "prescribed_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_activity"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_activity_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
+          },
+          {
+            foreignKeyName: "permit_applications_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activity_fee_view"
+            referencedColumns: ["activity_id"]
+          },
+          {
+            foreignKeyName: "permit_applications_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "prescribed_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_activity_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
+          },
+        ]
+      }
+      vw_permit_applications_registry: {
+        Row: {
+          activity_classification: string | null
+          activity_level: string | null
+          application_date: string | null
+          application_number: string | null
+          approval_date: string | null
+          assigned_officer_email: string | null
+          assigned_officer_id: string | null
+          assigned_officer_name: string | null
+          commencement_date: string | null
+          completion_date: string | null
+          created_at: string | null
+          district: string | null
+          entity_id: string | null
+          entity_name: string | null
+          entity_type: string | null
+          estimated_cost_kina: number | null
+          fee_amount: number | null
+          id: string | null
+          is_draft: boolean | null
+          llg: string | null
+          payment_status: string | null
+          permit_category: string | null
+          permit_number: string | null
+          permit_type: string | null
+          province: string | null
+          registration_number: string | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_permit_apps_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_permit_apps_entity"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
+          },
+          {
+            foreignKeyName: "permit_applications_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "active_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permit_applications_entity_id_fkey"
+            columns: ["entity_id"]
+            isOneToOne: false
+            referencedRelation: "vw_compliance_reports_list"
+            referencedColumns: ["entity_id"]
+          },
+        ]
       }
     }
     Functions: {
@@ -3661,6 +7439,7 @@ export type Database = {
           created_at: string
           departments_approached: string
           district: string
+          docusign_envelope_id: string
           entity_id: string
           estimated_cost_kina: number
           existing_permit_id: string
@@ -3674,6 +7453,7 @@ export type Database = {
           project_boundary: Json
           project_site_address: string
           project_site_description: string
+          project_title: string
           province: string
           review_notes: string
           reviewed_at: string
@@ -3681,6 +7461,7 @@ export type Database = {
           reviewer_email: string
           reviewer_first_name: string
           reviewer_last_name: string
+          signed_document_path: string
           site_ownership_details: string
           status: string
           total_area_sqkm: number
@@ -3785,6 +7566,8 @@ export type Database = {
         }
         Returns: string
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       transition_workflow_stage: {
         Args: {
           p_attachments?: Json
@@ -3834,6 +7617,45 @@ export type Database = {
         | "permit_amalgamation"
         | "permit_surrender"
         | "compliance_report"
+      application_status:
+        | "draft"
+        | "pending"
+        | "submitted"
+        | "under_review"
+        | "under_assessment"
+        | "awaiting_payment"
+        | "in_progress"
+        | "approved"
+        | "rejected"
+        | "cancelled"
+        | "revoked"
+        | "expired"
+        | "completed"
+        | "suspended"
+      approval_status_enum:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "requires_revision"
+      assessment_status_enum:
+        | "pending"
+        | "in_progress"
+        | "completed"
+        | "requires_revision"
+      inspection_status_enum:
+        | "scheduled"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+        | "postponed"
+      payment_status_enum:
+        | "pending"
+        | "partially_paid"
+        | "paid"
+        | "waived"
+        | "overdue"
+        | "refunded"
+        | "cancelled"
       staff_position: "officer" | "manager" | "director" | "managing_director"
       staff_unit:
         | "registry"
@@ -3842,6 +7664,12 @@ export type Database = {
         | "finance"
         | "directorate"
         | "systems_admin"
+      task_status_enum:
+        | "pending"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
+        | "overdue"
       user_type: "public" | "staff" | "admin" | "super_admin"
       workflow_stage:
         | "submitted"
@@ -3994,6 +7822,50 @@ export const Constants = {
         "permit_surrender",
         "compliance_report",
       ],
+      application_status: [
+        "draft",
+        "pending",
+        "submitted",
+        "under_review",
+        "under_assessment",
+        "awaiting_payment",
+        "in_progress",
+        "approved",
+        "rejected",
+        "cancelled",
+        "revoked",
+        "expired",
+        "completed",
+        "suspended",
+      ],
+      approval_status_enum: [
+        "pending",
+        "approved",
+        "rejected",
+        "requires_revision",
+      ],
+      assessment_status_enum: [
+        "pending",
+        "in_progress",
+        "completed",
+        "requires_revision",
+      ],
+      inspection_status_enum: [
+        "scheduled",
+        "in_progress",
+        "completed",
+        "cancelled",
+        "postponed",
+      ],
+      payment_status_enum: [
+        "pending",
+        "partially_paid",
+        "paid",
+        "waived",
+        "overdue",
+        "refunded",
+        "cancelled",
+      ],
       staff_position: ["officer", "manager", "director", "managing_director"],
       staff_unit: [
         "registry",
@@ -4002,6 +7874,13 @@ export const Constants = {
         "finance",
         "directorate",
         "systems_admin",
+      ],
+      task_status_enum: [
+        "pending",
+        "in_progress",
+        "completed",
+        "cancelled",
+        "overdue",
       ],
       user_type: ["public", "staff", "admin", "super_admin"],
       workflow_stage: [

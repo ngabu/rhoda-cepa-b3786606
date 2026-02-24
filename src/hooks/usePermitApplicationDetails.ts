@@ -1,12 +1,12 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { fetchPermitDetailsFlatteneed, savePermitDetailsFromFlat, PermitDetailsFlatteneed } from '@/services/permitDetails';
 
 export interface PermitApplicationDetails {
   id?: string;
-  permit_id: string;
-  user_id: string;
+  permit_id?: string;
+  user_id?: string;
   
   // Basic Info fields
   title?: string;
@@ -40,6 +40,13 @@ export interface PermitApplicationDetails {
   
   // Step 5: Application Fee
   application_fee?: number;
+  fee_amount?: number;
+  fee_breakdown?: any;
+  composite_fee?: number;
+  processing_days?: number;
+  fee_source?: string;
+  administration_form?: string;
+  technical_form?: string;
   
   // Project Details fields
   project_description?: string;
@@ -50,10 +57,22 @@ export interface PermitApplicationDetails {
   district?: string;
   province?: string;
   
+  // Documents
+  uploaded_files?: any;
+  document_uploads?: any;
+  public_consultation_proof?: any;
+  
+  // EIA/EIS
+  eia_required?: boolean;
+  eis_required?: boolean;
+  
   // Progress tracking
   current_step?: number;
   is_draft?: boolean;
   completed_steps?: number[];
+  
+  // Permit-specific details from child tables (flattened)
+  permitDetails?: PermitDetailsFlatteneed;
 }
 
 export interface PermitInfo {
@@ -66,6 +85,7 @@ export interface PermitInfo {
 
 export function usePermitApplicationDetails(permitId: string) {
   const [details, setDetails] = useState<PermitApplicationDetails | null>(null);
+  const [permitDetails, setPermitDetails] = useState<PermitDetailsFlatteneed | null>(null);
   const [permitInfo, setPermitInfo] = useState<PermitInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -78,9 +98,9 @@ export function usePermitApplicationDetails(permitId: string) {
 
   const loadDetails = async () => {
     try {
-      // Load permit info
+      // Load permit info from view
       const { data: permitData, error: permitError } = await (supabase as any)
-        .from('permit_applications')
+        .from('vw_permit_applications_full')
         .select('id, title, permit_type, status, created_at')
         .eq('id', permitId)
         .single();
@@ -88,9 +108,9 @@ export function usePermitApplicationDetails(permitId: string) {
       if (permitError) throw permitError;
       setPermitInfo(permitData);
 
-      // Load application details
+      // Load main application details from view
       const { data, error } = await (supabase as any)
-        .from('permit_applications')
+        .from('vw_permit_applications_full')
         .select('*')
         .eq('id', permitId)
         .single();
@@ -99,13 +119,22 @@ export function usePermitApplicationDetails(permitId: string) {
         throw error;
       }
 
+      // Fetch permit-specific details from child tables
+      let childDetails: PermitDetailsFlatteneed | null = null;
+      try {
+        childDetails = await fetchPermitDetailsFlatteneed(permitId);
+        setPermitDetails(childDetails);
+      } catch (childError) {
+        console.warn('Could not fetch child table details:', childError);
+      }
+
       if (data) {
-        // Parse completed_steps from JSON to number array
         const parsedData = {
           ...data,
           completed_steps: Array.isArray(data.completed_steps) 
             ? data.completed_steps as number[]
-            : []
+            : [],
+          permitDetails: childDetails || undefined,
         };
         setDetails(parsedData);
       } else {
@@ -128,14 +157,17 @@ export function usePermitApplicationDetails(permitId: string) {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('Not authenticated');
 
+      // Separate permit-specific details from main application data
+      const { permitDetails: permitSpecificDetails, ...mainDetails } = updatedDetails;
+
       const dataToSave = {
-        ...updatedDetails,
+        ...mainDetails,
         id: permitId,
         updated_at: new Date().toISOString()
       };
 
-      // Always update since the permit application already exists
-      const result = await (supabase as any)
+      // Update main permit_applications table
+      const result = await supabase
         .from('permit_applications')
         .update(dataToSave)
         .eq('id', permitId)
@@ -144,12 +176,18 @@ export function usePermitApplicationDetails(permitId: string) {
 
       if (result.error) throw result.error;
 
-      // Parse completed_steps from JSON to number array
+      // Save permit-specific details to child tables if provided
+      if (permitSpecificDetails) {
+        await savePermitDetailsFromFlat(permitId, permitSpecificDetails);
+        setPermitDetails(permitSpecificDetails);
+      }
+
       const parsedResult = {
         ...result.data,
         completed_steps: Array.isArray(result.data.completed_steps) 
           ? result.data.completed_steps as number[]
-          : []
+          : [],
+        permitDetails: permitSpecificDetails || permitDetails,
       };
       
       setDetails(parsedResult);
@@ -172,6 +210,7 @@ export function usePermitApplicationDetails(permitId: string) {
 
   return {
     details,
+    permitDetails,
     permitInfo,
     loading,
     saveDetails,

@@ -11,11 +11,13 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermitTypes } from "@/hooks/usePermitTypes";
 
 interface Application {
   id: string;
   title: string;
   permit_type: string;
+  permit_type_id?: string | null;
   status: string;
   permit_number?: string;
   application_date?: string;
@@ -45,6 +47,7 @@ interface Activity {
 export function MyApplicationsTabs() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { permitTypes } = usePermitTypes();
   const navigate = useNavigate();
   const [applications, setApplications] = useState<Application[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -65,30 +68,23 @@ export function MyApplicationsTabs() {
     try {
       setLoading(true);
       
-      // Fetch applications with entity information
+      // Fetch applications with entity information from view
       const { data: appsData, error: appsError } = await (supabase as any)
-        .from('permit_applications')
-        .select(`
-          id,
-          title,
-          permit_type,
-          status,
-          permit_number,
-          application_date,
-          approval_date,
-          created_at,
-          updated_at,
-          entity_id,
-          description,
-          entities (
-            id,
-            name,
-            entity_type,
-            contact_person
-          )
-        `)
+        .from('vw_permit_applications_list')
+        .select('*')
         .eq('user_id', user.id)
         .order('updated_at', { ascending: false });
+
+      // Map view data to expected format
+      const mappedApps = (appsData || []).map((app: any) => ({
+        ...app,
+        entities: app.entity_id ? {
+          id: app.entity_id,
+          name: app.entity_name,
+          entity_type: app.entity_type,
+          contact_person: null
+        } : null
+      }));
 
       if (appsError) throw appsError;
 
@@ -96,12 +92,12 @@ export function MyApplicationsTabs() {
       const { data: activitiesData, error: activitiesError } = await supabase
         .from('permit_activities')
         .select('*')
-        .in('permit_id', appsData?.map(app => app.id) || [])
+        .in('permit_id', mappedApps?.map((app: any) => app.id) || [])
         .order('updated_at', { ascending: false });
 
       if (activitiesError) throw activitiesError;
 
-      setApplications(appsData || []);
+      setApplications(mappedApps || []);
       setActivities(activitiesData || []);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -126,6 +122,15 @@ export function MyApplicationsTabs() {
 
   const formatStatus = (status: string) => {
     return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  const formatPermitType = (application: Application) => {
+    const permitType = application.permit_type_id
+      ? permitTypes.find((pt) => pt.id === application.permit_type_id)
+      : permitTypes.find((pt) => pt.name === application.permit_type);
+
+    const label = (permitType?.display_name ?? application.permit_type ?? '').replace(/\s+Permit$/i, '');
+    return label || 'Unspecified';
   };
 
   const handleDeleteApplication = async (applicationId: string, status: string) => {
@@ -338,7 +343,7 @@ export function MyApplicationsTabs() {
                   )}
                   <div className="flex items-center space-x-2">
                     <FileText className="h-4 w-4" />
-                    <span>Type: {application.permit_type.replace('_', ' ')}</span>
+                    <span>Type: {formatPermitType(application)}</span>
                   </div>
                 </div>
                 {application.description && (
@@ -404,7 +409,7 @@ export function MyApplicationsTabs() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <FileText className="h-4 w-4" />
-                    <span>Type: {permit.permit_type.replace('_', ' ')}</span>
+                    <span>Type: {formatPermitType(permit)}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Clock className="h-4 w-4" />

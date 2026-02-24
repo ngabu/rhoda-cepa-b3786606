@@ -88,7 +88,7 @@ export function EntityForm({ entity, onSuccess, onCancel }: EntityFormProps) {
         contact_person_phone: formData.contact_person_phone ? parseFloat(formData.contact_person_phone) : null,
         contact_person_email: formData.contact_person_email || null,
         postal_address: formData.postal_address || null,
-        'registered address': formData.registered_address || null,
+        registered_address: formData.registered_address || null,
         district: formData.district || null,
         province: formData.province || null,
         updated_at: new Date().toISOString(),

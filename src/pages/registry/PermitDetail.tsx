@@ -42,9 +42,9 @@ export function PermitDetail() {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('permit_applications')
-        .select('id, title, permit_number, permit_type, description, status, entity_name, entity_type, activity_location, application_date, approval_date, expiry_date, created_at, updated_at')
+      const { data, error } = await (supabase as any)
+        .from('vw_permit_applications_full')
+        .select('*')
         .eq('id', id)
         .single();
 

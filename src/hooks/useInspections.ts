@@ -60,14 +60,14 @@ export function useInspections() {
             title,
             entity_id,
             user_id,
-            entities(id, name)
+            entities:entities!permit_applications_entity_id_fkey(id, name)
           ),
           intent_registrations(
             id,
             activity_description,
             entity_id,
             user_id,
-            entities(id, name)
+            entities:entities!intent_registrations_entity_id_fkey(id, name)
           )
         `)
         .order('scheduled_date', { ascending: false });
@@ -148,7 +148,7 @@ export function useInspections() {
         // Fetch intent registration details
         const { data: intent, error: intentError } = await supabase
           .from('intent_registrations')
-          .select('id, entity_id, user_id, activity_description, existing_permit_id, entities(id, name)')
+          .select('id, entity_id, user_id, activity_description, existing_permit_id, entities:entities!intent_registrations_entity_id_fkey(id, name)')
           .eq('id', inspectionData.permit_application_id)
           .maybeSingle();
         
@@ -181,7 +181,7 @@ export function useInspections() {
         // Fetch permit data for invoice
         const { data: permit } = await supabase
           .from('permit_applications')
-          .select('id, permit_number, title, entity_id, user_id, entities(id, name)')
+          .select('id, permit_number, title, entity_id, user_id, entities:entities!permit_applications_entity_id_fkey(id, name)')
           .eq('id', actualPermitApplicationId)
           .maybeSingle();
         permitData = permit;
@@ -199,7 +199,7 @@ export function useInspections() {
         
         const { data: permit } = await supabase
           .from('permit_applications')
-          .select('id, permit_number, title, entity_id, user_id, entities(id, name)')
+          .select('id, permit_number, title, entity_id, user_id, entities:entities!permit_applications_entity_id_fkey(id, name)')
           .eq('id', actualPermitApplicationId)
           .maybeSingle();
         permitData = permit;
@@ -217,7 +217,7 @@ export function useInspections() {
         
         const { data: permit } = await supabase
           .from('permit_applications')
-          .select('id, permit_number, title, entity_id, user_id, entities(id, name)')
+          .select('id, permit_number, title, entity_id, user_id, entities:entities!permit_applications_entity_id_fkey(id, name)')
           .eq('id', actualPermitApplicationId)
           .maybeSingle();
         permitData = permit;
@@ -235,7 +235,7 @@ export function useInspections() {
         
         const { data: permit } = await supabase
           .from('permit_applications')
-          .select('id, permit_number, title, entity_id, user_id, entities(id, name)')
+          .select('id, permit_number, title, entity_id, user_id, entities:entities!permit_applications_entity_id_fkey(id, name)')
           .eq('id', actualPermitApplicationId)
           .maybeSingle();
         permitData = permit;
@@ -253,7 +253,7 @@ export function useInspections() {
         
         const { data: permit } = await supabase
           .from('permit_applications')
-          .select('id, permit_number, title, entity_id, user_id, entities(id, name)')
+          .select('id, permit_number, title, entity_id, user_id, entities:entities!permit_applications_entity_id_fkey(id, name)')
           .eq('id', actualPermitApplicationId)
           .maybeSingle();
         permitData = permit;
@@ -263,7 +263,7 @@ export function useInspections() {
         
         const { data: permit, error: permitError } = await supabase
           .from('permit_applications')
-          .select('id, permit_number, title, entity_id, user_id, entities(id, name)')
+          .select('id, permit_number, title, entity_id, user_id, entities:entities!permit_applications_entity_id_fkey(id, name)')
           .eq('id', actualPermitApplicationId)
           .maybeSingle();
 

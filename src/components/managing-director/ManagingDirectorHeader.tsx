@@ -12,9 +12,15 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { useDirectorateNotifications } from "@/hooks/useDirectorateNotifications"
 
-export function ManagingDirectorHeader() {
+interface ManagingDirectorHeaderProps {
+  onNotificationsClick?: () => void;
+}
+
+export function ManagingDirectorHeader({ onNotificationsClick }: ManagingDirectorHeaderProps) {
   const { profile, signOut } = useAuth()
+  const { unreadCount } = useDirectorateNotifications(profile?.user_id)
 
   const getInitials = () => {
     if (profile?.first_name && profile?.last_name) {
@@ -38,14 +44,21 @@ export function ManagingDirectorHeader() {
       
       <div className="flex items-center gap-4">
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="relative"
+          onClick={onNotificationsClick}
+        >
           <Bell className="h-5 w-5" />
-          <Badge 
-            variant="destructive" 
-            className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-          >
-            3
-          </Badge>
+          {unreadCount > 0 && (
+            <Badge 
+              variant="destructive" 
+              className="absolute -top-1 -right-1 h-5 min-w-[1.25rem] rounded-full p-0 flex items-center justify-center text-xs"
+            >
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </Badge>
+          )}
         </Button>
 
         {/* User Menu */}

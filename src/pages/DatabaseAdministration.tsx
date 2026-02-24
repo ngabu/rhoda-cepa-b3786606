@@ -197,7 +197,7 @@ export default function DatabaseAdministration() {
       ] = await Promise.all([
         supabase.from('profiles').select('*'),
         supabase.from('entities').select('*'),
-        supabase.from('permit_applications').select('*'),
+        (supabase as any).from('vw_permit_applications_full').select('*'),
         supabase.from('intent_registrations').select('*'),
         supabase.from('documents').select('*'),
         supabase.from('fee_payments').select('*'),

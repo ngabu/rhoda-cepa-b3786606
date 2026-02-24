@@ -10,6 +10,7 @@ import { usePrescribedActivities } from '@/hooks/usePrescribedActivities';
 import { usePermitTypes } from '@/hooks/usePermitTypes';
 import { usePermitTypeFields } from '@/hooks/usePermitTypeFields';
 import { useIndustrialSectors } from '@/hooks/useIndustrialSectors';
+import { EnvironmentalPermitFields } from './EnvironmentalPermitFields';
 
 interface ActivityClassificationStepProps {
   data: any;
@@ -289,7 +290,10 @@ export function ActivityClassificationStep({ data, onChange, hasLinkedIntent = f
                 <FileText className="w-5 h-5 text-primary" />
                 <h3 className="font-semibold text-lg">{selectedPermitType.display_name} - Specific Information</h3>
               </div>
-              {fieldsLoading ? (
+              {/* Check if Environmental Permit is selected */}
+              {selectedPermitType.name?.toLowerCase().includes('environmental') ? (
+                <EnvironmentalPermitFields data={data} onChange={onChange} />
+              ) : fieldsLoading ? (
                 <p className="text-sm text-muted-foreground">Loading fields...</p>
               ) : permitTypeFields.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No additional fields required for this permit type.</p>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +26,7 @@ export function PermitMDReviewTab({ applicationId, currentStatus, onStatusUpdate
   const [status, setStatus] = useState(currentStatus);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [sendingDocuSign, setSendingDocuSign] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<{ name: string; path: string }[]>([]);
 
@@ -33,6 +34,34 @@ export function PermitMDReviewTab({ applicationId, currentStatus, onStatusUpdate
   const canEdit = profile?.staff_position === 'managing_director' || 
                   profile?.user_type === 'admin' || 
                   profile?.user_type === 'super_admin';
+
+  useEffect(() => {
+    fetchReviewData();
+  }, [applicationId]);
+
+  const fetchReviewData = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('permit_reviews')
+        .select('*')
+        .eq('permit_application_id', applicationId)
+        .eq('review_stage', 'md')
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setDecision(data.assessment || '');
+        setDecisionNotes(data.remarks || '');
+        setUploadedFiles((data.uploaded_documents as { name: string; path: string }[]) || []);
+      }
+    } catch (error) {
+      console.error('Error fetching review data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!canEdit) return;
@@ -78,6 +107,28 @@ export function PermitMDReviewTab({ applicationId, currentStatus, onStatusUpdate
 
     setSubmitting(true);
     try {
+      // Save review data to permit_reviews table
+      const reviewData = {
+        permit_application_id: applicationId,
+        review_stage: 'md',
+        reviewer_id: profile?.user_id,
+        assessment: decision,
+        remarks: decisionNotes,
+        proposed_action: status,
+        validation_checks: {},
+        uploaded_documents: uploadedFiles,
+        status: status === 'approved' ? 'completed' : 'pending',
+        reviewed_at: new Date().toISOString()
+      };
+
+      const { error: reviewError } = await supabase
+        .from('permit_reviews')
+        .upsert(reviewData, { 
+          onConflict: 'permit_application_id,review_stage'
+        });
+
+      if (reviewError) throw reviewError;
+
       // Update permit application status
       const { error } = await supabase
         .from('permit_applications')
@@ -95,6 +146,19 @@ export function PermitMDReviewTab({ applicationId, currentStatus, onStatusUpdate
       setSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-8">
+          <div className="flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin mr-2" />
+            Loading review data...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

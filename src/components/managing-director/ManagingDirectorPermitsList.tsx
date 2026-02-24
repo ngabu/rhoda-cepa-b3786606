@@ -52,9 +52,10 @@ export function ManagingDirectorPermitsList() {
   const fetchPermits = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('permit_applications')
-        .select('id, title, permit_number, permit_type, description, approval_date, created_at, updated_at, entity_name, entity_id, activity_level')
+      // Use vw_permit_applications_list which includes approval_date
+      const { data, error } = await (supabase as any)
+        .from('vw_permit_applications_list')
+        .select('id, title, permit_number, permit_type, approval_date, created_at, updated_at, entity_name, entity_id, activity_level')
         .eq('status', 'approved')
         .not('permit_number', 'is', null)
         .order('approval_date', { ascending: false });
@@ -76,12 +77,9 @@ export function ManagingDirectorPermitsList() {
   const fetchPermitDetails = async (permitId: string) => {
     try {
       setLoadingDetails(true);
-      const { data, error } = await supabase
-        .from('permit_applications')
-        .select(`
-          *,
-          entity:entities(*)
-        `)
+      const { data, error } = await (supabase as any)
+        .from('vw_permit_applications_full')
+        .select('*')
         .eq('id', permitId)
         .single();
 

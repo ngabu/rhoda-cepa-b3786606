@@ -28,7 +28,7 @@ export default function SystemHealth() {
       ] = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('entities').select('*', { count: 'exact', head: true }),
-        supabase.from('permit_applications').select('*', { count: 'exact', head: true }),
+        (supabase as any).from('vw_permit_applications_list').select('*', { count: 'exact', head: true }),
         supabase.from('fee_structures').select('*', { count: 'exact', head: true }),
         supabase.from('documents').select('*', { count: 'exact', head: true }),
         supabase.from('audit_logs').select('*', { count: 'exact', head: true })

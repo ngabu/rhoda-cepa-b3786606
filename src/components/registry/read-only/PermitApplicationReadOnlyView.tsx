@@ -71,9 +71,6 @@ interface PermitApplicationData {
   legal_declaration_accepted?: boolean;
   compliance_commitment?: boolean;
   mandatory_fields_complete?: boolean;
-  waste_contaminant_details?: any;
-  water_extraction_details?: any;
-  ods_details?: any;
   public_consultation_proof?: any;
   consultation_period_start?: string;
   consultation_period_end?: string;
@@ -495,40 +492,6 @@ export function PermitApplicationReadOnlyView({ application }: PermitApplication
                 </>
               )}
 
-              {(application.waste_contaminant_details || application.water_extraction_details || application.ods_details) && (
-                <>
-                  <Separator />
-                  <div>
-                    <h4 className="font-medium mb-2">Specific Environmental Details</h4>
-                    <div className="space-y-3">
-                      {application.waste_contaminant_details && Object.keys(application.waste_contaminant_details).length > 0 && (
-                        <div>
-                          <h5 className="text-sm font-medium mb-1">Waste/Contaminant Details</h5>
-                          <div className="bg-muted/30 p-2 rounded text-sm">
-                            <pre>{JSON.stringify(application.waste_contaminant_details, null, 2)}</pre>
-                          </div>
-                        </div>
-                      )}
-                      {application.water_extraction_details && Object.keys(application.water_extraction_details).length > 0 && (
-                        <div>
-                          <h5 className="text-sm font-medium mb-1">Water Extraction Details</h5>
-                          <div className="bg-muted/30 p-2 rounded text-sm">
-                            <pre>{JSON.stringify(application.water_extraction_details, null, 2)}</pre>
-                          </div>
-                        </div>
-                      )}
-                      {application.ods_details && Object.keys(application.ods_details).length > 0 && (
-                        <div>
-                          <h5 className="text-sm font-medium mb-1">ODS Details</h5>
-                          <div className="bg-muted/30 p-2 rounded text-sm">
-                            <pre>{JSON.stringify(application.ods_details, null, 2)}</pre>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </>
-              )}
             </CardContent>
           </Card>
         </TabsContent>

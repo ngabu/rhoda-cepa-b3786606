@@ -22,6 +22,7 @@ import { PermitEnforcementComplianceReview } from "@/components/compliance/Permi
 import { InspectionsManagement } from "@/components/compliance/InspectionsManagement";
 import { ComplianceReportingManagement } from "@/components/compliance/ComplianceReportingManagement";
 import { ComplianceUserGuide } from "@/components/compliance/ComplianceUserGuide";
+import { UnitNotificationsPanel } from "@/components/notifications/UnitNotificationsPanel";
 import { Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -80,6 +81,7 @@ const ComplianceDashboardView = () => {
             {activeTab === 'permit-surrender' && <PermitSurrenderComplianceReview />}
             {activeTab === 'permit-transfer' && <PermitTransferComplianceReview />}
             {activeTab === 'user-guide' && <ComplianceUserGuide />}
+            {activeTab === 'notifications' && <UnitNotificationsPanel unit="compliance" />}
           </main>
         </div>
       </div>

@@ -1,10 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin } from 'lucide-react';
-import area from '@turf/area';
-import { polygon } from '@turf/helpers';
 
 interface IntentBoundaryMapDisplayProps {
   projectBoundary: any;
@@ -12,32 +10,48 @@ interface IntentBoundaryMapDisplayProps {
   province?: string;
   district?: string;
   llg?: string;
+  /** Pre-calculated area in sq km from the intent registration */
+  totalAreaSqKm?: number;
 }
 
-export function IntentBoundaryMapDisplay({ projectBoundary, activityLocation, province, district, llg }: IntentBoundaryMapDisplayProps) {
+export function IntentBoundaryMapDisplay({ 
+  projectBoundary, 
+  activityLocation, 
+  province, 
+  district, 
+  llg,
+  totalAreaSqKm 
+}: IntentBoundaryMapDisplayProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const [areaInfo, setAreaInfo] = useState<{ sqKm: number; hectares: number } | null>(null);
+
+  // Calculate hectares from the provided sq km
+  const areaSqKm = totalAreaSqKm ?? 0;
+  const areaHectares = areaSqKm * 100;
 
   useEffect(() => {
     if (!mapContainer.current || !projectBoundary) return;
 
+    // Validate projectBoundary has the required structure
+    const hasValidPolygonStructure = projectBoundary.type === 'Polygon' && 
+      Array.isArray(projectBoundary.coordinates) && 
+      projectBoundary.coordinates.length > 0;
+    
+    const hasValidFeatureStructure = projectBoundary.geometry && 
+      projectBoundary.geometry.type === 'Polygon' &&
+      Array.isArray(projectBoundary.geometry.coordinates) && 
+      projectBoundary.geometry.coordinates.length > 0;
+
+    if (!hasValidPolygonStructure && !hasValidFeatureStructure) {
+      console.warn('Invalid project boundary structure:', projectBoundary);
+      return;
+    }
+
     // Set Mapbox access token
     mapboxgl.accessToken = 'pk.eyJ1IjoiZ2FidW5vcm1hbiIsImEiOiJjbWJ0emU0cGEwOHR1MmtxdXh2d2wzOTV5In0.RUVMHkS-KaJ6CGWUiB3s4w';
-    
-    // Calculate area
-    const geoJsonPolygon = projectBoundary.type === 'Polygon' 
-      ? polygon(projectBoundary.coordinates)
-      : polygon(projectBoundary.geometry.coordinates);
-    
-    const areaSqMeters = area(geoJsonPolygon);
-    const areaSqKm = areaSqMeters / 1_000_000;
-    const areaHectares = areaSqMeters / 10_000;
-    
-    setAreaInfo({ sqKm: areaSqKm, hectares: areaHectares });
 
     // Calculate bounds for the polygon
-    const coordinates = projectBoundary.type === 'Polygon' 
+    const coordinates = hasValidPolygonStructure 
       ? projectBoundary.coordinates[0]
       : projectBoundary.geometry.coordinates[0];
     
@@ -73,14 +87,16 @@ export function IntentBoundaryMapDisplay({ projectBoundary, activityLocation, pr
       if (!map.current) return;
 
       // Add the boundary as a source
+      const geometryData = hasValidPolygonStructure 
+        ? projectBoundary 
+        : projectBoundary.geometry;
+        
       map.current.addSource('boundary', {
         type: 'geojson',
         data: {
           type: 'Feature',
           properties: {},
-          geometry: projectBoundary.type === 'Polygon' 
-            ? projectBoundary 
-            : projectBoundary.geometry
+          geometry: geometryData
         }
       });
 
@@ -154,16 +170,18 @@ export function IntentBoundaryMapDisplay({ projectBoundary, activityLocation, pr
                   </p>
                 </div>
               ` : ''}
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <div style="padding: 10px; background: #ecfdf5; border-radius: 6px; border-left: 3px solid #10b981;">
-                  <p style="margin: 0; font-size: 12px; color: #059669; font-weight: 600;">AREA (sq km)</p>
-                  <p style="margin: 4px 0 0 0; font-size: 18px; font-weight: 700; color: #047857;">${areaSqKm.toFixed(2)}</p>
+              ${totalAreaSqKm ? `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                  <div style="padding: 10px; background: #ecfdf5; border-radius: 6px; border-left: 3px solid #10b981;">
+                    <p style="margin: 0; font-size: 12px; color: #059669; font-weight: 600;">AREA (sq km)</p>
+                    <p style="margin: 4px 0 0 0; font-size: 18px; font-weight: 700; color: #047857;">${areaSqKm.toFixed(2)}</p>
+                  </div>
+                  <div style="padding: 10px; background: #fef3c7; border-radius: 6px; border-left: 3px solid #f59e0b;">
+                    <p style="margin: 0; font-size: 12px; color: #d97706; font-weight: 600;">AREA (ha)</p>
+                    <p style="margin: 4px 0 0 0; font-size: 18px; font-weight: 700; color: #b45309;">${areaHectares.toFixed(2)}</p>
+                  </div>
                 </div>
-                <div style="padding: 10px; background: #fef3c7; border-radius: 6px; border-left: 3px solid #f59e0b;">
-                  <p style="margin: 0; font-size: 12px; color: #d97706; font-weight: 600;">AREA (ha)</p>
-                  <p style="margin: 4px 0 0 0; font-size: 18px; font-weight: 700; color: #b45309;">${areaHectares.toFixed(2)}</p>
-                </div>
-              </div>
+              ` : ''}
               <div style="margin-top: 4px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
                 <p style="margin: 0; font-size: 12px; color: #6b7280;">
                   <strong>Center:</strong> ${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}
@@ -179,7 +197,7 @@ export function IntentBoundaryMapDisplay({ projectBoundary, activityLocation, pr
     return () => {
       map.current?.remove();
     };
-  }, [projectBoundary, activityLocation, province, district, llg]);
+  }, [projectBoundary, activityLocation, province, district, llg, totalAreaSqKm, areaSqKm, areaHectares]);
 
   if (!projectBoundary) {
     return (
@@ -216,15 +234,15 @@ export function IntentBoundaryMapDisplay({ projectBoundary, activityLocation, pr
           className="h-96 w-full rounded-lg border border-border overflow-hidden"
           style={{ touchAction: 'none' }}
         />
-        {areaInfo && (
+        {totalAreaSqKm && (
           <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
             <div className="p-3 bg-primary/10 rounded-lg">
               <p className="text-muted-foreground text-xs font-medium mb-1">Area (sq km)</p>
-              <p className="font-bold text-lg">{areaInfo.sqKm.toFixed(2)}</p>
+              <p className="font-bold text-lg">{areaSqKm.toFixed(2)}</p>
             </div>
             <div className="p-3 bg-primary/10 rounded-lg">
               <p className="text-muted-foreground text-xs font-medium mb-1">Area (hectares)</p>
-              <p className="font-bold text-lg">{areaInfo.hectares.toFixed(2)}</p>
+              <p className="font-bold text-lg">{areaHectares.toFixed(2)}</p>
             </div>
           </div>
         )}

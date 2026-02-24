@@ -18,9 +18,9 @@ export function StaffKPIs() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Fetch permit applications
-        const { data: applications } = await supabase
-          .from('permit_applications')
+        // Fetch permit applications from view
+        const { data: applications } = await (supabase as any)
+          .from('vw_permit_applications_list')
           .select('status, created_at, approval_date');
 
         // Fetch financial transactions

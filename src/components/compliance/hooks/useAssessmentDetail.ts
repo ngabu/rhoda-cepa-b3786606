@@ -37,8 +37,6 @@ interface AssessmentDetail {
     estimated_cost_kina?: number | null;
     land_area?: number | null;
     permit_period?: string | null;
-    ods_details?: any;
-    waste_contaminant_details?: any;
     activity_type?: string;
     fee_amount?: number | null;
     commencement_date?: string | null;
@@ -59,7 +57,8 @@ export function useAssessmentDetail(assessmentId: string) {
 
       console.log('Fetching assessment:', assessmentId);
       
-      // Fetch compliance assessment with related data including all fee calculation parameters
+      // Fetch compliance assessment with related data
+      // Use the view for the permit application data to get all joined fields
       const { data: assessment, error: assessmentError } = await supabase
         .from('compliance_assessments')
         .select(`
@@ -68,27 +67,14 @@ export function useAssessmentDetail(assessmentId: string) {
             id,
             title,
             application_number,
-            entity_name,
-            entity_type,
             status,
-            activity_classification,
-            activity_level,
             permit_type,
             description,
             activity_location,
-            coordinates,
-            compliance_checks,
             uploaded_files,
             application_date,
             user_id,
-            fee_amount,
-            estimated_cost_kina,
-            permit_period,
-            ods_details,
-            waste_contaminant_details,
-            activity_category,
-            commencement_date,
-            completion_date,
+            entity_id,
             activity_id
           )
         `)
@@ -100,15 +86,53 @@ export function useAssessmentDetail(assessmentId: string) {
         throw assessmentError;
       }
 
+      // Get permit application from the assessment
+      const permitApp = assessment?.permit_applications as any;
+      let enrichedPermitApplicationWithTypes: any = null;
+      
+      if (permitApp?.id) {
+        const [
+          { data: classificationData },
+          { data: projectData },
+          { data: feeData },
+          { data: locationData },
+          { data: complianceData },
+          { data: entityData }
+        ] = await Promise.all([
+          supabase.from('permit_classification_details').select('*').eq('permit_application_id', permitApp.id).maybeSingle(),
+          supabase.from('permit_project_details').select('*').eq('permit_application_id', permitApp.id).maybeSingle(),
+          supabase.from('permit_fee_details').select('*').eq('permit_application_id', permitApp.id).maybeSingle(),
+          supabase.from('permit_location_details').select('*').eq('permit_application_id', permitApp.id).maybeSingle(),
+          supabase.from('permit_compliance_details').select('*').eq('permit_application_id', permitApp.id).maybeSingle(),
+          permitApp.entity_id ? supabase.from('entities').select('name, entity_type').eq('id', permitApp.entity_id).maybeSingle() : Promise.resolve({ data: null })
+        ]);
+
+        enrichedPermitApplicationWithTypes = {
+          ...permitApp,
+          entity_name: entityData?.name || null,
+          entity_type: entityData?.entity_type || null,
+          activity_classification: classificationData?.activity_classification || null,
+          activity_level: classificationData?.activity_level || null,
+          activity_category: classificationData?.activity_category || null,
+          estimated_cost_kina: projectData?.estimated_cost_kina || null,
+          commencement_date: projectData?.commencement_date || null,
+          completion_date: projectData?.completion_date || null,
+          fee_amount: feeData?.fee_amount || null,
+          permit_period: projectData?.operating_hours || null,
+          coordinates: locationData?.coordinates || null,
+          compliance_checks: complianceData?.compliance_checks || null,
+        };
+      }
+
       console.log('Fetched assessment:', assessment);
 
       const fullAssessmentData = {
         ...assessment,
-        permit_application: assessment.permit_applications
+        permit_application: enrichedPermitApplicationWithTypes || assessment?.permit_applications
       };
 
       console.log('Full assessment data with fee parameters:', fullAssessmentData);
-      setAssessment(fullAssessmentData as AssessmentDetail);
+      setAssessment(fullAssessmentData as unknown as AssessmentDetail);
 
     } catch (error: any) {
       console.error('Error fetching assessment:', error);

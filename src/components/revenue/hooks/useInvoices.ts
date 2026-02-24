@@ -109,13 +109,13 @@ export function useInvoices() {
       
       let permitsMap: Record<string, any> = {};
       if (permitIds.length > 0) {
-        const { data: permits } = await supabase
-          .from('permit_applications')
+        const { data: permits } = await (supabase as any)
+          .from('vw_permit_applications_list')
           .select('id, title, permit_number, permit_type, entity_name, entity_type')
           .in('id', permitIds);
         
         if (permits) {
-          permitsMap = permits.reduce((acc, p) => ({ ...acc, [p.id]: p }), {});
+          permitsMap = permits.reduce((acc: any, p: any) => ({ ...acc, [p.id]: p }), {});
         }
       }
 

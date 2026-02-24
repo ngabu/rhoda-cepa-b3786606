@@ -19,6 +19,7 @@ import { useIntentRegistrations } from '@/hooks/useIntentRegistrations';
 import { usePrescribedActivities } from '@/hooks/usePrescribedActivities';
 
 import { ReviewSubmitStep } from '@/components/public/steps/ReviewSubmitStep';
+import { savePermitDetailsFromFlat } from '@/services/permitDetails';
 
 const generateApplicationNumber = () => {
   const date = new Date();
@@ -86,6 +87,7 @@ export function ComprehensivePermitForm({ permitId, onSuccess, onCancel, isStand
     environmentalImpact: '',
     mitigationMeasures: '',
     uploadedFiles: [],
+    document_uploads: {}, // Categorized documents (EIA, EIS, etc.)
     calculatedFees: null,
     // PNG Environment Act 2000 fields - Activity Classification
     activity_level: '',
@@ -121,13 +123,19 @@ export function ComprehensivePermitForm({ permitId, onSuccess, onCancel, isStand
     consultation_period_start: '',
     consultation_period_end: '',
     // PNG Environment Act 2000 fields - Fees
-    fee_amount: 0,
+    application_fee: 0, // Base application fee
+    composite_fee: 0, // Composite fee for Environmental Permits
+    fee_amount: 0, // Total fee payable
     fee_breakdown: null,
+    fee_source: 'official' as 'official' | 'estimated', // Fee calculation source
+    processing_days: 0, // Processing days for fee calculation
     // PNG Environment Act 2000 fields - Requirements & Legal
     eia_required: false,
     eis_required: false,
     legal_declaration_accepted: false,
+    legal_declaration_accepted_at: null,
     compliance_commitment: false,
+    compliance_commitment_accepted_at: null,
     payment_status: 'pending',
     mandatory_fields_complete: false,
     complianceChecks: {
@@ -146,8 +154,9 @@ export function ComprehensivePermitForm({ permitId, onSuccess, onCancel, isStand
     const loadDraftData = async () => {
       if (draftId || permitId) {
         try {
-          const { data, error } = await supabase
-            .from('permit_applications')
+          // Use the view to get all fields including those from child tables
+          const { data, error } = await (supabase as any)
+            .from('vw_permit_applications_full')
             .select('*')
             .eq('id', draftId || permitId)
             .single();
@@ -180,6 +189,7 @@ export function ComprehensivePermitForm({ permitId, onSuccess, onCancel, isStand
               environmentalImpact: data.environmental_impact || '',
               mitigationMeasures: data.mitigation_measures || '',
               uploadedFiles: Array.isArray(data.uploaded_files) ? data.uploaded_files : [],
+              document_uploads: (typeof data.document_uploads === 'object' && data.document_uploads) ? data.document_uploads : {},
               calculatedFees: data.fee_breakdown,
               activity_level: data.activity_level || '',
               prescribed_activity_id: data.activity_id || '', // Map activity_id to prescribed_activity_id
@@ -190,34 +200,40 @@ export function ComprehensivePermitForm({ permitId, onSuccess, onCancel, isStand
               entity_id: data.entity_id || '', // Add entity_id mapping
               entity_name: data.entity_name || '', // Add entity_name mapping
               existing_permit_id: data.existing_permit_id || null, // Add existing permit mapping
-              intent_registration_id: null, // Will be set via form selection
+              intent_registration_id: data.intent_registration_id || null, // Load from saved data
               permit_category: data.permit_category || '',
               permit_type_id: data.permit_type_id || '',
               permit_type: data.permit_type || '',
-              permit_type_specific_data: data.permit_type_specific || {},
+              permit_type_specific_data: data.permit_type_specific_data || {},
               industrial_sector_id: data.industrial_sector_id || '', // Add industrial sector mapping
               district: data.district || '', // Add district mapping
               province: data.province || '', // Add province mapping
-              llg: '', // LLG field
-              // Project Site Info fields
-              project_site_description: '',
-              site_ownership_details: '',
-              government_agreement: '',
-              departments_approached: '',
-              approvals_required: '',
-              landowner_negotiation_status: '',
-              total_area_sqkm: '',
-              project_boundary: null,
-              selected_intent_activity_description: '',
+              llg: data.llg || '', // LLG field
+              // Project Site Info fields - load from database
+              project_site_description: data.project_site_description || '',
+              site_ownership_details: data.site_ownership_details || '',
+              government_agreement: data.government_agreements_details || '',
+              departments_approached: data.consulted_departments || '',
+              approvals_required: data.required_approvals || '',
+              landowner_negotiation_status: data.landowner_negotiation_status || '',
+              total_area_sqkm: data.total_area_sqkm?.toString() || '',
+              project_boundary: data.project_boundary || null,
+              selected_intent_activity_description: data.activity_classification || '',
               public_consultation_proof: Array.isArray(data.public_consultation_proof) ? data.public_consultation_proof : [],
               consultation_period_start: data.consultation_period_start || '',
               consultation_period_end: data.consultation_period_end || '',
-              fee_amount: data.fee_amount || 0,
+              application_fee: data.application_fee || (typeof data.fee_breakdown === 'object' && data.fee_breakdown ? (data.fee_breakdown as any).administrationFee : 0) || 0,
+              composite_fee: data.composite_fee || (typeof data.fee_breakdown === 'object' && data.fee_breakdown ? (data.fee_breakdown as any).compositeFee : 0) || 0,
+              fee_amount: data.fee_amount || (typeof data.fee_breakdown === 'object' && data.fee_breakdown ? (data.fee_breakdown as any).totalFee : 0) || 0,
               fee_breakdown: data.fee_breakdown,
+              fee_source: data.fee_source || (typeof data.fee_breakdown === 'object' && data.fee_breakdown ? (data.fee_breakdown as any).source : 'official') || 'official',
+              processing_days: data.processing_days || (typeof data.fee_breakdown === 'object' && data.fee_breakdown ? (data.fee_breakdown as any).processingDays : 0) || 0,
               eia_required: data.eia_required || false,
               eis_required: data.eis_required || false,
               legal_declaration_accepted: data.legal_declaration_accepted || false,
+              legal_declaration_accepted_at: data.legal_declaration_accepted_at || null,
               compliance_commitment: data.compliance_commitment || false,
+              compliance_commitment_accepted_at: data.compliance_commitment_accepted_at || null,
               payment_status: data.payment_status || 'pending',
               mandatory_fields_complete: data.mandatory_fields_complete || false,
               complianceChecks: (typeof data.compliance_checks === 'object' && data.compliance_checks && 
@@ -264,6 +280,8 @@ export function ComprehensivePermitForm({ permitId, onSuccess, onCancel, isStand
         
         setFormData(prev => ({
           ...prev,
+          // Application Title from intent's project_title
+          applicationTitle: (selectedIntent as any).project_title || prev.applicationTitle,
           // Project Description from intent
           projectDescription: selectedIntent.activity_description || prev.projectDescription,
           // Classification fields from intent
@@ -338,6 +356,30 @@ export function ComprehensivePermitForm({ permitId, onSuccess, onCancel, isStand
     });
   };
 
+  // Helper function to extract Water Extraction and Waste Discharge details from permit_type_specific_data
+  const extractEnvironmentalPermitDetails = (permitTypeSpecificData: Record<string, any> | undefined | null) => {
+    if (!permitTypeSpecificData) return { waterExtractionDetails: null, wasteDischargeDetails: null };
+
+    const waterExtractionDetails: Record<string, any> = {};
+    const wasteDischargeDetails: Record<string, any> = {};
+
+    Object.entries(permitTypeSpecificData).forEach(([key, value]) => {
+      // Water Extraction fields start with 'we_'
+      if (key.startsWith('we_')) {
+        waterExtractionDetails[key] = value;
+      }
+      // Waste Discharge fields start with 'wd_'
+      if (key.startsWith('wd_')) {
+        wasteDischargeDetails[key] = value;
+      }
+    });
+
+    return {
+      waterExtractionDetails: Object.keys(waterExtractionDetails).length > 0 ? waterExtractionDetails : null,
+      wasteDischargeDetails: Object.keys(wasteDischargeDetails).length > 0 ? wasteDischargeDetails : null
+    };
+  };
+
   // Auto-save function for draft changes
   const saveDraftChanges = async (updatedFormData: typeof formData) => {
     try {
@@ -347,58 +389,94 @@ export function ComprehensivePermitForm({ permitId, onSuccess, onCancel, isStand
       const updateId = permitId || lastSavedDraftId;
       if (!updateId) return;
 
+      // Extract Water Extraction and Waste Discharge details
+      const { waterExtractionDetails, wasteDischargeDetails } = extractEnvironmentalPermitDetails(updatedFormData.permit_type_specific_data);
+
+      // Only include columns that exist in permit_applications table
       const applicationData = {
         title: updatedFormData.applicationTitle,
-        permit_type: updatedFormData.prescribedActivity || 'General Permit',
+        permit_type: updatedFormData.permit_type || '',
         description: updatedFormData.projectDescription,
         status: 'draft',
         user_id: user.id,
         entity_id: updatedFormData.entity_id || null,
-        entity_name: updatedFormData.entity_name || updatedFormData.organizationName,
-        entity_type: updatedFormData.entity_type || (updatedFormData.organizationName ? 'COMPANY' : 'INDIVIDUAL'),
         existing_permit_id: updatedFormData.existing_permit_id || null,
-        project_description: updatedFormData.projectDescription,
-        project_start_date: updatedFormData.projectStartDate || null,
-        project_end_date: updatedFormData.projectEndDate || null,
-        environmental_impact: updatedFormData.environmentalImpact || null,
-        mitigation_measures: updatedFormData.mitigationMeasures || null,
         activity_location: updatedFormData.projectLocation,
-        estimated_cost_kina: 0,
-        compliance_checks: updatedFormData.complianceChecks,
-        coordinates: updatedFormData.coordinates,
         uploaded_files: updatedFormData.uploadedFiles,
+        document_uploads: updatedFormData.document_uploads || {},
         is_draft: true,
         current_step: 10,
         application_number: updatedFormData.applicationNumber,
-        activity_level: updatedFormData.activity_level || null,
         activity_id: updatedFormData.prescribed_activity_id || null,
-        activity_category: updatedFormData.activity_category || null,
-        activity_subcategory: updatedFormData.activity_subcategory || null,
-        activity_classification: updatedFormData.activity_description || null,
-        permit_category: updatedFormData.permit_category || null,
         permit_type_id: updatedFormData.permit_type_id || null,
-        eia_required: updatedFormData.eia_required,
-        eis_required: updatedFormData.eis_required,
-        public_consultation_proof: updatedFormData.public_consultation_proof,
-        consultation_period_start: updatedFormData.consultation_period_start || null,
-        consultation_period_end: updatedFormData.consultation_period_end || null,
-        legal_declaration_accepted: updatedFormData.legal_declaration_accepted,
-        compliance_commitment: updatedFormData.compliance_commitment,
-        payment_status: updatedFormData.payment_status,
         mandatory_fields_complete: updatedFormData.mandatory_fields_complete,
-        commencement_date: updatedFormData.projectStartDate || null,
-        completion_date: updatedFormData.projectEndDate || null,
-        fee_amount: updatedFormData.fee_amount || 0,
-        fee_breakdown: updatedFormData.fee_breakdown || null,
         industrial_sector_id: updatedFormData.industrial_sector_id || null,
-        district: updatedFormData.district || null,
-        province: updatedFormData.province || null,
+        intent_registration_id: updatedFormData.intent_registration_id || null,
+        owner_name: updatedFormData.owner_name || null,
       };
 
       await supabase
         .from('permit_applications')
         .update(applicationData)
         .eq('id', updateId);
+
+      // Save details to child tables
+      await savePermitDetailsFromFlat(updateId, {
+        // Water & Waste
+        water_extraction_details: waterExtractionDetails,
+        waste_contaminant_details: wasteDischargeDetails,
+        // Location
+        province: updatedFormData.province,
+        district: updatedFormData.district,
+        llg: updatedFormData.llg,
+        project_boundary: updatedFormData.project_boundary,
+        coordinates: updatedFormData.coordinates,
+        total_area_sqkm: updatedFormData.total_area_sqkm ? parseFloat(updatedFormData.total_area_sqkm) : undefined,
+        project_site_description: updatedFormData.project_site_description,
+        site_ownership_details: updatedFormData.site_ownership_details,
+        land_type: updatedFormData.land_type,
+        tenure: updatedFormData.tenure,
+        legal_description: updatedFormData.legal_description,
+        // Consultation
+        consultation_period_start: updatedFormData.consultation_period_start,
+        consultation_period_end: updatedFormData.consultation_period_end,
+        consulted_departments: updatedFormData.departments_approached,
+        public_consultation_proof: updatedFormData.public_consultation_proof,
+        landowner_negotiation_status: updatedFormData.landowner_negotiation_status,
+        government_agreements_details: updatedFormData.government_agreement,
+        required_approvals: updatedFormData.approvals_required,
+        // Fee
+        application_fee: updatedFormData.calculatedFees?.administrationFee || updatedFormData.application_fee,
+        fee_amount: updatedFormData.calculatedFees?.totalFee || updatedFormData.fee_amount,
+        fee_breakdown: updatedFormData.calculatedFees || updatedFormData.fee_breakdown,
+        fee_source: updatedFormData.calculatedFees?.source || updatedFormData.fee_source,
+        composite_fee: updatedFormData.calculatedFees?.compositeFee || updatedFormData.composite_fee,
+        processing_days: updatedFormData.calculatedFees?.processingDays || updatedFormData.processing_days,
+        payment_status: updatedFormData.payment_status,
+        // Project
+        project_description: updatedFormData.projectDescription,
+        project_start_date: updatedFormData.projectStartDate,
+        project_end_date: updatedFormData.projectEndDate,
+        commencement_date: updatedFormData.projectStartDate,
+        completion_date: updatedFormData.projectEndDate,
+        environmental_impact: updatedFormData.environmentalImpact,
+        mitigation_measures: updatedFormData.mitigationMeasures,
+        // Classification
+        permit_category: updatedFormData.permit_category,
+        activity_classification: updatedFormData.activity_description,
+        activity_category: updatedFormData.activity_category,
+        activity_subcategory: updatedFormData.activity_subcategory,
+        activity_level: updatedFormData.activity_level,
+        eia_required: updatedFormData.eia_required,
+        eis_required: updatedFormData.eis_required,
+        permit_type_specific_data: updatedFormData.permit_type_specific_data,
+        // Compliance
+        compliance_checks: updatedFormData.complianceChecks,
+        compliance_commitment: updatedFormData.compliance_commitment,
+        compliance_commitment_accepted_at: updatedFormData.compliance_commitment_accepted_at,
+        legal_declaration_accepted: updatedFormData.legal_declaration_accepted,
+        legal_declaration_accepted_at: updatedFormData.legal_declaration_accepted_at,
+      });
 
       console.log('💾 Auto-saved draft changes');
     } catch (error) {
@@ -444,62 +522,156 @@ export function ComprehensivePermitForm({ permitId, onSuccess, onCancel, isStand
         projectEndDate: formData.projectEndDate
       });
       
+      // Extract Water Extraction and Waste Discharge details for dedicated columns
+      const { waterExtractionDetails, wasteDischargeDetails } = extractEnvironmentalPermitDetails(formData.permit_type_specific_data);
+
+      // For final submission, upload any base64 stored documents to storage
+      let finalDocumentUploads = { ...(formData.document_uploads || {}) };
+      let finalUploadedFiles = [...(formData.uploadedFiles || [])];
+      let finalConsultationProof = [...(formData.public_consultation_proof || [])];
+      
+      if (!isDraft) {
+        // Upload document_uploads that have base64 fileData to storage
+        for (const [docType, docData] of Object.entries(finalDocumentUploads)) {
+          const doc = docData as any;
+          if (doc?.fileData && !doc.fromWarehouse) {
+            try {
+              // Convert base64 back to blob
+              const base64Response = await fetch(doc.fileData);
+              const blob = await base64Response.blob();
+              
+              // Upload to storage
+              const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${doc.name.split('.').pop()}`;
+              const filePath = `${user.id}/permit-documents/${fileName}`;
+              
+              const { error: uploadError } = await supabase.storage
+                .from('documents')
+                .upload(filePath, blob, {
+                  cacheControl: '3600',
+                  upsert: false,
+                  contentType: doc.type
+                });
+              
+              if (uploadError) {
+                console.error('Failed to upload document:', uploadError);
+                continue;
+              }
+              
+              // Update the document reference with the file path (remove base64 data)
+              finalDocumentUploads[docType] = {
+                id: doc.id,
+                name: doc.name,
+                size: doc.size,
+                type: doc.type,
+                fromDatabase: true,
+                file_path: filePath,
+              };
+              
+              console.log(`📤 Uploaded document ${docType} to storage: ${filePath}`);
+            } catch (uploadErr) {
+              console.error(`Failed to upload document ${docType}:`, uploadErr);
+            }
+          }
+        }
+
+        // Upload uploaded_files that have base64 fileData to storage
+        finalUploadedFiles = await Promise.all(
+          finalUploadedFiles.map(async (file: any) => {
+            if (file?.fileData && !file.fromWarehouse && !file.fromDatabase) {
+              try {
+                const base64Response = await fetch(file.fileData);
+                const blob = await base64Response.blob();
+                const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${file.name.split('.').pop()}`;
+                const filePath = `${user.id}/permit-documents/${fileName}`;
+                
+                const { error: uploadError } = await supabase.storage
+                  .from('documents')
+                  .upload(filePath, blob, { cacheControl: '3600', upsert: false, contentType: file.type });
+                
+                if (uploadError) {
+                  console.error('Failed to upload file:', uploadError);
+                  return file;
+                }
+                
+                console.log(`📤 Uploaded file to storage: ${filePath}`);
+                return { id: file.id, name: file.name, size: file.size, type: file.type, fromDatabase: true, file_path: filePath };
+              } catch (err) {
+                console.error('Failed to upload file:', err);
+                return file;
+              }
+            }
+            return file;
+          })
+        );
+
+        // Upload public_consultation_proof that have base64 fileData to storage
+        finalConsultationProof = await Promise.all(
+          finalConsultationProof.map(async (file: any) => {
+            if (file?.fileData && !file.fromWarehouse && !file.fromDatabase) {
+              try {
+                const base64Response = await fetch(file.fileData);
+                const blob = await base64Response.blob();
+                const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${file.name.split('.').pop()}`;
+                const filePath = `${user.id}/consultation-documents/${fileName}`;
+                
+                const { error: uploadError } = await supabase.storage
+                  .from('documents')
+                  .upload(filePath, blob, { cacheControl: '3600', upsert: false, contentType: file.type });
+                
+                if (uploadError) {
+                  console.error('Failed to upload consultation proof:', uploadError);
+                  return file;
+                }
+                
+                console.log(`📤 Uploaded consultation proof to storage: ${filePath}`);
+                return { id: file.id, name: file.name, size: file.size, type: file.type, fromDatabase: true, file_path: filePath };
+              } catch (err) {
+                console.error('Failed to upload consultation proof:', err);
+                return file;
+              }
+            }
+            return file;
+          })
+        );
+      }
+
+      // For drafts, store documents as metadata only (not uploaded to final storage)
+      // For submission, use finalDocumentUploads which has been uploaded to storage
       const applicationData = {
         title: formData.applicationTitle,
-        permit_type: formData.prescribedActivity || 'General Permit',
+        permit_type: formData.permit_type || '',
         description: formData.projectDescription,
-        status: isDraft ? 'draft' : 'submitted',
+        status: isDraft ? 'draft' : 'pending',
         user_id: user.id,
         entity_id: formData.entity_id || null,
-        entity_name: formData.entity_name || formData.organizationName,
-        entity_type: formData.entity_type || (formData.organizationName ? 'COMPANY' : 'INDIVIDUAL'),
         existing_permit_id: formData.existing_permit_id || null,
-        // Project details - use correct database columns
-        project_description: formData.projectDescription,
-        project_start_date: formData.projectStartDate || null,
-        project_end_date: formData.projectEndDate || null,
-        environmental_impact: formData.environmentalImpact || null,
-        mitigation_measures: formData.mitigationMeasures || null,
         activity_location: formData.projectLocation,
-        estimated_cost_kina: 0,
-        compliance_checks: formData.complianceChecks,
-        coordinates: formData.coordinates,
-        uploaded_files: formData.uploadedFiles,
+        uploaded_files: isDraft ? formData.uploadedFiles : finalUploadedFiles,
+        document_uploads: isDraft ? formData.document_uploads || {} : finalDocumentUploads,
         is_draft: isDraft,
         current_step: 10,
         application_number: generatedAppNumber,
         application_date: isDraft ? null : new Date().toISOString(),
-        // PNG Environment Act 2000 fields - Activity Classification & Requirements
-        activity_level: formData.activity_level || null,
         activity_id: formData.prescribed_activity_id || null,
-        activity_category: formData.activity_category || null,
-        activity_subcategory: formData.activity_subcategory || null,
-        activity_classification: formData.activity_description || null,
-        permit_category: formData.permit_category || null,
         permit_type_id: formData.permit_type_id || null,
-        eia_required: formData.eia_required,
-        eis_required: formData.eis_required,
-        // PNG Environment Act 2000 fields - Public Consultation
-        public_consultation_proof: formData.public_consultation_proof,
-        consultation_period_start: formData.consultation_period_start || null,
-        consultation_period_end: formData.consultation_period_end || null,
-        // PNG Environment Act 2000 fields - Legal Compliance
-        legal_declaration_accepted: formData.legal_declaration_accepted,
-        compliance_commitment: formData.compliance_commitment,
-        payment_status: formData.payment_status,
         mandatory_fields_complete: formData.mandatory_fields_complete,
-        // Date fields - ensure null for empty dates
-        commencement_date: formData.projectStartDate || null,
-        completion_date: formData.projectEndDate || null,
-        // Location and sector fields
         industrial_sector_id: formData.industrial_sector_id || null,
-        district: formData.district || null,
-        province: formData.province || null,
+        intent_registration_id: formData.intent_registration_id || null,
+        owner_name: formData.owner_name || null,
       };
 
       let result;
-      if (permitId || (isDraft && lastSavedDraftId)) {
-        // Update existing application
+      const draftIdToDelete = lastSavedDraftId;
+      
+      if (!isDraft && draftIdToDelete) {
+        // SUBMISSION: Create new record and delete draft afterward
+        result = await supabase
+          .from('permit_applications')
+          .insert(applicationData)
+          .select()
+          .single();
+      } else if (permitId || (isDraft && lastSavedDraftId)) {
+        // Update existing application (draft save or editing existing permit)
         const updateId = permitId || lastSavedDraftId;
         result = await supabase
           .from('permit_applications')
@@ -508,7 +680,7 @@ export function ComprehensivePermitForm({ permitId, onSuccess, onCancel, isStand
           .select()
           .single();
       } else {
-        // Create new application
+        // Create new application (new draft or direct submit without prior draft)
         result = await supabase
           .from('permit_applications')
           .insert(applicationData)
@@ -518,6 +690,106 @@ export function ComprehensivePermitForm({ permitId, onSuccess, onCancel, isStand
 
       const { data: permitApp, error: permitError } = result;
       if (permitError) throw permitError;
+
+      // Save permit-specific details to normalized child tables
+      if (permitApp?.id) {
+        try {
+          await savePermitDetailsFromFlat(permitApp.id, {
+            // Water & Waste
+            water_extraction_details: waterExtractionDetails,
+            waste_contaminant_details: wasteDischargeDetails,
+            // Location
+            province: formData.province,
+            district: formData.district,
+            llg: formData.llg,
+            project_boundary: formData.project_boundary,
+            coordinates: formData.coordinates,
+            total_area_sqkm: formData.total_area_sqkm ? parseFloat(formData.total_area_sqkm) : undefined,
+            project_site_description: formData.project_site_description,
+            site_ownership_details: formData.site_ownership_details,
+            land_type: formData.land_type,
+            tenure: formData.tenure,
+            legal_description: formData.legal_description,
+            // Consultation
+            consultation_period_start: formData.consultation_period_start,
+            consultation_period_end: formData.consultation_period_end,
+            consulted_departments: formData.departments_approached,
+            public_consultation_proof: isDraft ? formData.public_consultation_proof : finalConsultationProof,
+            landowner_negotiation_status: formData.landowner_negotiation_status,
+            government_agreements_details: formData.government_agreement,
+            required_approvals: formData.approvals_required,
+            // Fee
+            application_fee: formData.calculatedFees?.administrationFee || formData.application_fee,
+            fee_amount: formData.calculatedFees?.totalFee || formData.fee_amount,
+            fee_breakdown: formData.calculatedFees || formData.fee_breakdown,
+            fee_source: formData.calculatedFees?.source || formData.fee_source,
+            composite_fee: formData.calculatedFees?.compositeFee || formData.composite_fee,
+            processing_days: formData.calculatedFees?.processingDays || formData.processing_days,
+            payment_status: formData.payment_status,
+            // Project
+            project_description: formData.projectDescription,
+            project_start_date: formData.projectStartDate,
+            project_end_date: formData.projectEndDate,
+            commencement_date: formData.projectStartDate,
+            completion_date: formData.projectEndDate,
+            environmental_impact: formData.environmentalImpact,
+            mitigation_measures: formData.mitigationMeasures,
+            // Classification
+            permit_category: formData.permit_category,
+            activity_classification: formData.activity_description,
+            activity_category: formData.activity_category,
+            activity_subcategory: formData.activity_subcategory,
+            activity_level: formData.activity_level,
+            eia_required: formData.eia_required,
+            eis_required: formData.eis_required,
+            permit_type_specific_data: formData.permit_type_specific_data,
+            // Compliance
+            compliance_checks: formData.complianceChecks,
+            compliance_commitment: formData.compliance_commitment,
+            compliance_commitment_accepted_at: formData.compliance_commitment_accepted_at,
+            legal_declaration_accepted: formData.legal_declaration_accepted,
+            legal_declaration_accepted_at: formData.legal_declaration_accepted_at,
+          });
+          console.log('💾 Saved permit details to child tables');
+        } catch (childError) {
+          console.error('Error saving to child tables:', childError);
+          // Non-fatal - the main application was saved
+        }
+      }
+
+      // If this was a submission from a draft, delete the draft record
+      if (!isDraft && draftIdToDelete && permitApp?.id !== draftIdToDelete) {
+        try {
+          // Delete any documents linked to the old draft
+          await supabase
+            .from('documents')
+            .delete()
+            .eq('permit_id', draftIdToDelete);
+          
+          // Delete child table records for the draft
+          await supabase.from('permit_location_details').delete().eq('permit_application_id', draftIdToDelete);
+          await supabase.from('permit_consultation_details').delete().eq('permit_application_id', draftIdToDelete);
+          await supabase.from('permit_fee_details').delete().eq('permit_application_id', draftIdToDelete);
+          await supabase.from('permit_project_details').delete().eq('permit_application_id', draftIdToDelete);
+          await supabase.from('permit_classification_details').delete().eq('permit_application_id', draftIdToDelete);
+          await supabase.from('permit_compliance_details').delete().eq('permit_application_id', draftIdToDelete);
+          
+          // Delete the draft permit application
+          const { error: deleteError } = await supabase
+            .from('permit_applications')
+            .delete()
+            .eq('id', draftIdToDelete);
+          
+          if (deleteError) {
+            console.warn('Failed to delete draft after submission:', deleteError);
+          } else {
+            console.log('🗑️ Draft deleted after successful submission:', draftIdToDelete);
+          }
+        } catch (deleteErr) {
+          console.warn('Error cleaning up draft:', deleteErr);
+          // Non-fatal - the submission was successful
+        }
+      }
 
       toast({
         title: isDraft ? "Draft Saved!" : "Application Submitted!",
@@ -562,129 +834,71 @@ export function ComprehensivePermitForm({ permitId, onSuccess, onCancel, isStand
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     
-    if (lastSavedDraftId) {
-      // If we have a saved draft, upload files to storage and database
-      try {
-        const { data: user } = await supabase.auth.getUser();
-        if (!user.user) throw new Error('Not authenticated');
-
-        const uploadedFileData = [];
-        
-        for (const file of files) {
-          // Upload file to storage
-          const fileName = `${Date.now()}-${Math.random()}.${file.name.split('.').pop()}`;
-          const filePath = `${user.user.id}/permit-documents/${fileName}`;
-          
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('documents')
-            .upload(filePath, file, {
-              cacheControl: '3600',
-              upsert: false
-            });
-
-          if (uploadError) throw uploadError;
-
-          // Save document record to database
-          const { data: docData, error: docError } = await supabase
-            .from('documents')
-            .insert({
-              filename: file.name,
-              file_path: filePath,
-              file_size: file.size,
-              mime_type: file.type,
-              user_id: user.user.id,
-              permit_id: lastSavedDraftId
-            })
-            .select()
-            .single();
-
-          if (docError) throw docError;
-          
-          uploadedFileData.push({
-            id: docData.id,
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            lastModified: file.lastModified,
-            fromDatabase: true
-          });
-        }
-        
-        toast({
-          title: "Files Uploaded",
-          description: `${files.length} file(s) uploaded successfully to storage.`
-        });
-        
-        // Update form data with uploaded files
-        handleInputChange('uploadedFiles', [...(formData.uploadedFiles || []), ...uploadedFileData]);
-        
-      } catch (error) {
-        console.error('Error uploading files:', error);
-        toast({
-          title: "Upload Error",
-          description: "Failed to upload files to storage. Saving as metadata only.",
-          variant: "destructive"
-        });
-        
-        // Fallback to metadata-only storage
-        const fileData = files.map(file => ({
-          id: Date.now() + Math.random(),
+    // Helper to convert file to base64
+    const fileToBase64 = (file: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = error => reject(error);
+      });
+    };
+    
+    // For all cases, store file as base64 metadata (will be uploaded to storage on final submit)
+    // This keeps drafts temporary and lightweight
+    try {
+      const uploadedFileData = await Promise.all(
+        files.map(async (file) => ({
+          id: `file_${Date.now()}_${Math.random().toString(36).substring(7)}`,
           name: file.name,
           size: file.size,
           type: file.type,
-          lastModified: file.lastModified
-        }));
-        
-        handleInputChange('uploadedFiles', [...(formData.uploadedFiles || []), ...fileData]);
-      }
-    } else {
-      // For new forms without a saved draft, just store metadata
-      const fileData = files.map(file => ({
-        id: Date.now() + Math.random(),
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        lastModified: file.lastModified
-      }));
+          lastModified: file.lastModified,
+          fromDatabase: false,
+          fileData: await fileToBase64(file), // Store base64 for later upload
+        }))
+      );
       
-      handleInputChange('uploadedFiles', [...(formData.uploadedFiles || []), ...fileData]);
+      handleInputChange('uploadedFiles', [...(formData.uploadedFiles || []), ...uploadedFileData]);
+      
+      toast({
+        title: "Files Added",
+        description: `${files.length} file(s) added. They will be uploaded when you submit the application.`
+      });
+    } catch (error) {
+      console.error('Error processing files:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process files. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
   const removeFile = async (fileId: string) => {
     const fileToRemove = (formData.uploadedFiles || []).find((file: any) => file.id === fileId);
     
-    if (fileToRemove && fileToRemove.fromDatabase) {
-      // If file is from database, also delete from storage and database
+    if (fileToRemove && fileToRemove.fromDatabase && fileToRemove.file_path) {
+      // If file is from database/storage, also delete from storage and database
       try {
-        const { data, error } = await supabase
-          .from('documents')
-          .select('file_path')
-          .eq('id', fileId)
-          .single();
-          
-        if (error) throw error;
-        
         // Delete from storage
         const { error: storageError } = await supabase.storage
           .from('documents')
-          .remove([data.file_path]);
+          .remove([fileToRemove.file_path]);
 
         if (storageError) {
           console.warn('Failed to delete from storage:', storageError);
         }
 
-        // Delete from database
-        const { error: dbError } = await supabase
+        // Try to delete from documents table if it exists there
+        await supabase
           .from('documents')
           .delete()
-          .eq('id', fileId);
-
-        if (dbError) throw dbError;
+          .eq('file_path', fileToRemove.file_path);
         
         toast({
           title: "File Deleted",
-          description: "File removed from storage and database."
+          description: "File removed successfully."
         });
       } catch (error) {
         console.error('Error deleting file:', error);
@@ -696,6 +910,7 @@ export function ComprehensivePermitForm({ permitId, onSuccess, onCancel, isStand
       }
     }
     
+    // Always remove from form data
     const updatedFiles = (formData.uploadedFiles || []).filter((file: any) => file.id !== fileId);
     handleInputChange('uploadedFiles', updatedFiles);
   };
@@ -721,12 +936,12 @@ export function ComprehensivePermitForm({ permitId, onSuccess, onCancel, isStand
     ),
     project: <ProjectAndSpecificDetailsTab formData={formData} handleInputChange={handleInputChange} hasLinkedIntent={hasLinkedIntent} />,
     location: <LocationTab formData={formData} handleInputChange={handleInputChange} hasLinkedIntent={hasLinkedIntent} />,
-    consultation: <PublicConsultationStep data={formData} onChange={(updates) => setFormData(prev => ({ ...prev, ...updates }))} hasLinkedIntent={hasLinkedIntent} />,
+    consultation: <PublicConsultationStep data={formData} onChange={(updates) => handleInputChange(updates)} hasLinkedIntent={hasLinkedIntent} />,
     documents: <DocumentsTab formData={formData} handleInputChange={handleInputChange} handleFileUpload={handleFileUpload} removeFile={removeFile} formatFileSize={formatFileSize} permitId={permitId || lastSavedDraftId} activityLevel={formData.activity_level} />,
     fees: (
       <ApplicationFeeStep 
         data={formData} 
-        onChange={() => {}} // Disabled for public users
+        onChange={(updates) => handleInputChange(updates)}
       />
     ),
     

@@ -32,7 +32,7 @@ interface EntityDetails {
   id: string;
   name: string;
   entity_type: string;
-  'registered address'?: string;
+  registered_address?: string;
   postal_address?: string;
   email?: string;
   phone?: string;
@@ -65,7 +65,7 @@ export function IntentRegistrationReviewForm({ intentId, onBack }: IntentRegistr
         .from('intent_registrations')
         .select(`
           *,
-          entity:entities!inner(id, name, entity_type)
+          entity:entities!intent_registrations_entity_id_fkey(id, name, entity_type)
         `)
         .eq('id', intentId)
         .in('status', ['submitted', 'approved', 'rejected', 'under_review'])

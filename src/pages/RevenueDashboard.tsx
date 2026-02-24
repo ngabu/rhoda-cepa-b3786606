@@ -10,6 +10,7 @@ import { RevenueItemCodesManagement } from '@/components/revenue/RevenueItemCode
 import { RevenueReports } from '@/components/revenue/RevenueReports';
 import RevenueAnalyticsReportsNew from '@/components/revenue/RevenueAnalyticsReportsNew';
 import { RevenueKPIs } from '@/components/revenue/RevenueKPIs';
+import { RevenueFeeMap } from '@/components/revenue/RevenueFeeMap';
 import { RevenueEntitiesList } from '@/components/revenue/RevenueEntitiesList';
 import { RevenuePermitsList } from '@/components/revenue/RevenuePermitsList';
 import { RevenueIntentRegistrationsList } from '@/components/revenue/RevenueIntentRegistrationsList';
@@ -19,6 +20,7 @@ import { AppSettings } from '@/components/public/AppSettings';
 import { useAuth } from '@/contexts/AuthContext';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { RevenueSidebar } from '@/components/revenue/RevenueSidebar';
+import { UnitNotificationsPanel } from '@/components/notifications/UnitNotificationsPanel';
 
 export default function RevenueDashboard() {
   const { profile } = useAuth();
@@ -55,6 +57,7 @@ export default function RevenueDashboard() {
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
                 <TabsContent value="dashboard" className="space-y-4 md:space-y-6">
                   <RevenueKPIs />
+                  <RevenueFeeMap />
                 </TabsContent>
 
                 <TabsContent value="listings-intents" className="space-y-4 md:space-y-6">
@@ -118,6 +121,10 @@ export default function RevenueDashboard() {
 
                 <TabsContent value="staff-management" className="space-y-4 md:space-y-6">
                   <StaffManagement unit="revenue" />
+                </TabsContent>
+
+                <TabsContent value="notifications" className="space-y-4 md:space-y-6">
+                  <UnitNotificationsPanel unit="revenue" />
                 </TabsContent>
               </Tabs>
             </div>

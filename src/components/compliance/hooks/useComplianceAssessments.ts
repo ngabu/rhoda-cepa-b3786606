@@ -79,8 +79,9 @@ export function useComplianceAssessments() {
       let permitApplicationsData: any[] = [];
       
       if (permitApplicationIds.length > 0) {
-        const { data: applications, error: applicationsError } = await supabase
-          .from('permit_applications')
+        // Use view for read operations to get entity info
+        const { data: applications, error: applicationsError } = await (supabase as any)
+          .from('vw_permit_applications_compliance')
           .select(`
             id,
             title,

@@ -31,9 +31,9 @@ export default function PerformanceMetrics() {
         .select('*')
         .eq('user_type', 'staff');
 
-      // Fetch all applications with assessments
-      const { data: applications } = await supabase
-        .from('permit_applications')
+      // Fetch all applications with assessments - use view for read operations
+      const { data: applications } = await (supabase as any)
+        .from('vw_permit_applications_full')
         .select(`
           *,
           compliance_assessments(*)

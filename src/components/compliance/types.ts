@@ -22,12 +22,25 @@ export interface PermitApplication {
   assigned_compliance_officer_id: string | null;
   assigned_officer_name: string | null;
   assigned_officer_email: string | null;
+  // Entity info from JOIN
   entity_name: string | null;
   entity_type: string | null;
   entity: {
     name: string;
     entity_type: string;
   };
+  // Location from child table
+  province?: string | null;
+  district?: string | null;
+  // Classification from child table
+  activity_level?: string | null;
+  activity_classification?: string | null;
+  eia_required?: boolean | null;
+  eis_required?: boolean | null;
+  // Compliance from child table
+  compliance_checks?: any;
+  compliance_commitment?: boolean | null;
+  legal_declaration_accepted?: boolean | null;
   created_at: string;
   updated_at: string;
 }

@@ -48,9 +48,9 @@ export default function StrategicReports() {
           break;
       }
 
-      // Fetch applications data
-      const { data: applications } = await supabase
-        .from('permit_applications')
+      // Fetch applications data from view
+      const { data: applications } = await (supabase as any)
+        .from('vw_permit_applications_list')
         .select('*')
         .gte('created_at', startDate.toISOString())
         .order('created_at', { ascending: true });

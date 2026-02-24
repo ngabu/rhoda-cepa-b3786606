@@ -13,8 +13,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Building, User, FileText, AlertCircle, CheckCircle, XCircle, Clock, MapPin, ChevronsUpDown, ChevronDown, Calendar, Trash2, Edit } from 'lucide-react';
 import { format } from 'date-fns';
-import { PermitDetailsReadOnlyView } from './PermitDetailsReadOnlyView';
+import { PermitApplicationDetailsCollapsible } from './PermitApplicationDetailsCollapsible';
 import { PermitApplicationsMap } from './PermitApplicationsMap';
+import { calculateBoundaryCenter } from '@/utils/mapUtils';
+import { usePermitTypes } from '@/hooks/usePermitTypes';
 
 interface Permit {
   id: string;
@@ -31,9 +33,50 @@ interface Permit {
   entity_type?: string;
   province?: string;
   district?: string;
+  llg?: string;
   coordinates?: any;
+  project_boundary?: any;
   activity_level?: string;
+  activity_category?: string;
+  activity_subcategory?: string;
+  activity_classification?: string;
+  activity_location?: string;
+  industrial_sector_id?: string;
+  permit_type_id?: string;
+  permit_type_specific_data?: any;
+  project_description?: string;
+  project_site_description?: string;
+  site_ownership_details?: string;
+  environmental_impact?: string;
+  mitigation_measures?: string;
+  commencement_date?: string;
+  completion_date?: string;
+  estimated_cost_kina?: number;
+  permit_period?: string;
+  consultation_period_start?: string;
+  consultation_period_end?: string;
+  public_consultation_proof?: any;
+  fee_amount?: number;
+  fee_breakdown?: any;
+  payment_status?: string;
+  eia_required?: boolean;
+  eis_required?: boolean;
+  legal_declaration_accepted?: boolean;
+  compliance_commitment?: boolean;
   created_at: string;
+  application_number?: string;
+  total_area_sqkm?: number;
+  government_agreements_details?: string;
+  consulted_departments?: string;
+  required_approvals?: string;
+  landowner_negotiation_status?: string;
+  intent_registration_id?: string;
+  existing_permit_id?: string;
+  // Fee fields
+  application_fee?: number;
+  // Document fields
+  document_uploads?: Record<string, any>;
+  uploaded_files?: any[];
 }
 
 interface PermitRegistrationListProps {
@@ -44,11 +87,12 @@ interface PermitRegistrationListProps {
 export function PermitRegistrationList({ onNavigateToNewApplication, onNavigateToEditApplication }: PermitRegistrationListProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { permitTypes } = usePermitTypes();
   const [permits, setPermits] = useState<Permit[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPermit, setSelectedPermit] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<string>('details');
+  const [activeTab, setActiveTab] = useState<string>('mapping');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [permitToDelete, setPermitToDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -57,8 +101,9 @@ export function PermitRegistrationList({ onNavigateToNewApplication, onNavigateT
     if (!user) return;
 
     try {
+      // Use view to get entity info and child table data via JOINs
       const { data, error } = await (supabase as any)
-        .from('permit_applications')
+        .from('vw_permit_applications_full')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -94,10 +139,10 @@ export function PermitRegistrationList({ onNavigateToNewApplication, onNavigateT
       case 'draft':
       case 'pending':
         return <Clock className="w-4 h-4 text-warning" />;
-      case 'submitted':
-      case 'under_initial_review':
-      case 'under_technical_review':
+      case 'under_review':
         return <AlertCircle className="w-4 h-4 text-info" />;
+      case 'requires_clarification':
+        return <AlertCircle className="w-4 h-4 text-warning" />;
       default:
         return <AlertCircle className="w-4 h-4 text-muted-foreground" />;
     }
@@ -107,9 +152,7 @@ export function PermitRegistrationList({ onNavigateToNewApplication, onNavigateT
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
       draft: 'secondary',
       pending: 'secondary',
-      submitted: 'outline',
-      under_initial_review: 'outline',
-      under_technical_review: 'outline',
+      under_review: 'outline',
       approved: 'default',
       rejected: 'destructive',
       requires_clarification: 'secondary'
@@ -121,12 +164,21 @@ export function PermitRegistrationList({ onNavigateToNewApplication, onNavigateT
     );
   };
 
+  const formatPermitType = (permit: Permit) => {
+    const permitType = permit.permit_type_id
+      ? permitTypes.find((pt) => pt.id === permit.permit_type_id)
+      : permitTypes.find((pt) => pt.name === permit.permit_type);
+
+    const label = (permitType?.display_name ?? permit.permit_type ?? '').replace(/\s+Permit$/i, '');
+    return label || 'Unspecified';
+  };
+
   const canDelete = (status: string) => {
-    return ['draft', 'rejected', 'requires_clarification'].includes(status);
+    return ['draft', 'pending', 'rejected', 'requires_clarification'].includes(status);
   };
 
   const canEdit = (status: string) => {
-    return ['draft', 'requires_clarification'].includes(status);
+    return ['draft', 'pending', 'requires_clarification'].includes(status);
   };
 
   const handleDeleteClick = (permitId: string, e: React.MouseEvent) => {
@@ -206,11 +258,18 @@ export function PermitRegistrationList({ onNavigateToNewApplication, onNavigateT
           Draft ({permits.filter(p => p.status === 'draft').length})
         </Button>
         <Button
-          variant={statusFilter === 'submitted' ? 'default' : 'outline'}
-          onClick={() => setStatusFilter('submitted')}
+          variant={statusFilter === 'pending' ? 'default' : 'outline'}
+          onClick={() => setStatusFilter('pending')}
           size="sm"
         >
-          Submitted ({permits.filter(p => p.status === 'submitted').length})
+          Pending ({permits.filter(p => p.status === 'pending').length})
+        </Button>
+        <Button
+          variant={statusFilter === 'under_review' ? 'default' : 'outline'}
+          onClick={() => setStatusFilter('under_review')}
+          size="sm"
+        >
+          Under Review ({permits.filter(p => p.status === 'under_review').length})
         </Button>
         <Button
           variant={statusFilter === 'approved' ? 'default' : 'outline'}
@@ -278,7 +337,7 @@ export function PermitRegistrationList({ onNavigateToNewApplication, onNavigateT
                         {permit.permit_number || <span className="text-muted-foreground">-</span>}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{permit.permit_type}</Badge>
+                        <Badge variant="outline">{formatPermitType(permit)}</Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -318,29 +377,27 @@ export function PermitRegistrationList({ onNavigateToNewApplication, onNavigateT
                           <div className="border-t border-glass/30 bg-white/80 dark:bg-primary/5 backdrop-blur-md p-6">
                             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                               <TabsList className="grid w-full grid-cols-2">
-                                <TabsTrigger value="details">Application Details</TabsTrigger>
                                 <TabsTrigger value="mapping">Project Site Mapping</TabsTrigger>
+                                <TabsTrigger value="details">Application Details</TabsTrigger>
                               </TabsList>
-
-                              <TabsContent value="details" className="space-y-4 mt-4">
-                                <PermitDetailsReadOnlyView permit={selectedPermitData as any} />
-                              </TabsContent>
 
                               <TabsContent value="mapping" className="mt-4">
                                 <PermitApplicationsMap
                                   key={`map-${selectedPermitData.id}`}
                                   showAllApplications={false}
-                                  existingBoundary={selectedPermitData.coordinates}
+                                  existingBoundary={selectedPermitData.project_boundary}
                                   onBoundarySave={() => {}}
-                                  coordinates={{ 
-                                    lat: selectedPermitData.coordinates?.lat || -6.314993, 
-                                    lng: selectedPermitData.coordinates?.lng || 147.1494 
-                                  }}
+                                  coordinates={calculateBoundaryCenter(selectedPermitData.project_boundary)}
                                   onCoordinatesChange={() => {}}
                                   readOnly={true}
                                   district={selectedPermitData.district}
                                   province={selectedPermitData.province}
+                                  llg={selectedPermitData.llg}
                                 />
+                              </TabsContent>
+
+                              <TabsContent value="details" className="space-y-4 mt-4">
+                                <PermitApplicationDetailsCollapsible permit={selectedPermitData} />
                               </TabsContent>
                             </Tabs>
 
@@ -385,11 +442,20 @@ export function PermitRegistrationList({ onNavigateToNewApplication, onNavigateT
                                   </Alert>
                                 )}
 
-                                {selectedPermitData.status === 'submitted' && (
+                                {selectedPermitData.status === 'pending' && (
+                                  <Alert>
+                                    <Clock className="h-4 w-4" />
+                                    <AlertDescription>
+                                      Your application is pending review. You can still edit or delete this application.
+                                    </AlertDescription>
+                                  </Alert>
+                                )}
+
+                                {selectedPermitData.status === 'under_review' && (
                                   <Alert>
                                     <AlertCircle className="h-4 w-4" />
                                     <AlertDescription>
-                                      Your application has been submitted and is awaiting initial review.
+                                      Your application is currently under review by CEPA staff.
                                     </AlertDescription>
                                   </Alert>
                                 )}

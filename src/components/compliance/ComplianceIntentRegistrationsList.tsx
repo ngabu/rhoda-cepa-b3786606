@@ -24,6 +24,7 @@ interface IntentRegistration {
   user_id: string;
   entity_id: string;
   activity_level: string;
+  project_title: string | null;
   activity_description: string;
   preparatory_work_description: string;
   commencement_date: string;
@@ -102,7 +103,7 @@ export function ComplianceIntentRegistrationsList() {
         .from('intent_registrations')
         .select(`
           *,
-          entity:entities(id, name, entity_type)
+          entity:entities!intent_registrations_entity_id_fkey(id, name, entity_type)
         `)
         .order('created_at', { ascending: false });
 

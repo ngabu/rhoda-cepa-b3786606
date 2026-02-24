@@ -61,19 +61,10 @@ export function ApplicationDetailDialog({ open, onOpenChange, permitApplicationI
     try {
       setLoading(true);
 
-      // Fetch application details
-      const { data: appData, error: appError } = await supabase
-        .from('permit_applications')
-        .select(`
-          id,
-          title,
-          permit_type,
-          status,
-          created_at,
-          updated_at,
-          application_number,
-          entity_name
-        `)
+      // Fetch application details from view
+      const { data: appData, error: appError } = await (supabase as any)
+        .from('vw_permit_applications_list')
+        .select('*')
         .eq('id', permitApplicationId)
         .single();
 
@@ -81,7 +72,16 @@ export function ApplicationDetailDialog({ open, onOpenChange, permitApplicationI
         console.error('Error fetching application:', appError);
         throw appError;
       }
-      setApplication(appData);
+      setApplication({
+        id: appData.id,
+        title: appData.title,
+        permit_type: appData.permit_type,
+        status: appData.status,
+        created_at: appData.created_at,
+        updated_at: appData.updated_at,
+        application_number: appData.application_number,
+        entity_name: appData.entity_name
+      });
 
       // Note: initial_assessments table has been removed - no longer needed
 

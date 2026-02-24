@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 project_id = "mkjugoonmpxsofbasjux"
 
 [functions.convertToGeoJSON]
@@ -20,3 +21,6 @@ verify_jwt = false
 
 [functions.ai-analytics]
 verify_jwt = false
+=======
+project_id = "mkjugoonmpxsofbasjux"
+>>>>>>> 792f6e2be59bbc249431d7d6b8abdc1b53cfa179

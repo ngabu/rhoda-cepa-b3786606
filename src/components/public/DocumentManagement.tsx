@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Upload, FileText, Download, Trash2, Eye, Filter, FolderOpen, X, Loader2, Book } from 'lucide-react';
+import { Upload, FileText, Download, Trash2, Eye, Filter, FolderOpen, X, Loader2, Book, GripVertical } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +16,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Select,
   SelectContent,
@@ -330,6 +340,10 @@ export function DocumentManagement() {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [uploadCategory, setUploadCategory] = useState<string>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [draggedFile, setDraggedFile] = useState<DocumentFile | null>(null);
+  const [dragOverCategory, setDragOverCategory] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState<{ id: string; filePath: string; filename: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -385,7 +399,7 @@ export function DocumentManagement() {
     try {
       const fileExt = selectedFile.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `${user.id}/documents/${fileName}`;
+      const filePath = `${user.id}/warehouse/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('documents')
@@ -470,18 +484,25 @@ export function DocumentManagement() {
     }
   };
 
-  const handleDelete = async (fileId: string, filePath: string) => {
+  const handleDeleteClick = (fileId: string, filePath: string, filename: string) => {
+    setFileToDelete({ id: fileId, filePath, filename });
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!fileToDelete) return;
+
     try {
       const { error: storageError } = await supabase.storage
         .from('documents')
-        .remove([filePath]);
+        .remove([fileToDelete.filePath]);
 
       if (storageError) throw storageError;
 
       const { error: dbError } = await supabase
         .from('documents')
         .delete()
-        .eq('id', fileId);
+        .eq('id', fileToDelete.id);
 
       if (dbError) throw dbError;
 
@@ -498,6 +519,9 @@ export function DocumentManagement() {
         description: "Failed to delete file",
         variant: "destructive",
       });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setFileToDelete(null);
     }
   };
 
@@ -531,6 +555,65 @@ export function DocumentManagement() {
   });
 
   const categoryCounts = getCategoryCounts();
+
+  // Drag and drop handlers
+  const handleDragStart = (e: React.DragEvent, file: DocumentFile) => {
+    setDraggedFile(file);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', file.id);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedFile(null);
+    setDragOverCategory(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, categoryId: string) => {
+    e.preventDefault();
+    if (categoryId !== 'all') {
+      setDragOverCategory(categoryId);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverCategory(null);
+  };
+
+  const handleDrop = async (e: React.DragEvent, categoryId: string) => {
+    e.preventDefault();
+    setDragOverCategory(null);
+
+    if (!draggedFile || categoryId === 'all') return;
+    if (draggedFile.document_type === categoryId) return;
+
+    try {
+      const { error } = await supabase
+        .from('documents')
+        .update({ document_type: categoryId })
+        .eq('id', draggedFile.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setFiles(prev => prev.map(f => 
+        f.id === draggedFile.id ? { ...f, document_type: categoryId } : f
+      ));
+
+      toast({
+        title: "Document Moved",
+        description: `Moved to ${getCategoryName(categoryId)}`,
+      });
+    } catch (error) {
+      console.error('Error moving document:', error);
+      toast({
+        title: "Move Failed",
+        description: "Failed to move document to new category",
+        variant: "destructive",
+      });
+    } finally {
+      setDraggedFile(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -570,16 +653,22 @@ export function DocumentManagement() {
                 {/* Categories Sidebar */}
                 <div className="w-72 border-r p-6">
                   <h3 className="font-semibold text-foreground mb-4">Categories</h3>
+                  <p className="text-xs text-muted-foreground mb-3">Drag documents to organize</p>
                   <div className="space-y-1">
                     {categories.map((category) => (
                       <button
                         key={category.id}
                         onClick={() => setSelectedCategory(category.id)}
+                        onDragOver={(e) => handleDragOver(e, category.id)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, category.id)}
                         className={cn(
-                          "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors",
+                          "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-200",
                           selectedCategory === category.id
                             ? "bg-primary/10 text-primary font-medium"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                          dragOverCategory === category.id && category.id !== 'all' && "bg-primary/20 border-2 border-dashed border-primary scale-[1.02]",
+                          category.id === 'all' && draggedFile && "opacity-50 cursor-not-allowed"
                         )}
                       >
                         <div className="flex items-center gap-2 min-w-0">
@@ -627,11 +716,23 @@ export function DocumentManagement() {
                       </div>
                     ) : (
                       filteredFiles.map((file) => (
-                        <Card key={file.id} className="border hover:border-primary/30 transition-colors">
+                        <Card 
+                          key={file.id} 
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, file)}
+                          onDragEnd={handleDragEnd}
+                          className={cn(
+                            "border hover:border-primary/30 transition-all cursor-grab active:cursor-grabbing",
+                            draggedFile?.id === file.id && "opacity-50 scale-[0.98]"
+                          )}
+                        >
                           <CardContent className="p-4">
                             <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-                                <FileText className="w-5 h-5 text-blue-500" />
+                              <div className="flex items-center gap-2">
+                                <GripVertical className="w-4 h-4 text-muted-foreground/50" />
+                                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                  <FileText className="w-5 h-5 text-blue-500" />
+                                </div>
                               </div>
                               <div className="flex-1 min-w-0">
                                 <h4 className="font-semibold text-foreground truncate">{file.filename}</h4>
@@ -659,7 +760,7 @@ export function DocumentManagement() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => handleDelete(file.id, file.file_path)}
+                                  onClick={() => handleDeleteClick(file.id, file.file_path, file.filename)}
                                   className="text-muted-foreground hover:text-destructive"
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -770,6 +871,24 @@ export function DocumentManagement() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Document</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{fileToDelete?.filename}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setFileToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

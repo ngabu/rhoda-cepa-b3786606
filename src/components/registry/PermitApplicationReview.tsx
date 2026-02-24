@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Clock, Search, Filter, MapPin, Shield, Receipt, UserCheck, ChevronDown, ChevronsUpDown, FileDown, Loader2 } from 'lucide-react';
+import { FileText, Clock, Search, Filter, MapPin, Shield, UserCheck, ChevronDown, ChevronsUpDown, FileDown, Loader2, Receipt } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
@@ -55,6 +55,90 @@ interface PermitApplication {
   province?: string | null;
   llg?: string | null;
   permit_specific_fields?: any;
+  // Location tab fields
+  project_site_description?: string | null;
+  site_ownership_details?: string | null;
+  total_area_sqkm?: number | null;
+  // Details of Application (Step 2) fields
+  legal_description?: string | null;
+  land_type?: string | null;
+  owner_name?: string | null;
+  tenure?: string | null;
+  existing_permits_details?: string | null;
+  government_agreements_details?: string | null;
+  consulted_departments?: string | null;
+  required_approvals?: string | null;
+  landowner_negotiation_status?: string | null;
+  // Activity Details fields
+  proposed_works_description?: string | null;
+  operating_hours?: string | null;
+  operational_capacity?: string | null;
+  operational_details?: string | null;
+  // Fee fields
+  application_fee?: number | null;
+  fee_amount?: number | null;
+  fee_breakdown?: any;
+  composite_fee?: number | null;
+  processing_days?: number | null;
+  fee_source?: string | null;
+  // Compliance fields
+  compliance_commitment?: boolean | null;
+  legal_declaration_accepted?: boolean | null;
+  eia_required?: boolean | null;
+  eis_required?: boolean | null;
+  // Consultation fields
+  consultation_period_start?: string | null;
+  consultation_period_end?: string | null;
+  public_consultation_proof?: any;
+  // Document fields
+  document_uploads?: any;
+  intent_registration_id?: string | null;
+  industrial_sector_id?: string | null;
+  // Classification fields
+  permit_category?: string | null;
+  permit_type_specific?: string | null;
+  permit_type_specific_data?: any;
+  ods_quota_allocation?: string | null;
+  // Prescribed activity fields
+  activity_category_number?: string | null;
+  prescribed_activity_description?: string | null;
+  activity_level_number?: number | null;
+  // Water & Waste details
+  water_extraction_details?: any;
+  effluent_discharge_details?: any;
+  solid_waste_details?: any;
+  hazardous_waste_details?: any;
+  marine_dumping_details?: any;
+  stormwater_details?: any;
+  waste_contaminant_details?: any;
+  // Chemical details
+  chemical_storage_details?: any;
+  fuel_storage_details?: any;
+  hazardous_material_details?: any;
+  pesticide_details?: any;
+  mining_chemical_details?: any;
+  ods_details?: any;
+  // Emission details
+  air_emission_details?: any;
+  ghg_emission_details?: any;
+  noise_emission_details?: any;
+  // Environmental details
+  biodiversity_abs_details?: any;
+  carbon_offset_details?: any;
+  land_clearing_details?: any;
+  soil_extraction_details?: any;
+  wildlife_trade_details?: any;
+  rehabilitation_details?: any;
+  // Industry details
+  aquaculture_details?: any;
+  mining_permit_details?: any;
+  forest_product_details?: any;
+  dredging_details?: any;
+  infrastructure_details?: any;
+  renewable_energy_details?: any;
+  research_details?: any;
+  monitoring_license_details?: any;
+  // Entity reference
   entity?: {
     id: string;
     name: string;
@@ -81,23 +165,81 @@ export function PermitApplicationReview() {
   const fetchApplications = async () => {
     try {
       setLoading(true);
+      // Use the comprehensive view that joins all child detail tables
       const { data, error } = await supabase
-        .from('permit_applications')
-        .select(`
-          *,
-          entity:entities(id, name, entity_type)
-        `)
+        .from('vw_permit_applications_full')
+        .select('*')
         .not('status', 'eq', 'approved')
         .not('status', 'eq', 'draft')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      const mappedApplications: PermitApplication[] = (data || []).map(app => ({
-        ...app,
-        entity_name: app.entity?.name || app.entity_name || null,
-        entity_type: app.entity?.entity_type || app.entity_type || null,
-      }));
+      const mappedApplications: PermitApplication[] = (data || []).map(app => {
+        const appAny = app as any;
+        return {
+          ...app,
+          // Map location details from view
+          province: appAny.province,
+          district: appAny.district,
+          llg: appAny.llg,
+          project_boundary: appAny.project_boundary,
+          coordinates: appAny.coordinates,
+          total_area_sqkm: appAny.total_area_sqkm,
+          project_site_description: appAny.project_site_description,
+          site_ownership_details: appAny.site_ownership_details,
+          land_type: appAny.land_type,
+          tenure: appAny.tenure,
+          legal_description: appAny.legal_description,
+          // Map project details from view
+          project_description: appAny.project_description,
+          project_start_date: appAny.project_start_date,
+          project_end_date: appAny.project_end_date,
+          commencement_date: appAny.commencement_date,
+          completion_date: appAny.completion_date,
+          estimated_cost_kina: appAny.estimated_cost_kina,
+          operational_details: appAny.operational_details,
+          operational_capacity: appAny.operational_capacity,
+          operating_hours: appAny.operating_hours,
+          environmental_impact: appAny.environmental_impact,
+          mitigation_measures: appAny.mitigation_measures,
+          proposed_works_description: appAny.proposed_works_description,
+          // Map classification details from view
+          permit_category: appAny.permit_category,
+          activity_classification: appAny.activity_classification,
+          activity_category: appAny.activity_category,
+          activity_subcategory: appAny.activity_subcategory,
+          activity_level: appAny.activity_level,
+          eia_required: appAny.eia_required,
+          eis_required: appAny.eis_required,
+          // Map consultation details from view
+          consultation_period_start: appAny.consultation_period_start,
+          consultation_period_end: appAny.consultation_period_end,
+          consulted_departments: appAny.consulted_departments,
+          public_consultation_proof: appAny.public_consultation_proof,
+          landowner_negotiation_status: appAny.landowner_negotiation_status,
+          government_agreements_details: appAny.government_agreements_details,
+          required_approvals: appAny.required_approvals,
+          // Map fee details from view
+          application_fee: appAny.application_fee,
+          fee_amount: appAny.fee_amount,
+          fee_breakdown: appAny.fee_breakdown,
+          composite_fee: appAny.composite_fee,
+          processing_days: appAny.processing_days,
+          fee_source: appAny.fee_source,
+          // Map compliance details from view
+          compliance_commitment: appAny.compliance_commitment,
+          legal_declaration_accepted: appAny.legal_declaration_accepted,
+          // Map entity reference
+          entity: appAny.entity_name ? {
+            id: appAny.entity_id || '',
+            name: appAny.entity_name,
+            entity_type: appAny.entity_type || ''
+          } : undefined,
+          entity_name: appAny.entity_name,
+          entity_type: appAny.entity_type,
+        };
+      });
       
       setApplications(mappedApplications);
     } catch (error) {
@@ -349,7 +491,7 @@ export function PermitApplicationReview() {
                                 </TabsTrigger>
                                 <TabsTrigger value="registration" className="flex items-center gap-1 text-xs">
                                   <FileText className="w-3 h-3" />
-                                  Registration
+                                  Permit Details
                                 </TabsTrigger>
                                 <TabsTrigger value="registry-review" className="flex items-center gap-1 text-xs">
                                   <FileText className="w-3 h-3" />
@@ -357,15 +499,15 @@ export function PermitApplicationReview() {
                                 </TabsTrigger>
                                 <TabsTrigger value="compliance-review" className="flex items-center gap-1 text-xs">
                                   <Shield className="w-3 h-3" />
-                                  Compliance
+                                  Compliance Review
                                 </TabsTrigger>
-                                <TabsTrigger value="invoice-payments" className="flex items-center gap-1 text-xs">
+                                <TabsTrigger value="invoice-payment" className="flex items-center gap-1 text-xs">
                                   <Receipt className="w-3 h-3" />
-                                  Invoices
+                                  Invoice & Payment
                                 </TabsTrigger>
                                 <TabsTrigger value="md-review" className="flex items-center gap-1 text-xs">
                                   <UserCheck className="w-3 h-3" />
-                                  MD Approval
+                                  MD Review & Approval
                                 </TabsTrigger>
                               </TabsList>
 
@@ -393,7 +535,7 @@ export function PermitApplicationReview() {
                                 />
                               </TabsContent>
 
-                              <TabsContent value="invoice-payments" className="mt-4">
+                              <TabsContent value="invoice-payment" className="mt-4">
                                 <PermitInvoicePaymentsTab 
                                   applicationId={app.id}
                                   entityId={app.entity_id}

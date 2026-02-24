@@ -167,8 +167,8 @@ export function EnhancedComplianceAssessmentForm({ assessmentId, onComplete }: E
         duration: parseInt(appData?.permit_period?.split(' ')[0]) || 1,
         projectCost: appData?.estimated_cost_kina || 0,
         landArea: 0,
-        odsChemicalType: appData?.ods_details?.chemical_type || '',
-        wasteType: appData?.waste_contaminant_details?.type || ''
+        odsChemicalType: '',
+        wasteType: ''
       });
 
       // Fetch additional data

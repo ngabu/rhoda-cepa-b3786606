@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -18,14 +19,36 @@ import {
   Waves,
   TrendingUp,
   Database,
-  Shield
+  Shield,
+  Loader2
 } from 'lucide-react';
+import { fetchPermitDetailsFlatteneed, PermitDetailsFlatteneed } from '@/services/permitDetails';
 
 interface ComprehensivePermitDetailsReadOnlyProps {
   application: any;
 }
 
 export function ComprehensivePermitDetailsReadOnly({ application }: ComprehensivePermitDetailsReadOnlyProps) {
+  const [details, setDetails] = useState<PermitDetailsFlatteneed | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const loadDetails = async () => {
+      if (application?.id) {
+        try {
+          const data = await fetchPermitDetailsFlatteneed(application.id);
+          setDetails(data);
+        } catch (error) {
+          console.error('Error loading permit details:', error);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+    loadDetails();
+  }, [application?.id]);
   
   const renderSection = (title: string, icon: React.ReactNode, data: any, fields: Array<{key: string, label: string, type?: 'text' | 'number' | 'date' | 'boolean' | 'array'}>) => {
     if (!data || Object.keys(data).length === 0) return null;
@@ -71,9 +94,18 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
     );
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="w-6 h-6 animate-spin text-primary mr-2" />
+        <span className="text-muted-foreground">Loading permit details...</span>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Operational Details */}
+      {/* Operational Details - these remain on application object */}
       {(application.operational_details || application.operational_capacity || application.operating_hours) && (
         <Card>
           <CardHeader>
@@ -109,7 +141,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Water Extraction Details',
         <Droplet className="w-5 h-5 text-blue-500" />,
-        application.water_extraction_details,
+        details?.water_extraction_details,
         [
           { key: 'source_type', label: 'Water Source Type' },
           { key: 'extraction_rate', label: 'Extraction Rate (L/day)', type: 'number' },
@@ -123,7 +155,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Effluent Discharge Details',
         <Droplet className="w-5 h-5 text-cyan-500" />,
-        application.effluent_discharge_details,
+        details?.effluent_discharge_details,
         [
           { key: 'discharge_type', label: 'Type of Discharge' },
           { key: 'discharge_volume', label: 'Discharge Volume (L/day)', type: 'number' },
@@ -137,7 +169,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Solid Waste Details',
         <Trash className="w-5 h-5 text-orange-500" />,
-        application.solid_waste_details,
+        details?.solid_waste_details,
         [
           { key: 'waste_type', label: 'Type of Waste' },
           { key: 'daily_generation', label: 'Daily Generation (kg/day)', type: 'number' },
@@ -151,7 +183,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Hazardous Waste Details',
         <AlertTriangle className="w-5 h-5 text-red-500" />,
-        application.hazardous_waste_details,
+        details?.hazardous_waste_details,
         [
           { key: 'waste_classification', label: 'Waste Classification' },
           { key: 'quantity', label: 'Estimated Quantity (kg/year)', type: 'number' },
@@ -165,7 +197,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Waste Contaminant Details',
         <AlertTriangle className="w-5 h-5 text-amber-500" />,
-        application.waste_contaminant_details,
+        details?.waste_contaminant_details,
         [
           { key: 'discharge_type', label: 'Discharge Type' },
           { key: 'discharge_volume', label: 'Discharge Volume', type: 'number' },
@@ -178,7 +210,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Air Emission Details',
         <Wind className="w-5 h-5 text-sky-500" />,
-        application.air_emission_details,
+        details?.air_emission_details,
         [
           { key: 'emission_sources', label: 'Emission Sources' },
           { key: 'pollutant_types', label: 'Pollutant Types', type: 'array' },
@@ -192,7 +224,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'GHG Emission Details',
         <TrendingUp className="w-5 h-5 text-purple-500" />,
-        application.ghg_emission_details,
+        details?.ghg_emission_details,
         [
           { key: 'annual_emissions', label: 'Annual Emissions (tCO2e)', type: 'number' },
           { key: 'emission_sources', label: 'Emission Sources', type: 'array' },
@@ -205,7 +237,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Carbon Offset Details',
         <Leaf className="w-5 h-5 text-green-500" />,
-        application.carbon_offset_details,
+        details?.carbon_offset_details,
         [
           { key: 'offset_type', label: 'Offset Type' },
           { key: 'offset_amount', label: 'Offset Amount (tCO2e)', type: 'number' },
@@ -218,7 +250,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Noise Emission Details',
         <Wind className="w-5 h-5 text-indigo-500" />,
-        application.noise_emission_details,
+        details?.noise_emission_details,
         [
           { key: 'noise_sources', label: 'Noise Sources' },
           { key: 'expected_levels', label: 'Expected Noise Levels (dB)' },
@@ -231,7 +263,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Ozone Depleting Substances (ODS)',
         <Shield className="w-5 h-5 text-blue-600" />,
-        application.ods_details,
+        details?.ods_details,
         [
           { key: 'ods_type', label: 'ODS Type' },
           { key: 'import_quantity', label: 'Import Quantity (MT CO2 eq)', type: 'number' },
@@ -244,7 +276,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Stormwater Management',
         <Waves className="w-5 h-5 text-blue-400" />,
-        application.stormwater_details,
+        details?.stormwater_details,
         [
           { key: 'catchment_area', label: 'Catchment Area (m²)', type: 'number' },
           { key: 'drainage_system', label: 'Drainage System' },
@@ -257,7 +289,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Mining Permit Details',
         <Mountain className="w-5 h-5 text-stone-600" />,
-        application.mining_permit_details,
+        details?.mining_permit_details,
         [
           { key: 'mineral_type', label: 'Mineral Type' },
           { key: 'extraction_method', label: 'Extraction Method' },
@@ -270,7 +302,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Mining Chemical Usage',
         <FlaskConical className="w-5 h-5 text-red-600" />,
-        application.mining_chemical_details,
+        details?.mining_chemical_details,
         [
           { key: 'chemical_types', label: 'Chemical Types', type: 'array' },
           { key: 'quantities', label: 'Annual Quantities' },
@@ -283,7 +315,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Soil Extraction Details',
         <Mountain className="w-5 h-5 text-amber-700" />,
-        application.soil_extraction_details,
+        details?.soil_extraction_details,
         [
           { key: 'extraction_volume', label: 'Extraction Volume (m³)', type: 'number' },
           { key: 'extraction_method', label: 'Extraction Method' },
@@ -296,7 +328,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Land Clearing Details',
         <TreePine className="w-5 h-5 text-green-700" />,
-        application.land_clearing_details,
+        details?.land_clearing_details,
         [
           { key: 'area_to_clear', label: 'Area to Clear (hectares)', type: 'number' },
           { key: 'vegetation_type', label: 'Vegetation Type' },
@@ -309,7 +341,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Dredging Details',
         <Waves className="w-5 h-5 text-teal-600" />,
-        application.dredging_details,
+        details?.dredging_details,
         [
           { key: 'dredging_area', label: 'Dredging Area (m²)', type: 'number' },
           { key: 'dredging_depth', label: 'Dredging Depth (m)', type: 'number' },
@@ -323,7 +355,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Marine Dumping Details',
         <Fish className="w-5 h-5 text-blue-700" />,
-        application.marine_dumping_details,
+        details?.marine_dumping_details,
         [
           { key: 'material_type', label: 'Material Type' },
           { key: 'volume', label: 'Volume (m³)', type: 'number' },
@@ -336,7 +368,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Infrastructure Details',
         <Building2 className="w-5 h-5 text-slate-600" />,
-        application.infrastructure_details,
+        details?.infrastructure_details,
         [
           { key: 'infrastructure_type', label: 'Infrastructure Type' },
           { key: 'dimensions', label: 'Dimensions/Scale' },
@@ -349,7 +381,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Hazardous Material Details',
         <AlertTriangle className="w-5 h-5 text-red-600" />,
-        application.hazardous_material_details,
+        details?.hazardous_material_details,
         [
           { key: 'material_types', label: 'Material Types', type: 'array' },
           { key: 'quantities', label: 'Quantities' },
@@ -363,7 +395,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Fuel Storage Details',
         <Database className="w-5 h-5 text-orange-600" />,
-        application.fuel_storage_details,
+        details?.fuel_storage_details,
         [
           { key: 'fuel_types', label: 'Fuel Types', type: 'array' },
           { key: 'storage_capacity', label: 'Total Storage Capacity (L)', type: 'number' },
@@ -377,7 +409,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Renewable Energy Details',
         <Zap className="w-5 h-5 text-yellow-500" />,
-        application.renewable_energy_details,
+        details?.renewable_energy_details,
         [
           { key: 'energy_type', label: 'Energy Type' },
           { key: 'capacity', label: 'Installed Capacity (MW)', type: 'number' },
@@ -390,7 +422,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Biodiversity & Access and Benefit Sharing',
         <TreePine className="w-5 h-5 text-green-600" />,
-        application.biodiversity_abs_details,
+        details?.biodiversity_abs_details,
         [
           { key: 'species_involved', label: 'Species Involved', type: 'array' },
           { key: 'collection_method', label: 'Collection Method' },
@@ -403,7 +435,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Wildlife Trade Details',
         <Fish className="w-5 h-5 text-teal-500" />,
-        application.wildlife_trade_details,
+        details?.wildlife_trade_details,
         [
           { key: 'species', label: 'Species' },
           { key: 'quantity', label: 'Quantity', type: 'number' },
@@ -417,7 +449,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Research Details',
         <FlaskConical className="w-5 h-5 text-purple-600" />,
-        application.research_details,
+        details?.research_details,
         [
           { key: 'research_objectives', label: 'Research Objectives' },
           { key: 'methodology', label: 'Methodology' },
@@ -430,7 +462,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Monitoring License Details',
         <FlaskConical className="w-5 h-5 text-indigo-600" />,
-        application.monitoring_license_details,
+        details?.monitoring_license_details,
         [
           { key: 'monitoring_type', label: 'Monitoring Type' },
           { key: 'parameters', label: 'Parameters to Monitor', type: 'array' },
@@ -443,7 +475,7 @@ export function ComprehensivePermitDetailsReadOnly({ application }: Comprehensiv
       {renderSection(
         'Rehabilitation & Closure Plan',
         <Leaf className="w-5 h-5 text-lime-600" />,
-        application.rehabilitation_details,
+        details?.rehabilitation_details,
         [
           { key: 'rehabilitation_plan', label: 'Rehabilitation Plan' },
           { key: 'timeline', label: 'Timeline' },

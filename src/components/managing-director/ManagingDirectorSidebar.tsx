@@ -20,9 +20,16 @@ import {
   FileCheck,
   BarChart3,
   Bot,
+  Bell,
+  User,
+  Cog,
+  LogOut,
 } from "lucide-react"
 import pngEmblem from "@/assets/png-emblem.png"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { useDirectorateNotifications } from "@/hooks/useDirectorateNotifications"
+import { useAuth } from "@/contexts/AuthContext"
+import { Badge } from "@/components/ui/badge"
 
 interface NavigationItem {
   title: string
@@ -48,6 +55,15 @@ const navigationItems: NavigationItem[] = [
   { title: "AI Analytics", value: "ai-analytics", icon: Bot },
 ]
 
+const endMenuItems: NavigationItem[] = [
+  { title: "Notifications", value: "notifications", icon: Bell },
+]
+
+const accountItems: NavigationItem[] = [
+  { title: "Profile", value: "profile", icon: User },
+  { title: "Settings", value: "settings", icon: Cog },
+]
+
 interface ManagingDirectorSidebarProps {
   activeTab: string
   onTabChange: (tab: string) => void
@@ -55,6 +71,8 @@ interface ManagingDirectorSidebarProps {
 
 export function ManagingDirectorSidebar({ activeTab, onTabChange }: ManagingDirectorSidebarProps) {
   const { state, isMobile, setOpenMobile } = useSidebar()
+  const { profile, signOut } = useAuth()
+  const { unreadCount } = useDirectorateNotifications(profile?.user_id)
   const [openSubMenus, setOpenSubMenus] = useState<string[]>(["listings"])
 
   const handleTabChange = (tab: string) => {
@@ -63,6 +81,15 @@ export function ManagingDirectorSidebar({ activeTab, onTabChange }: ManagingDire
       setOpenMobile(false)
     }
   }
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   const toggleSubMenu = (value: string) => {
     setOpenSubMenus((prev) =>
@@ -84,9 +111,9 @@ export function ManagingDirectorSidebar({ activeTab, onTabChange }: ManagingDire
     >
       <SidebarContent className="p-0 bg-gradient-to-b from-primary/90 to-primary/80 backdrop-blur-2xl">
         {/* Branding */}
-        <div className="p-6 pb-8 bg-primary-glow/90 backdrop-blur-xl rounded-br-[4rem] mb-4 shadow-glow">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-glow-accent p-1">
+        <div className={`pb-8 bg-primary-glow/90 backdrop-blur-xl mb-4 shadow-glow ${isCollapsed ? 'p-2 rounded-br-[2rem]' : 'p-6 rounded-br-[4rem]'}`}>
+          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
+            <div className={`bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-glow-accent p-1 ${isCollapsed ? 'w-8 h-8' : 'w-10 h-10'}`}>
               <img src={pngEmblem} alt="PNG Emblem" className="w-full h-full object-contain" />
             </div>
             {!isCollapsed && (
@@ -98,7 +125,7 @@ export function ManagingDirectorSidebar({ activeTab, onTabChange }: ManagingDire
           </div>
         </div>
 
-        <div className="px-4">
+        <div className={isCollapsed ? 'px-2' : 'px-4'}>
           <SidebarGroup>
             {!isCollapsed && <SidebarGroupLabel className="text-white/60 text-xs uppercase tracking-wider mb-2">Executive Operations</SidebarGroupLabel>}
             <SidebarGroupContent>
@@ -156,6 +183,67 @@ export function ManagingDirectorSidebar({ activeTab, onTabChange }: ManagingDire
                     </SidebarMenuItem>
                   )
                 )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <SidebarGroup className="mt-6">
+            {!isCollapsed && <SidebarGroupLabel className="text-white/60 text-xs uppercase tracking-wider mb-2">Notifications</SidebarGroupLabel>}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {endMenuItems.map((item) => (
+                  <SidebarMenuItem key={item.value}>
+                    <SidebarMenuButton asChild>
+                      <button
+                        onClick={() => handleTabChange(item.value)}
+                        className={`w-full ${getNavCls(activeTab === item.value)} relative`}
+                      >
+                        <item.icon className="w-5 h-5 shrink-0" />
+                        {!isCollapsed && <span className="ml-3 flex-1 text-left">{item.title}</span>}
+                        {unreadCount > 0 && (
+                          <Badge 
+                            variant="destructive" 
+                            className={`${isCollapsed ? 'absolute -top-1 -right-1' : ''} h-5 min-w-[1.25rem] rounded-full p-0 flex items-center justify-center text-xs`}
+                          >
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </Badge>
+                        )}
+                      </button>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <SidebarGroup className="mt-6">
+            {!isCollapsed && <SidebarGroupLabel className="text-white/60 text-xs uppercase tracking-wider mb-2">Account</SidebarGroupLabel>}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {accountItems.map((item) => (
+                  <SidebarMenuItem key={item.value}>
+                    <SidebarMenuButton asChild>
+                      <button
+                        onClick={() => handleTabChange(item.value)}
+                        className={`w-full ${getNavCls(activeTab === item.value)}`}
+                      >
+                        <item.icon className="w-5 h-5 shrink-0" />
+                        {!isCollapsed && <span className="ml-3 flex-1 text-left">{item.title}</span>}
+                      </button>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full text-white/80 hover:bg-red-500/20 hover:text-white transition-all duration-200 backdrop-blur-sm"
+                    >
+                      <LogOut className="w-5 h-5 shrink-0" />
+                      {!isCollapsed && <span className="ml-3 flex-1 text-left">Sign Out</span>}
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

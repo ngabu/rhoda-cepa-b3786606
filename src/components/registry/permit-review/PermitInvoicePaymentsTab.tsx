@@ -3,14 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Receipt, Download, FileText, Loader2, Eye, Paperclip, Upload, Lock } from 'lucide-react';
+import { Receipt, Download, FileText, Loader2, Eye, Paperclip, Upload, Lock, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface PermitInvoicePaymentsTabProps {
@@ -33,18 +35,41 @@ interface Invoice {
   document_path: string | null;
 }
 
+interface FeePayment {
+  id: string;
+  permit_application_id: string;
+  administration_fee: number;
+  technical_fee: number;
+  total_fee: number;
+  payment_status: string;
+  amount_paid: number;
+  payment_method: string | null;
+  payment_reference: string | null;
+  receipt_number: string | null;
+  paid_at: string | null;
+}
+
 export function PermitInvoicePaymentsTab({ applicationId, entityId, onStatusUpdate }: PermitInvoicePaymentsTabProps) {
   const { profile } = useAuth();
   const { toast } = useToast();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [feePayment, setFeePayment] = useState<FeePayment | null>(null);
   const [loading, setLoading] = useState(true);
   const [remarks, setRemarks] = useState('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  
+  // Payment fields
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentReference, setPaymentReference] = useState('');
+  const [receiptNumber, setReceiptNumber] = useState('');
+  const [amountPaid, setAmountPaid] = useState('');
   
   // Validation checkboxes
   const [invoicePaymentVerified, setInvoicePaymentVerified] = useState(false);
   const [cepaAccountsReconciled, setCepaAccountsReconciled] = useState(false);
+  const [paymentReceiptAttached, setPaymentReceiptAttached] = useState(false);
 
   // Check if user can edit this tab (only revenue staff)
   const canEdit = profile?.staff_unit === 'revenue' || 
@@ -52,23 +77,59 @@ export function PermitInvoicePaymentsTab({ applicationId, entityId, onStatusUpda
                   profile?.user_type === 'super_admin';
 
   useEffect(() => {
-    fetchInvoices();
+    fetchData();
   }, [applicationId, entityId]);
 
-  const fetchInvoices = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Fetch invoices
+      const { data: invoiceData, error: invoiceError } = await supabase
         .from('invoices')
         .select('*')
-        .or(`entity_id.eq.${entityId},permit_application_id.eq.${applicationId}`)
+        .or(`entity_id.eq.${entityId},permit_id.eq.${applicationId}`)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setInvoices(data || []);
+      if (invoiceError) throw invoiceError;
+      setInvoices(invoiceData || []);
+
+      // Fetch fee payment record
+      const { data: feeData, error: feeError } = await supabase
+        .from('fee_payments')
+        .select('*')
+        .eq('permit_application_id', applicationId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (feeError) throw feeError;
+      if (feeData) {
+        setFeePayment(feeData);
+        setPaymentMethod(feeData.payment_method || '');
+        setPaymentReference(feeData.payment_reference || '');
+        setReceiptNumber(feeData.receipt_number || '');
+        setAmountPaid(feeData.amount_paid?.toString() || '');
+      }
+
+      // Fetch saved review data
+      const { data: reviewData, error: reviewError } = await supabase
+        .from('permit_reviews')
+        .select('*')
+        .eq('permit_application_id', applicationId)
+        .eq('review_stage', 'revenue')
+        .maybeSingle();
+
+      if (!reviewError && reviewData) {
+        setRemarks(reviewData.remarks || '');
+        const validations = reviewData.validation_checks as Record<string, boolean> || {};
+        setInvoicePaymentVerified(validations.invoicePaymentVerified || false);
+        setCepaAccountsReconciled(validations.cepaAccountsReconciled || false);
+        setPaymentReceiptAttached(validations.paymentReceiptAttached || false);
+      }
     } catch (error) {
-      console.error('Error fetching invoices:', error);
-      toast({ title: 'Error', description: 'Failed to load invoices', variant: 'destructive' });
+      console.error('Error fetching data:', error);
+      toast({ title: 'Error', description: 'Failed to load invoice data', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -104,13 +165,78 @@ export function PermitInvoicePaymentsTab({ applicationId, entityId, onStatusUpda
         title: 'Success', 
         description: verified ? 'Invoice marked as paid' : 'Invoice marked as pending' 
       });
-      fetchInvoices();
+      fetchData();
       onStatusUpdate();
     } catch (error) {
       console.error('Error updating invoice:', error);
       toast({ title: 'Error', description: 'Failed to update invoice status', variant: 'destructive' });
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!canEdit) {
+      toast({ title: 'Error', description: 'You do not have permission to edit this section', variant: 'destructive' });
+      return;
+    }
+
+    if (!invoicePaymentVerified) {
+      toast({ title: 'Validation Required', description: 'Please verify invoice payment before submitting', variant: 'destructive' });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      // Update or create fee payment record
+      if (feePayment) {
+        const { error: feeError } = await supabase
+          .from('fee_payments')
+          .update({
+            payment_method: paymentMethod || null,
+            payment_reference: paymentReference || null,
+            receipt_number: receiptNumber || null,
+            amount_paid: parseFloat(amountPaid) || 0,
+            payment_status: invoicePaymentVerified && cepaAccountsReconciled ? 'paid' : 'partial',
+            paid_at: invoicePaymentVerified ? new Date().toISOString() : null,
+            approved_by: profile?.user_id
+          })
+          .eq('id', feePayment.id);
+
+        if (feeError) throw feeError;
+      }
+
+      // Save review data to permit_reviews
+      const reviewData = {
+        permit_application_id: applicationId,
+        review_stage: 'revenue',
+        reviewer_id: profile?.user_id,
+        remarks,
+        validation_checks: {
+          invoicePaymentVerified,
+          cepaAccountsReconciled,
+          paymentReceiptAttached
+        },
+        status: invoicePaymentVerified && cepaAccountsReconciled ? 'completed' : 'pending',
+        reviewed_at: new Date().toISOString()
+      };
+
+      const { error: reviewError } = await supabase
+        .from('permit_reviews')
+        .upsert(reviewData, { 
+          onConflict: 'permit_application_id,review_stage'
+        });
+
+      if (reviewError) throw reviewError;
+
+      toast({ title: 'Success', description: 'Revenue review saved successfully' });
+      onStatusUpdate();
+      fetchData();
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      toast({ title: 'Error', description: 'Failed to save review', variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -154,7 +280,7 @@ export function PermitInvoicePaymentsTab({ applicationId, entityId, onStatusUpda
       if (updateError) throw updateError;
 
       toast({ title: 'Success', description: 'Invoice document uploaded successfully' });
-      fetchInvoices();
+      fetchData();
     } catch (error) {
       console.error('Error uploading document:', error);
       toast({ title: 'Error', description: 'Failed to upload document', variant: 'destructive' });
@@ -240,6 +366,83 @@ export function PermitInvoicePaymentsTab({ applicationId, entityId, onStatusUpda
             </AlertDescription>
           </Alert>
         )}
+
+        {/* Fee Payment Summary */}
+        {feePayment && (
+          <div className="p-4 bg-emerald-500/5 rounded-lg border border-emerald-200 dark:border-emerald-900">
+            <Label className="text-sm font-semibold mb-3 block">Fee Payment Summary</Label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <span className="text-muted-foreground">Admin Fee:</span>
+                <p className="font-medium">K {feePayment.administration_fee?.toLocaleString() || '0'}</p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Technical Fee:</span>
+                <p className="font-medium">K {feePayment.technical_fee?.toLocaleString() || '0'}</p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Total Fee:</span>
+                <p className="font-semibold text-emerald-600">K {feePayment.total_fee?.toLocaleString() || '0'}</p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Status:</span>
+                <p>{getStatusBadge(feePayment.payment_status, null)}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Payment Details Form */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="paymentMethod">Payment Method</Label>
+            <Select value={paymentMethod} onValueChange={setPaymentMethod} disabled={!canEdit}>
+              <SelectTrigger className={!canEdit ? 'bg-muted cursor-not-allowed' : ''}>
+                <SelectValue placeholder="Select payment method" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                <SelectItem value="cheque">Cheque</SelectItem>
+                <SelectItem value="cash">Cash</SelectItem>
+                <SelectItem value="eftpos">EFTPOS</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="paymentReference">Payment Reference</Label>
+            <Input
+              id="paymentReference"
+              value={paymentReference}
+              onChange={(e) => setPaymentReference(e.target.value)}
+              placeholder="Enter payment reference number"
+              disabled={!canEdit}
+              className={!canEdit ? 'bg-muted cursor-not-allowed' : ''}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="receiptNumber">Receipt Number</Label>
+            <Input
+              id="receiptNumber"
+              value={receiptNumber}
+              onChange={(e) => setReceiptNumber(e.target.value)}
+              placeholder="Enter receipt number"
+              disabled={!canEdit}
+              className={!canEdit ? 'bg-muted cursor-not-allowed' : ''}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="amountPaid">Amount Paid (K)</Label>
+            <Input
+              id="amountPaid"
+              type="number"
+              value={amountPaid}
+              onChange={(e) => setAmountPaid(e.target.value)}
+              placeholder="0.00"
+              disabled={!canEdit}
+              className={!canEdit ? 'bg-muted cursor-not-allowed' : ''}
+            />
+          </div>
+        </div>
 
         {invoices.length === 0 ? (
           <div className="text-center py-8 border rounded-lg bg-muted/20">
@@ -365,6 +568,17 @@ export function PermitInvoicePaymentsTab({ applicationId, entityId, onStatusUpda
                 CEPA Accounts reconciliation completed
               </Label>
             </div>
+            <div className="flex items-center space-x-3">
+              <Checkbox
+                id="paymentReceiptAttached"
+                checked={paymentReceiptAttached}
+                onCheckedChange={(checked) => setPaymentReceiptAttached(!!checked)}
+                disabled={!canEdit}
+              />
+              <Label htmlFor="paymentReceiptAttached" className="text-sm font-normal cursor-pointer">
+                Payment receipt attached
+              </Label>
+            </div>
           </div>
         </div>
 
@@ -381,6 +595,24 @@ export function PermitInvoicePaymentsTab({ applicationId, entityId, onStatusUpda
             className={!canEdit ? 'bg-muted cursor-not-allowed' : ''}
           />
         </div>
+
+        {canEdit && (
+          <div className="flex gap-4 pt-4">
+            <Button onClick={handleSubmitReview} disabled={submitting} className="flex-1 bg-emerald-600 hover:bg-emerald-700">
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Save Revenue Review
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

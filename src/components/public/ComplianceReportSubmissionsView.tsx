@@ -7,15 +7,17 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { FileText, Plus, Calendar, Clock, CheckCircle2, AlertCircle, XCircle, Upload, Download, X, Building2 } from 'lucide-react';
+import { FileText, Plus, Calendar, Clock, CheckCircle2, AlertCircle, XCircle, Upload, Download, X, Building2, MessageSquare } from 'lucide-react';
 import { format, addMonths, addQuarters, differenceInDays } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useDocuments } from '@/hooks/useDocuments';
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DocumentWarehousePicker } from '@/components/shared/DocumentWarehousePicker';
 
 export function ComplianceReportSubmissionsView() {
   const { user } = useAuth();
@@ -23,13 +25,24 @@ export function ComplianceReportSubmissionsView() {
   const [selectedSchedule, setSelectedSchedule] = useState<any>(null);
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
   
+  // Create New Report state
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedPermitId, setSelectedPermitId] = useState("");
+  const [reportStartDate, setReportStartDate] = useState("");
+  const [reportEndDate, setReportEndDate] = useState("");
+  const [newReportDescription, setNewReportDescription] = useState("");
+  const [newReportFiles, setNewReportFiles] = useState<any[]>([]);
+  const [isNewReportPickerOpen, setIsNewReportPickerOpen] = useState(false);
+  const [isCreatingReport, setIsCreatingReport] = useState(false);
+  
   // Permit Compliance state
   const [reportType, setReportType] = useState("");
   const [reportPeriod, setReportPeriod] = useState("");
   const [executiveSummary, setExecutiveSummary] = useState("");
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [warehouseFiles, setWarehouseFiles] = useState<any[]>([]);
+  const [isWarehousePickerOpen, setIsWarehousePickerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { uploadDocument } = useDocuments();
+  
 
   // Get user's entities
   const { data: entities } = useQuery({
@@ -51,24 +64,25 @@ export function ComplianceReportSubmissionsView() {
     queryKey: ['user-approved-permits-with-entity', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from('permit_applications')
-        .select(`
-          id, 
-          permit_number, 
-          title,
-          status,
-          created_at,
-          entities (
-            id,
-            name,
-            entity_type
-          )
-        `)
+      const { data, error } = await (supabase as any)
+        .from('vw_permit_applications_list')
+        .select('*')
         .eq('user_id', user.id)
         .eq('status', 'approved');
       if (error) throw error;
-      return data || [];
+      // Map to expected format
+      return (data || []).map((p: any) => ({
+        id: p.id,
+        permit_number: p.permit_number,
+        title: p.title,
+        status: p.status,
+        created_at: p.created_at,
+        entities: {
+          id: p.entity_id,
+          name: p.entity_name,
+          entity_type: p.entity_type
+        }
+      }));
     },
     enabled: !!user?.id,
   });
@@ -86,7 +100,7 @@ export function ComplianceReportSubmissionsView() {
             id,
             permit_number,
             title,
-            entities (
+            entities:entities!permit_applications_entity_id_fkey (
               id,
               name,
               entity_type
@@ -137,15 +151,87 @@ export function ComplianceReportSubmissionsView() {
     };
   }) || [];
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setUploadedFiles(prev => [...prev, ...newFiles]);
+  const removeWarehouseFile = (docId: string) => {
+    setWarehouseFiles(prev => prev.filter(f => f.id !== docId));
+  };
+
+  const handleWarehouseSelect = (documents: any[]) => {
+    setWarehouseFiles(prev => {
+      const existingIds = prev.map(f => f.id);
+      const newDocs = documents.filter(d => !existingIds.includes(d.id));
+      return [...prev, ...newDocs];
+    });
+  };
+
+  // New Report handlers
+  const removeNewReportFile = (docId: string) => {
+    setNewReportFiles(prev => prev.filter(f => f.id !== docId));
+  };
+
+  const handleNewReportFileSelect = (documents: any[]) => {
+    setNewReportFiles(prev => {
+      const existingIds = prev.map(f => f.id);
+      const newDocs = documents.filter(d => !existingIds.includes(d.id));
+      return [...prev, ...newDocs];
+    });
+  };
+
+  const handleCreateNewReport = async () => {
+    if (!selectedPermitId || !reportStartDate || !reportEndDate) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setIsCreatingReport(true);
+    try {
+      // Create the compliance report
+      const { data: reportData, error: reportError } = await supabase
+        .from('compliance_reports')
+        .insert({
+          user_id: user?.id,
+          permit_id: selectedPermitId,
+          description: `${newReportDescription}\n\nReporting Period: ${reportStartDate} to ${reportEndDate}`,
+          status: 'submitted',
+          report_date: new Date().toISOString(),
+        })
+        .select()
+        .single();
+      
+      if (reportError) throw reportError;
+
+      // Link selected documents to the report by updating them in the documents table
+      if (newReportFiles.length > 0 && reportData) {
+        for (const file of newReportFiles) {
+          await supabase
+            .from('documents')
+            .update({ permit_id: selectedPermitId })
+            .eq('id', file.id);
+        }
+      }
+
+      toast.success("Compliance report created successfully");
+      queryClient.invalidateQueries({ queryKey: ['user-compliance-reports-detailed'] });
+
+      // Reset form
+      setIsCreateDialogOpen(false);
+      setSelectedPermitId("");
+      setReportStartDate("");
+      setReportEndDate("");
+      setNewReportDescription("");
+      setNewReportFiles([]);
+    } catch (error: any) {
+      toast.error("Failed to create compliance report: " + error.message);
+    } finally {
+      setIsCreatingReport(false);
     }
   };
 
-  const removeFile = (index: number) => {
-    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const handleSubmitComplianceReport = async () => {
@@ -169,10 +255,6 @@ export function ComplianceReportSubmissionsView() {
       
       if (error) throw error;
 
-      // Upload each file
-      for (const file of uploadedFiles) {
-        await uploadDocument(file, selectedSchedule.permitNumber);
-      }
 
       toast.success("Your compliance report has been submitted successfully");
       queryClient.invalidateQueries({ queryKey: ['user-compliance-reports-detailed'] });
@@ -183,7 +265,7 @@ export function ComplianceReportSubmissionsView() {
       setReportType("");
       setReportPeriod("");
       setExecutiveSummary("");
-      setUploadedFiles([]);
+      setWarehouseFiles([]);
     } catch (error: any) {
       toast.error("Failed to submit compliance report: " + error.message);
     } finally {
@@ -240,6 +322,10 @@ export function ComplianceReportSubmissionsView() {
             Submit and track your compliance reports
           </p>
         </div>
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Create New Report
+        </Button>
       </div>
 
       <Tabs defaultValue="submissions" className="w-full">
@@ -336,7 +422,7 @@ export function ComplianceReportSubmissionsView() {
                         <TableHead>Permit Title</TableHead>
                         <TableHead>Submission Date</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Review Notes</TableHead>
+                        <TableHead>Official Feedback</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -362,10 +448,15 @@ export function ComplianceReportSubmissionsView() {
                             </div>
                           </TableCell>
                           <TableCell>{getStatusBadge(report.status)}</TableCell>
-                          <TableCell className="max-w-[200px]">
-                            <p className="text-sm text-muted-foreground truncate">
-                              {report.review_notes || report.description || '-'}
-                            </p>
+                          <TableCell className="max-w-[250px]">
+                            {report.review_notes ? (
+                              <div className="flex items-start gap-2">
+                                <MessageSquare className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                                <p className="text-sm text-foreground">{report.review_notes}</p>
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground italic">No feedback yet</p>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -584,42 +675,48 @@ export function ComplianceReportSubmissionsView() {
             </div>
 
             {/* File Upload Section */}
-            <div className="space-y-2">
-              <Label>Upload Compliance Documents *</Label>
-              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
-                <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground mb-2">
-                  Upload completed report template, monitoring data, laboratory results, photos, and supporting evidence
-                </p>
-                <input
-                  type="file"
-                  multiple
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="file-upload"
-                  accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-                />
-                <Label htmlFor="file-upload">
-                  <Button variant="outline" type="button" asChild>
-                    <span>
-                      <FileText className="w-4 h-4 mr-2" />
-                      Choose Files
-                    </span>
+            <div className="space-y-3">
+              <Label>Attach Compliance Documents *</Label>
+              
+              {/* Single Upload Button - Opens Warehouse */}
+              <div className="border-2 border-dashed border-primary/30 rounded-lg p-6 bg-primary/5">
+                <div className="flex flex-col items-center text-center gap-3">
+                  <Upload className="h-10 w-10 text-primary" />
+                  <div>
+                    <p className="font-medium text-foreground">Upload Compliance Documents</p>
+                    <p className="text-sm text-muted-foreground">
+                      Select from your document warehouse or upload new files
+                    </p>
+                  </div>
+                  <Button 
+                    variant="default" 
+                    type="button" 
+                    onClick={() => setIsWarehousePickerOpen(true)}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Documents
                   </Button>
-                </Label>
+                </div>
               </div>
               
-              {/* Display uploaded files */}
-              {uploadedFiles.length > 0 && (
-                <div className="mt-4 space-y-2">
-                  <Label className="text-sm font-medium">Selected Files:</Label>
-                  {uploadedFiles.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
-                      <span className="text-sm truncate flex-1">{file.name}</span>
+              {/* Display attached files */}
+              {warehouseFiles.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-primary" />
+                    Attached Documents ({warehouseFiles.length}):
+                  </Label>
+                  {warehouseFiles.map((file) => (
+                    <div key={file.id} className="flex items-center justify-between p-2 bg-primary/10 border border-primary/20 rounded">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <FileText className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span className="text-sm truncate">{file.filename}</span>
+                        <span className="text-xs text-muted-foreground">({formatFileSize(file.file_size)})</span>
+                      </div>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => removeFile(index)}
+                        onClick={() => removeWarehouseFile(file.id)}
                         type="button"
                       >
                         <X className="h-4 w-4" />
@@ -667,7 +764,7 @@ export function ComplianceReportSubmissionsView() {
             <div className="flex gap-3 pt-4">
               <Button 
                 onClick={handleSubmitComplianceReport} 
-                disabled={isSubmitting || uploadedFiles.length === 0 || !reportType || !reportPeriod}
+                disabled={isSubmitting || warehouseFiles.length === 0 || !reportType || !reportPeriod}
                 className="flex-1"
               >
                 {isSubmitting ? "Submitting..." : "Submit Report"}
@@ -684,6 +781,225 @@ export function ComplianceReportSubmissionsView() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Document Warehouse Picker */}
+      <DocumentWarehousePicker
+        open={isWarehousePickerOpen}
+        onOpenChange={setIsWarehousePickerOpen}
+        onSelect={handleWarehouseSelect}
+        multiSelect={true}
+        title="Select Compliance Documents"
+        description="Choose documents from your Document Warehouse to attach to this compliance report."
+      />
+
+      {/* Create New Report Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create New Compliance Report</DialogTitle>
+          <DialogDescription>
+            Submit a new compliance report for one of your active permits
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-6 py-4">
+          {/* Permit Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="permitSelect">Select Permit *</Label>
+            <Select value={selectedPermitId} onValueChange={setSelectedPermitId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select an active permit" />
+              </SelectTrigger>
+              <SelectContent>
+                {permits?.map((permit) => (
+                  <SelectItem key={permit.id} value={permit.id}>
+                    <div className="flex flex-col">
+                      <span className="font-medium">
+                        {permit.permit_number || 'Pending'} - {permit.title}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {permit.entities?.name} ({permit.entities?.entity_type})
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {(!permits || permits.length === 0) && (
+              <p className="text-sm text-muted-foreground">
+                No active permits found. You need at least one approved permit to submit a report.
+              </p>
+            )}
+          </div>
+
+          {/* Auto-populated Project Title */}
+          {selectedPermitId && (
+            <div className="space-y-2">
+              <Label>Project Title</Label>
+              <Input
+                value={permits?.find(p => p.id === selectedPermitId)?.title || ''}
+                disabled
+                className="bg-muted"
+              />
+            </div>
+          )}
+
+          {/* Auto-populated Entity/Project Description */}
+          {selectedPermitId && (
+            <div className="space-y-2">
+              <Label>Entity</Label>
+              <Input
+                value={`${permits?.find(p => p.id === selectedPermitId)?.entities?.name || ''} (${permits?.find(p => p.id === selectedPermitId)?.entities?.entity_type || ''})`}
+                disabled
+                className="bg-muted"
+              />
+            </div>
+          )}
+
+            {/* Date Range */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="startDate">Reporting Period Start *</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={reportStartDate}
+                  onChange={(e) => setReportStartDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="endDate">Reporting Period End *</Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  value={reportEndDate}
+                  onChange={(e) => setReportEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="description">Report Description</Label>
+              <Textarea
+                id="description"
+                placeholder="Provide a summary of this compliance report..."
+                rows={4}
+                value={newReportDescription}
+                onChange={(e) => setNewReportDescription(e.target.value)}
+              />
+            </div>
+
+            {/* Document Attachment */}
+            <div className="space-y-3">
+              <Label>Attach Documents</Label>
+              
+              <div className="border-2 border-dashed border-primary/30 rounded-lg p-6 bg-primary/5">
+                <div className="flex flex-col items-center text-center gap-3">
+                  <Upload className="h-10 w-10 text-primary" />
+                  <div>
+                    <p className="font-medium text-foreground">Upload Documents</p>
+                    <p className="text-sm text-muted-foreground">
+                      Select documents from your Document Warehouse
+                    </p>
+                  </div>
+                  <Button 
+                    variant="default" 
+                    type="button" 
+                    onClick={() => setIsNewReportPickerOpen(true)}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Select Documents
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Display attached files */}
+              {newReportFiles.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-primary" />
+                    Attached Documents ({newReportFiles.length}):
+                  </Label>
+                  {newReportFiles.map((file) => (
+                    <div key={file.id} className="flex items-center justify-between p-2 bg-primary/10 border border-primary/20 rounded">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <FileText className="w-4 h-4 text-primary flex-shrink-0" />
+                        <span className="text-sm truncate">{file.filename}</span>
+                        <span className="text-xs text-muted-foreground">({formatFileSize(file.file_size)})</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeNewReportFile(file.id)}
+                        type="button"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Official Feedback Section - Read Only */}
+            <Card className="bg-muted/30">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                  Official Feedback
+                </CardTitle>
+                <CardDescription>
+                  Feedback from CEPA Compliance Unit (read-only)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-background/50 border rounded-lg p-4 min-h-[80px]">
+                  <p className="text-sm text-muted-foreground italic">
+                    No feedback yet. The CEPA Compliance Unit will provide feedback after reviewing your submission.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Submit Buttons */}
+            <div className="flex gap-3 pt-4">
+              <Button 
+                onClick={handleCreateNewReport} 
+                disabled={isCreatingReport || !selectedPermitId || !reportStartDate || !reportEndDate}
+                className="flex-1"
+              >
+                {isCreatingReport ? "Creating..." : "Submit Report"}
+              </Button>
+              <Button 
+                variant="outline" 
+                type="button" 
+                className="flex-1"
+                onClick={() => {
+                  setIsCreateDialogOpen(false);
+                  setSelectedPermitId("");
+                  setReportStartDate("");
+                  setReportEndDate("");
+                  setNewReportDescription("");
+                  setNewReportFiles([]);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Document Warehouse Picker for New Report */}
+      <DocumentWarehousePicker
+        open={isNewReportPickerOpen}
+        onOpenChange={setIsNewReportPickerOpen}
+        onSelect={handleNewReportFileSelect}
+        multiSelect={true}
+        title="Select Documents for Report"
+        description="Choose documents from your Document Warehouse to attach to this compliance report."
+      />
     </div>
   );
 }

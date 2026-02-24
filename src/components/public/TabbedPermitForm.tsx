@@ -59,7 +59,7 @@ export function TabbedPermitForm({ permitId, onComplete }: TabbedPermitFormProps
       case 3: // Documents
         return true; // Documents are optional for now
       case 4: // Fees
-        return formData.permit_type && formData.total_fee;
+        return formData.permit_type && formData.fee_amount;
       case 5: // Compliance
         return true; // Compliance fields are optional
       default:

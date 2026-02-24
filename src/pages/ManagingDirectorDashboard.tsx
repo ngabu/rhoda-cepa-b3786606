@@ -18,6 +18,7 @@ import { ExecutiveAnalyticsDashboard } from '@/components/managing-director/Exec
 import { AIAnalytics } from '@/components/managing-director/AIAnalytics';
 import { ProfileSettings } from '@/components/public/ProfileSettings';
 import { AppSettings } from '@/components/public/AppSettings';
+import MDNotifications from '@/pages/md/Notifications';
 
 export default function ManagingDirectorDashboard() {
   const { profile } = useAuth();
@@ -65,7 +66,7 @@ export default function ManagingDirectorDashboard() {
       <div className="flex min-h-screen w-full">
         <ManagingDirectorSidebar activeTab={activeTab} onTabChange={setActiveTab} />
         <div className="flex-1 flex flex-col">
-          <ManagingDirectorHeader />
+          <ManagingDirectorHeader onNotificationsClick={() => setActiveTab('notifications')} />
           <main className="flex-1 p-6 bg-background">
             {activeTab === 'dashboard' && (
       <div className="space-y-6">
@@ -81,77 +82,77 @@ export default function ManagingDirectorDashboard() {
 
         {/* Quick Stats Dashboard */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
+          <Card className="bg-muted/50 border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-orange-800 dark:text-orange-200">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 Pending Approvals
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-bold text-orange-900 dark:text-orange-100">
+                <span className="text-3xl font-bold text-foreground">
                   {pendingApprovals.length}
                 </span>
-                <FileCheck className="w-8 h-8 text-orange-500" />
+                <FileCheck className="w-8 h-8 text-primary" />
               </div>
-              <p className="text-xs text-orange-600 dark:text-orange-300 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 Requires your review
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
+          <Card className="bg-muted/50 border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-blue-800 dark:text-blue-200">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 Requires Signature
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-bold text-blue-900 dark:text-blue-100">
+                <span className="text-3xl font-bold text-foreground">
                   {requiresSignature.length}
                 </span>
-                <FileSignature className="w-8 h-8 text-blue-500" />
+                <FileSignature className="w-8 h-8 text-primary" />
               </div>
-              <p className="text-xs text-blue-600 dark:text-blue-300 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 Letters awaiting signature
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-green-200 bg-green-50 dark:bg-green-950/20">
+          <Card className="bg-muted/50 border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-green-800 dark:text-green-200">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 Approved This Month
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-bold text-green-900 dark:text-green-100">
+                <span className="text-3xl font-bold text-foreground">
                   {approvedThisMonth.length}
                 </span>
-                <UserCheck className="w-8 h-8 text-green-500" />
+                <UserCheck className="w-8 h-8 text-primary" />
               </div>
-              <p className="text-xs text-green-600 dark:text-green-300 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 Applications approved
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-red-200 bg-red-50 dark:bg-red-950/20">
+          <Card className="bg-muted/50 border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-red-800 dark:text-red-200">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 Pending Actions
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-bold text-red-900 dark:text-red-100">
+                <span className="text-3xl font-bold text-foreground">
                   {pendingApprovals.length}
                 </span>
-                <Bell className="w-8 h-8 text-red-500" />
+                <Bell className="w-8 h-8 text-primary" />
               </div>
-              <p className="text-xs text-red-600 dark:text-red-300 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 Awaiting your review
               </p>
             </CardContent>
@@ -309,6 +310,10 @@ export default function ManagingDirectorDashboard() {
 
             {activeTab === 'settings' && (
               <AppSettings />
+            )}
+
+            {activeTab === 'notifications' && (
+              <MDNotifications />
             )}
           </main>
         </div>

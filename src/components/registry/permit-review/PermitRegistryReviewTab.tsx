@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,7 @@ export function PermitRegistryReviewTab({ applicationId, currentStatus, onStatus
   const [status, setStatus] = useState(currentStatus);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [uploadedFiles, setUploadedFiles] = useState<{ name: string; path: string }[]>([]);
   
   // Validation checkboxes
@@ -39,6 +40,41 @@ export function PermitRegistryReviewTab({ applicationId, currentStatus, onStatus
   const canEdit = profile?.staff_unit === 'registry' || 
                   profile?.user_type === 'admin' || 
                   profile?.user_type === 'super_admin';
+
+  useEffect(() => {
+    fetchReviewData();
+  }, [applicationId]);
+
+  const fetchReviewData = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('permit_reviews')
+        .select('*')
+        .eq('permit_application_id', applicationId)
+        .eq('review_stage', 'registry')
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setAssessment(data.assessment || '');
+        setRemarks(data.remarks || '');
+        setProposedAction(data.proposed_action || '');
+        setUploadedFiles((data.uploaded_documents as { name: string; path: string }[]) || []);
+        
+        const validations = data.validation_checks as Record<string, boolean> || {};
+        setEntityIPAValidated(validations.entityIPAValidated || false);
+        setProjectSiteMapValidated(validations.projectSiteMapValidated || false);
+        setDocumentsComplete(validations.documentsComplete || false);
+        setFeeCalculated(validations.feeCalculated || false);
+      }
+    } catch (error) {
+      console.error('Error fetching review data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!canEdit) return;
@@ -84,29 +120,37 @@ export function PermitRegistryReviewTab({ applicationId, currentStatus, onStatus
 
     setSubmitting(true);
     try {
-      // Prepare assessment data to store in permit application
-      const assessmentData = {
+      // Save review data to permit_reviews table
+      const reviewData = {
+        permit_application_id: applicationId,
+        review_stage: 'registry',
+        reviewer_id: profile?.user_id,
         assessment,
         remarks,
         proposed_action: proposedAction,
-        documents: uploadedFiles,
-        validation: {
+        validation_checks: {
           entityIPAValidated,
           projectSiteMapValidated,
           documentsComplete,
           feeCalculated
         },
-        assessed_by: profile?.user_id,
-        assessed_at: new Date().toISOString()
+        uploaded_documents: uploadedFiles,
+        status: status === 'registry_approved' ? 'completed' : 'pending',
+        reviewed_at: new Date().toISOString()
       };
 
-      // Update permit application status and store assessment in compliance_checks field
+      const { error: reviewError } = await supabase
+        .from('permit_reviews')
+        .upsert(reviewData, { 
+          onConflict: 'permit_application_id,review_stage'
+        });
+
+      if (reviewError) throw reviewError;
+
+      // Update permit application status
       const { error: appError } = await supabase
         .from('permit_applications')
-        .update({ 
-          status,
-          compliance_checks: assessmentData
-        })
+        .update({ status })
         .eq('id', applicationId);
 
       if (appError) throw appError;
@@ -120,6 +164,19 @@ export function PermitRegistryReviewTab({ applicationId, currentStatus, onStatus
       setSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-8">
+          <div className="flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin mr-2" />
+            Loading review data...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

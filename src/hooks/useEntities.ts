@@ -10,7 +10,7 @@ export interface Entity {
   email?: string;
   phone?: string;
   postal_address?: string;
-  'registered address'?: string;
+  registered_address?: string;
   registration_number?: string;
   tax_number?: string;
   contact_person?: string;

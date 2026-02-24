@@ -39,8 +39,9 @@ export function usePermitsForAssessment() {
     try {
       console.log('Fetching permits for assessment...');
       
-      let query = supabase
-        .from('permit_applications')
+      // Use view to get entity info via JOINs since entity_name/entity_type don't exist on permit_applications
+      let query = (supabase as any)
+        .from('vw_permit_applications_list')
         .select(`
           id,
           title,

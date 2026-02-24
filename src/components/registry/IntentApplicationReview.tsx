@@ -21,6 +21,7 @@ interface IntentRegistration {
   user_id: string;
   entity_id: string;
   activity_level: string;
+  project_title: string | null;
   activity_description: string;
   preparatory_work_description: string;
   commencement_date: string;
@@ -87,7 +88,7 @@ export function IntentApplicationReview() {
         .from('intent_registrations')
         .select(`
           *,
-          entity:entities!inner(id, name, entity_type)
+          entity:entities!intent_registrations_entity_id_fkey(id, name, entity_type)
         `)
         .in('status', ['pending', 'under_review', 'approved', 'rejected', 'requires_clarification'])
         .order('created_at', { ascending: false });

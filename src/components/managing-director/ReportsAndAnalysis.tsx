@@ -40,12 +40,12 @@ export function ReportsAndAnalysis() {
     },
   });
 
-  // Fetch registry data from permit_applications
+  // Fetch registry data from permit_applications view
   const { data: registryData } = useQuery({
     queryKey: ['registry-analytics'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('permit_applications')
+      const { data, error } = await (supabase as any)
+        .from('vw_permit_applications_list')
         .select('status, permit_type, created_at, activity_level')
         .order('created_at', { ascending: false });
       

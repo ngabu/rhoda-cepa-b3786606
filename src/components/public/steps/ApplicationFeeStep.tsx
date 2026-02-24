@@ -18,6 +18,12 @@ export function ApplicationFeeStep({ data, onChange }: ApplicationFeeStepProps) 
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const hasCalculatedOnce = useRef(false);
 
+  // Check if Environmental Permit is selected
+  const isEnvironmentalPermit = data.permit_type?.toLowerCase() === 'environmental' || 
+                                 data.permit_type_id === '1655df4b-bfcf-47de-85fa-c4567c749362';
+
+  const COMPOSITE_FEE = 2000; // K2000 composite fee for Environmental Permit
+
   const handleCalculateFees = async () => {
     setCalculationError('');
     setValidationErrors([]);
@@ -45,20 +51,30 @@ export function ApplicationFeeStep({ data, onChange }: ApplicationFeeStepProps) 
       const fees = await calculateFeesWithSupabase(params);
       
       if (fees) {
-        setCalculatedFees(fees);
+        // Add composite fee if Environmental Permit is selected
+        const compositeFeeAmount = isEnvironmentalPermit ? COMPOSITE_FEE : 0;
+        const totalWithComposite = fees.totalFee + compositeFeeAmount;
+        
+        const updatedFees = {
+          ...fees,
+          compositeFee: compositeFeeAmount,
+          totalFee: totalWithComposite
+        };
+        
+        setCalculatedFees(updatedFees);
         hasCalculatedOnce.current = true;
         
+        // Update form data with correct database column names
         onChange({
-          administration_fee: fees.totalFee,
-          technical_fee: 0,
-          total_fee: fees.totalFee,
-          fee_amount: fees.totalFee,
+          application_fee: fees.totalFee,
+          composite_fee: compositeFeeAmount,
+          fee_amount: totalWithComposite,
           processing_days: fees.processingDays,
           administration_form: fees.administrationForm,
           technical_form: fees.technicalForm,
           fee_source: fees.source,
-          calculatedFees: fees,
-          fee_breakdown: fees
+          calculatedFees: updatedFees,
+          fee_breakdown: updatedFees
         });
       }
     } catch (error) {
@@ -77,9 +93,45 @@ export function ApplicationFeeStep({ data, onChange }: ApplicationFeeStepProps) 
     }
   }, []); // Empty dependency array - only run once on mount
 
-
+  // Update composite fee whenever isEnvironmentalPermit changes OR when calculatedFees is first set
+  // This ensures composite fee is properly applied even when permit_type is already 'environmental' on load
+  const lastCompositeFeeRef = useRef<number | undefined>(undefined);
+  
+  useEffect(() => {
+    if (calculatedFees) {
+      const compositeFeeAmount = isEnvironmentalPermit ? COMPOSITE_FEE : 0;
+      
+      // Only update if composite fee actually needs to change
+      if (calculatedFees.compositeFee !== compositeFeeAmount || lastCompositeFeeRef.current !== compositeFeeAmount) {
+        const baseFee = calculatedFees.administrationFee || 0;
+        const totalWithComposite = baseFee + compositeFeeAmount;
+        
+        const updatedFees = {
+          ...calculatedFees,
+          compositeFee: compositeFeeAmount,
+          totalFee: totalWithComposite
+        };
+        
+        lastCompositeFeeRef.current = compositeFeeAmount;
+        setCalculatedFees(updatedFees);
+        
+        // Update form data with correct database column names
+        onChange({
+          composite_fee: compositeFeeAmount,
+          fee_amount: totalWithComposite,
+          calculatedFees: updatedFees,
+          fee_breakdown: updatedFees
+        });
+        
+        console.log('💰 Updated composite fee:', compositeFeeAmount, 'isEnvironmentalPermit:', isEnvironmentalPermit);
+      }
+    }
+  }, [isEnvironmentalPermit, calculatedFees?.administrationFee]);
 
   const [isBreakdownOpen, setIsBreakdownOpen] = useState(false);
+
+  const formatCurrency = (amount: number) => 
+    `PGK ${amount?.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') || '0.00'}`;
 
   return (
     <div className="space-y-6">
@@ -106,16 +158,43 @@ export function ApplicationFeeStep({ data, onChange }: ApplicationFeeStepProps) 
                 
                 <CollapsibleContent>
                   <div className="p-4 space-y-4 bg-background">
+                    {/* Base Application Fee */}
+                    <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                      <span className="text-foreground">Application Fee</span>
+                      <span className="font-medium text-foreground">
+                        {formatCurrency(calculatedFees?.administrationFee || 0)}
+                      </span>
+                    </div>
+
+                    {/* Composite Fee for Environmental Permit */}
+                    {isEnvironmentalPermit && (
+                      <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
+                        <div>
+                          <span className="text-foreground">Composite Fee</span>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Environmental Permit processing fee
+                          </p>
+                        </div>
+                        <span className="font-medium text-green-700 dark:text-green-400">
+                          {formatCurrency(COMPOSITE_FEE)}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Total Fee */}
                     <div className="flex justify-between items-center p-4 bg-primary/10 rounded-lg border border-primary/20">
-                      <span className="font-bold text-foreground">Application Fee</span>
+                      <span className="font-bold text-foreground">Total Fee Payable</span>
                       <span className="font-bold text-lg text-primary">
-                        PGK {calculatedFees?.totalFee?.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') || '0.00'}
+                        {formatCurrency(calculatedFees?.totalFee || 0)}
                       </span>
                     </div>
 
                     <div className="text-xs text-muted-foreground space-y-1 p-3 bg-muted/20 rounded">
-                      <p>• Calculation formula: (Annual Recurrent Fee ÷ 365) × Processing Days</p>
+                      <p>• Application Fee formula: (Annual Recurrent Fee ÷ 365) × Processing Days</p>
                       <p>• Processing days: {calculatedFees?.processingDays || 'N/A'} days</p>
+                      {isEnvironmentalPermit && (
+                        <p>• Composite Fee: K2,000 flat rate for Environmental Permit applications</p>
+                      )}
                       <p>• Based on official 2018 Environment Act Fees</p>
                       <p>• Level 2.1: 30 days | Level 2.2/2.3/2.4: 60 days | Level 3: 90 days</p>
                     </div>
@@ -127,10 +206,15 @@ export function ApplicationFeeStep({ data, onChange }: ApplicationFeeStepProps) 
             <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
               <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2">Payment Process:</h4>
               <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
-                <li>• CEPA will issue fee notices using the specified forms</li>
-                <li>• Fees calculated using official formula: (Annual Recurrent Fee ÷ 365) × Processing Days</li>
+                <li>• CEPA will issue a fee notice after application submission</li>
+                <li>• Application Fee calculated using: (Annual Recurrent Fee ÷ 365) × Processing Days</li>
+                {isEnvironmentalPermit && (
+                  <li>• Environmental Permit applications include an additional K2,000 Composite Fee</li>
+                )}
                 <li>• All fees must be paid before CEPA begins assessment work</li>
                 <li>• Fee notices will be signed by the Managing Director and bear CEPA's Common Seal</li>
+                <li>• Payment can be made via bank transfer, cheque, or online payment portal</li>
+                <li>• Receipt will be issued upon confirmation of payment</li>
               </ul>
             </div>
           </>

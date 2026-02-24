@@ -98,9 +98,9 @@ const Dashboard = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch user's permit applications for stats
+      // Fetch user's permit applications for stats from view
       const { data: applications, error: appsError } = await (supabase as any)
-        .from('permit_applications')
+        .from('vw_permit_applications_list')
         .select('*')
         .eq('user_id', user.id);
 
@@ -112,9 +112,9 @@ const Dashboard = () => {
       const approved = applications?.filter((app: any) => app.status === 'approved')?.length || 0;
       const rejected = applications?.filter((app: any) => app.status === 'rejected')?.length || 0;
 
-      // Fetch user's recent applications (limit 5)
+      // Fetch user's recent applications (limit 5) from view
       const { data: recent, error: recentError } = await (supabase as any)
-        .from('permit_applications')
+        .from('vw_permit_applications_list')
         .select('*')
         .eq('user_id', user.id)
         .order('updated_at', { ascending: false })

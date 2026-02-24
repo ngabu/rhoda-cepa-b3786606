@@ -115,8 +115,8 @@ export function ExecutiveAnalyticsDashboard() {
   const { data: permitApplications = [] } = useQuery({
     queryKey: ['executive-permits', dateRange],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('permit_applications')
+      const { data, error } = await (supabase as any)
+        .from('vw_permit_applications_full')
         .select('id, status, permit_type, created_at, updated_at, province, district, entity_name, title, activity_level, estimated_cost_kina')
         .gte('created_at', dateFilters.start.toISOString())
         .lte('created_at', dateFilters.end.toISOString());
@@ -129,8 +129,8 @@ export function ExecutiveAnalyticsDashboard() {
   const { data: allPermitApplications = [] } = useQuery({
     queryKey: ['executive-permits-all'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('permit_applications')
+      const { data, error } = await (supabase as any)
+        .from('vw_permit_applications_full')
         .select('id, status, activity_level, estimated_cost_kina, created_at, expiry_date, permit_type, fee_amount');
       if (error) throw error;
       return data || [];
@@ -242,9 +242,9 @@ export function ExecutiveAnalyticsDashboard() {
   const { data: permitsWithSector = [] } = useQuery({
     queryKey: ['executive-permits-sector', dateRange],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('permit_applications')
-        .select('id, status, permit_type, title, entity_name, province, created_at')
+      const { data, error } = await (supabase as any)
+        .from('vw_permit_applications_list')
+        .select('id, status, permit_type, title, entity_name, created_at')
         .gte('created_at', dateFilters.start.toISOString())
         .lte('created_at', dateFilters.end.toISOString());
       if (error) throw error;
@@ -758,7 +758,6 @@ export function ExecutiveAnalyticsDashboard() {
               <SelectItem value="weekly">Last 7 Days</SelectItem>
               <SelectItem value="monthly">Last 30 Days</SelectItem>
               <SelectItem value="quarterly">Last Quarter</SelectItem>
-              <SelectItem value="yearly">Last Year</SelectItem>
               <SelectItem value="mtd">Month to Date</SelectItem>
               <SelectItem value="ytd">Year to Date</SelectItem>
               <SelectItem value="last-year">Previous Year</SelectItem>
@@ -792,92 +791,92 @@ export function ExecutiveAnalyticsDashboard() {
 
       {/* Executive Summary Cards - Top Level KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
-        <Card className="col-span-1 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-900/20 border-emerald-200 dark:border-emerald-800">
+        <Card className="col-span-1 bg-muted/50 border-border">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Total Applications</p>
-                <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">{executiveKPIs.totalApplications}</p>
+                <p className="text-xs text-muted-foreground font-medium">Total Applications</p>
+                <p className="text-2xl font-bold text-foreground">{executiveKPIs.totalApplications}</p>
               </div>
-              <FileText className="w-8 h-8 text-emerald-500" />
+              <FileText className="w-8 h-8 text-primary" />
             </div>
-            <div className="flex items-center gap-1 mt-2 text-xs text-emerald-600 dark:text-emerald-400">
+            <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
               <TrendingUp className="w-3 h-3" />
               <span>{executiveKPIs.pendingApplications} pending</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="col-span-1 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/30 dark:to-blue-900/20 border-blue-200 dark:border-blue-800">
+        <Card className="col-span-1 bg-muted/50 border-border">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Approval Rate</p>
-                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{executiveKPIs.approvalRate}%</p>
+                <p className="text-xs text-muted-foreground font-medium">Approval Rate</p>
+                <p className="text-2xl font-bold text-foreground">{executiveKPIs.approvalRate}%</p>
               </div>
-              <CheckCircle2 className="w-8 h-8 text-blue-500" />
+              <CheckCircle2 className="w-8 h-8 text-primary" />
             </div>
-            <div className="flex items-center gap-1 mt-2 text-xs text-blue-600 dark:text-blue-400">
+            <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
               <span>{executiveKPIs.approvedApplications} approved</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="col-span-1 bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/30 dark:to-amber-900/20 border-amber-200 dark:border-amber-800">
+        <Card className="col-span-1 bg-muted/50 border-border">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Revenue Collected</p>
-                <p className="text-2xl font-bold text-amber-900 dark:text-amber-100">{formatCurrency(executiveKPIs.collectedRevenue)}</p>
+                <p className="text-xs text-muted-foreground font-medium">Revenue Collected</p>
+                <p className="text-2xl font-bold text-foreground">{formatCurrency(executiveKPIs.collectedRevenue)}</p>
               </div>
-              <DollarSign className="w-8 h-8 text-amber-500" />
+              <DollarSign className="w-8 h-8 text-primary" />
             </div>
-            <div className="flex items-center gap-1 mt-2 text-xs text-amber-600 dark:text-amber-400">
+            <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
               <span>{executiveKPIs.collectionRate}% collection rate</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="col-span-1 bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-950/30 dark:to-violet-900/20 border-violet-200 dark:border-violet-800">
+        <Card className="col-span-1 bg-muted/50 border-border">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-violet-600 dark:text-violet-400 font-medium">Compliance Score</p>
-                <p className="text-2xl font-bold text-violet-900 dark:text-violet-100">{executiveKPIs.avgComplianceScore}%</p>
+                <p className="text-xs text-muted-foreground font-medium">Compliance Score</p>
+                <p className="text-2xl font-bold text-foreground">{executiveKPIs.avgComplianceScore}%</p>
               </div>
-              <Shield className="w-8 h-8 text-violet-500" />
+              <Shield className="w-8 h-8 text-primary" />
             </div>
-            <div className="flex items-center gap-1 mt-2 text-xs text-violet-600 dark:text-violet-400">
+            <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
               <span>Avg across all permits</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="col-span-1 bg-gradient-to-br from-teal-50 to-teal-100 dark:from-teal-950/30 dark:to-teal-900/20 border-teal-200 dark:border-teal-800">
+        <Card className="col-span-1 bg-muted/50 border-border">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-teal-600 dark:text-teal-400 font-medium">Registered Entities</p>
-                <p className="text-2xl font-bold text-teal-900 dark:text-teal-100">{executiveKPIs.totalEntities}</p>
+                <p className="text-xs text-muted-foreground font-medium">Registered Entities</p>
+                <p className="text-2xl font-bold text-foreground">{executiveKPIs.totalEntities}</p>
               </div>
-              <Building2 className="w-8 h-8 text-teal-500" />
+              <Building2 className="w-8 h-8 text-primary" />
             </div>
-            <div className="flex items-center gap-1 mt-2 text-xs text-teal-600 dark:text-teal-400">
+            <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
               <span>{executiveKPIs.activeEntities} active</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="col-span-1 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-950/30 dark:to-rose-900/20 border-rose-200 dark:border-rose-800">
+        <Card className="col-span-1 bg-muted/50 border-border">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">Inspections</p>
-                <p className="text-2xl font-bold text-rose-900 dark:text-rose-100">{executiveKPIs.completedInspections}</p>
+                <p className="text-xs text-muted-foreground font-medium">Inspections</p>
+                <p className="text-2xl font-bold text-foreground">{executiveKPIs.completedInspections}</p>
               </div>
-              <Activity className="w-8 h-8 text-rose-500" />
+              <Activity className="w-8 h-8 text-primary" />
             </div>
-            <div className="flex items-center gap-1 mt-2 text-xs text-rose-600 dark:text-rose-400">
+            <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
               <span>{executiveKPIs.scheduledInspections} scheduled</span>
             </div>
           </CardContent>

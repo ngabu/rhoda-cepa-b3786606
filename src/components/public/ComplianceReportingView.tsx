@@ -80,8 +80,8 @@ export function ComplianceReportingView() {
 
   const fetchActivePermits = async () => {
     try {
-      const { data, error } = await supabase
-        .from('permit_applications')
+      const { data, error } = await (supabase as any)
+        .from('vw_permit_applications_list')
         .select('id, permit_number, title, status')
         .eq('user_id', user?.id)
         .in('status', ['approved', 'active'])

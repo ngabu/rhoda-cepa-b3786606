@@ -37,26 +37,29 @@ export function useDirectorateApprovals() {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase
+      // First get approvals
+      const { data: approvalsData, error: approvalsError } = await supabase
         .from('directorate_approvals')
-        .select(`
-          *,
-          permit_applications!inner (
-            id,
-            title,
-            permit_type,
-            entity_name,
-            status
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (approvalsError) throw approvalsError;
 
-      const transformedData = (data || []).map(item => ({
-        ...item,
-        application: item.permit_applications
-      }));
+      // Then get permit details from view for each approval
+      const transformedData = await Promise.all(
+        (approvalsData || []).map(async (approval) => {
+          const { data: permitData } = await (supabase as any)
+            .from('vw_permit_applications_list')
+            .select('id, title, permit_type, entity_name, status')
+            .eq('id', approval.application_id)
+            .single();
+          
+          return {
+            ...approval,
+            application: permitData || null
+          };
+        })
+      );
 
       setApprovals(transformedData);
     } catch (error) {

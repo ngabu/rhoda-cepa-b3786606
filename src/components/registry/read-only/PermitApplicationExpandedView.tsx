@@ -61,6 +61,7 @@ interface PermitApplicationData {
   province?: string | null;
   llg?: string | null;
   permit_specific_fields?: any;
+  total_area_sqkm?: number | null;
   entity?: {
     id: string;
     name: string;
@@ -68,7 +69,7 @@ interface PermitApplicationData {
     email?: string;
     phone?: string;
     contact_person?: string;
-    'registered address'?: string;
+    registered_address?: string;
     postal_address?: string;
   };
 }
@@ -327,10 +328,10 @@ export function PermitApplicationExpandedView({ application }: PermitApplication
                         <p className="font-medium">{entityDetails.contact_person}</p>
                       </div>
                     )}
-                    {entityDetails['registered address'] && (
+                    {entityDetails.registered_address && (
                       <div className="space-y-1">
                         <Label className="text-muted-foreground text-sm">Registered Address</Label>
-                        <p className="font-medium">{entityDetails['registered address']}</p>
+                        <p className="font-medium">{entityDetails.registered_address}</p>
                       </div>
                     )}
                   </div>
@@ -506,6 +507,7 @@ export function PermitApplicationExpandedView({ application }: PermitApplication
                 province={application.province || undefined}
                 district={application.district || undefined}
                 llg={application.llg || undefined}
+                totalAreaSqKm={application.total_area_sqkm || undefined}
               />
             </CollapsibleContent>
           </Collapsible>

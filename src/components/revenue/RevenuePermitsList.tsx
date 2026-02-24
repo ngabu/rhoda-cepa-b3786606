@@ -52,15 +52,28 @@ export function RevenuePermitsList() {
   const fetchPermits = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('permit_applications')
-        .select('id, title, permit_number, permit_type, description, approval_date, created_at, updated_at, entity_name, entity_id, activity_level')
+      // Use vw_permit_applications_list which includes approval_date
+      const { data, error } = await (supabase as any)
+        .from('vw_permit_applications_list')
+        .select('*')
         .eq('status', 'approved')
         .not('permit_number', 'is', null)
         .order('approval_date', { ascending: false });
 
       if (error) throw error;
-      setPermits(data || []);
+      setPermits((data || []).map((p: any) => ({
+        id: p.id,
+        title: p.title,
+        permit_number: p.permit_number,
+        permit_type: p.permit_type,
+        description: p.description,
+        approval_date: p.approval_date,
+        created_at: p.created_at,
+        updated_at: p.updated_at,
+        entity_name: p.entity_name,
+        entity_id: p.entity_id,
+        activity_level: p.activity_level
+      })));
     } catch (error) {
       console.error('Error fetching permits:', error);
       toast({
@@ -76,16 +89,14 @@ export function RevenuePermitsList() {
   const fetchPermitDetails = async (permitId: string) => {
     try {
       setLoadingDetails(true);
-      const { data, error } = await supabase
-        .from('permit_applications')
-        .select(`
-          *,
-          entity:entities(*)
-        `)
+      const { data, error } = await (supabase as any)
+        .from('vw_permit_applications_full')
+        .select('*')
         .eq('id', permitId)
         .single();
 
       if (error) throw error;
+      // The view already includes entity_name and other entity fields
       setExpandedPermitDetails(data);
     } catch (error) {
       console.error('Error fetching permit details:', error);

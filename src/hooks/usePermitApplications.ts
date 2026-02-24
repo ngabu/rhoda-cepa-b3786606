@@ -47,7 +47,7 @@ export function usePermitApplications() {
   const fetchApplications = async () => {
     try {
       let query = (supabase as any)
-        .from('permit_applications')
+        .from('vw_permit_applications_list')
         .select(`
           id,
           title,
@@ -59,24 +59,13 @@ export function usePermitApplications() {
           user_id,
           entity_id,
           permit_number,
-          coordinates,
           assigned_officer_id,
           assigned_officer_name,
           assigned_officer_email,
           entity_name,
           entity_type,
-          activity_location,
-          estimated_cost_kina,
-          is_draft,
-          current_step,
-          entities (
-            id,
-            name,
-            entity_type,
-            contact_person,
-            email,
-            phone
-          )
+          activity_level,
+          activity_classification
         `);
 
       // Filter based on user role
@@ -94,16 +83,9 @@ export function usePermitApplications() {
       if (error) throw error;
 
         // Transform the data to match the PermitApplication interface
-        const transformedData = (data || []).map(app => ({
+        const transformedData = ((data || []) as any[]).map(app => ({
           ...app,
-          entity: app.entities ? {
-            id: app.entities.id,
-            name: app.entities.name,
-            entity_type: app.entities.entity_type,
-            contact_person: app.entities.contact_person,
-            email: app.entities.email,
-            phone: app.entities.phone
-          } : app.entity_name ? {
+          entity: app.entity_name ? {
             id: app.entity_id || '',
             name: app.entity_name,
             entity_type: app.entity_type || '',
@@ -121,10 +103,10 @@ export function usePermitApplications() {
             land_type: null,
             owner_name: null,
             proposed_works_description: null,
-            activity_location: app.activity_location,
-            estimated_cost_kina: app.estimated_cost_kina,
-            is_draft: app.is_draft,
-            current_step: app.current_step
+            activity_location: null,
+            estimated_cost_kina: null,
+            is_draft: null,
+            current_step: null
           }
         }));
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,7 @@ export function IntentRegistryReviewTab({ intentId, currentStatus, onStatusUpdat
   const [status, setStatus] = useState(currentStatus);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [uploadedFiles, setUploadedFiles] = useState<{ name: string; path: string }[]>([]);
   
   // Validation checkboxes
@@ -39,6 +40,40 @@ export function IntentRegistryReviewTab({ intentId, currentStatus, onStatusUpdat
                   profile?.user_type === 'admin' || 
                   profile?.user_type === 'super_admin';
 
+  useEffect(() => {
+    fetchReviewData();
+  }, [intentId]);
+
+  const fetchReviewData = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('intent_reviews')
+        .select('*')
+        .eq('intent_registration_id', intentId)
+        .eq('review_stage', 'registry')
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setAssessment(data.assessment || '');
+        setRemarks(data.remarks || '');
+        setProposedAction(data.proposed_action || '');
+        setUploadedFiles((data.uploaded_documents as { name: string; path: string }[]) || []);
+        
+        const validations = data.validation_checks as Record<string, boolean> || {};
+        setEntityIPAValidated(validations.entityIPAValidated || false);
+        setProjectSiteMapValidated(validations.projectSiteMapValidated || false);
+        setPreparationWorkSatisfactory(validations.preparationWorkSatisfactory || false);
+      }
+    } catch (error) {
+      console.error('Error fetching review data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!canEdit) return;
     const files = e.target.files;
@@ -49,7 +84,6 @@ export function IntentRegistryReviewTab({ intentId, currentStatus, onStatusUpdat
       const newFiles: { name: string; path: string }[] = [];
       
       for (const file of Array.from(files)) {
-        const fileExt = file.name.split('.').pop();
         const fileName = `${intentId}/registry-review/${Date.now()}-${file.name}`;
         
         const { error: uploadError } = await supabase.storage
@@ -84,25 +118,39 @@ export function IntentRegistryReviewTab({ intentId, currentStatus, onStatusUpdat
 
     setSubmitting(true);
     try {
+      // Save review data to intent_reviews table
       const reviewData = {
-        status,
-        registry_review_status: status,
-        registry_review_notes: JSON.stringify({
-          assessment,
-          remarks,
-          proposed_action: proposedAction,
-          documents: uploadedFiles,
-        }),
-        registry_reviewed_by: profile?.user_id,
-        registry_reviewed_at: new Date().toISOString()
+        intent_registration_id: intentId,
+        review_stage: 'registry',
+        reviewer_id: profile?.user_id,
+        assessment,
+        remarks,
+        proposed_action: proposedAction,
+        validation_checks: {
+          entityIPAValidated,
+          projectSiteMapValidated,
+          preparationWorkSatisfactory
+        },
+        uploaded_documents: uploadedFiles,
+        status: status === 'registry_approved' ? 'completed' : 'pending',
+        reviewed_at: new Date().toISOString()
       };
 
-      const { error } = await supabase
+      const { error: reviewError } = await supabase
+        .from('intent_reviews')
+        .upsert(reviewData, { 
+          onConflict: 'intent_registration_id,review_stage'
+        });
+
+      if (reviewError) throw reviewError;
+
+      // Update intent registration status
+      const { error: intentError } = await supabase
         .from('intent_registrations')
-        .update(reviewData)
+        .update({ status })
         .eq('id', intentId);
 
-      if (error) throw error;
+      if (intentError) throw intentError;
 
       toast({ title: 'Success', description: 'Registry review submitted successfully' });
       onStatusUpdate();
@@ -113,6 +161,19 @@ export function IntentRegistryReviewTab({ intentId, currentStatus, onStatusUpdat
       setSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-8">
+          <div className="flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin mr-2" />
+            Loading review data...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

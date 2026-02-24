@@ -368,10 +368,10 @@ export function ProgressivePermitForm({ onSuccess, onCancel, permitId }: Progres
     setLoading(true);
     try {
       const filePromises = files.map(async (file) => {
-        // Upload to Supabase Storage
+        // Upload to document warehouse for centralized storage
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
-        const filePath = `${user?.id}/permit-documents/${fileName}`;
+        const filePath = `${user?.id}/warehouse/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('documents')
@@ -489,7 +489,7 @@ export function ProgressivePermitForm({ onSuccess, onCancel, permitId }: Progres
         permit_type: formData.permit_type,
         title: formData.title,
         description: formData.description || null,
-        status: isDraft ? 'draft' : 'submitted',
+        status: isDraft ? 'draft' : 'pending',
         application_date: new Date().toISOString(),
         activity_location: formData.projectLocation || null,
         estimated_cost_kina: formData.estimated_cost ? parseFloat(formData.estimated_cost) : null,

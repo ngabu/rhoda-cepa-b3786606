@@ -63,8 +63,8 @@ const RegistryDashboard = () => {
           .select('*', { count: 'exact', head: true });
 
         // Active Permits (approved status)
-        const { count: activePermits } = await supabase
-          .from('permit_applications')
+        const { count: activePermits } = await (supabase as any)
+          .from('vw_permit_applications_list')
           .select('*', { count: 'exact', head: true })
           .eq('status', 'approved');
 
@@ -74,8 +74,8 @@ const RegistryDashboard = () => {
           .select('*', { count: 'exact', head: true })
           .eq('status', 'pending');
 
-        const { count: pendingPermits } = await supabase
-          .from('permit_applications')
+        const { count: pendingPermits } = await (supabase as any)
+          .from('vw_permit_applications_list')
           .select('*', { count: 'exact', head: true })
           .eq('status', 'pending');
 
@@ -89,8 +89,8 @@ const RegistryDashboard = () => {
         const thirtyDaysFromNow = new Date();
         thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
         
-        const { count: expiringSoon } = await supabase
-          .from('permit_applications')
+        const { count: expiringSoon } = await (supabase as any)
+          .from('vw_permit_applications_list')
           .select('*', { count: 'exact', head: true })
           .eq('status', 'approved')
           .lte('permit_end_date', thirtyDaysFromNow.toISOString())

@@ -24,10 +24,9 @@ interface Permit {
   title: string;
   permit_number: string | null;
   permit_type: string;
-  description: string | null;
   approval_date: string | null;
-  created_at: string;
   updated_at: string;
+  created_at: string;
   entity_name: string | null;
   entity_id: string | null;
   activity_level: string | null;
@@ -55,15 +54,27 @@ export function PermitsList() {
   const fetchPermits = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('permit_applications')
-        .select('id, title, permit_number, permit_type, description, approval_date, created_at, updated_at, entity_name, entity_id, activity_level')
+      // Use registry view which has more relevant fields for registry dashboard
+      const { data, error } = await (supabase as any)
+        .from('vw_permit_applications_registry')
+        .select('*')
         .eq('status', 'approved')
         .not('permit_number', 'is', null)
-        .order('approval_date', { ascending: false });
+        .order('approval_date', { ascending: false, nullsFirst: false });
 
       if (error) throw error;
-      setPermits(data || []);
+      setPermits((data || []).map((p: any) => ({
+        id: p.id,
+        title: p.title,
+        permit_number: p.permit_number,
+        permit_type: p.permit_type,
+        approval_date: p.approval_date,
+        updated_at: p.updated_at,
+        created_at: p.created_at,
+        entity_name: p.entity_name,
+        entity_id: p.entity_id,
+        activity_level: p.activity_level
+      })));
     } catch (error) {
       console.error('Error fetching permits:', error);
       toast({
@@ -79,17 +90,24 @@ export function PermitsList() {
   const fetchPermitDetails = async (permitId: string) => {
     try {
       setLoadingDetails(true);
-      const { data, error } = await supabase
-        .from('permit_applications')
-        .select(`
-          *,
-          entity:entities(*)
-        `)
+      const { data, error } = await (supabase as any)
+        .from('vw_permit_applications_full')
+        .select('*')
         .eq('id', permitId)
         .single();
 
       if (error) throw error;
-      setExpandedPermitDetails(data);
+      // Also fetch entity separately for backward compatibility
+      let entityData = null;
+      if (data.entity_id) {
+        const { data: entity } = await supabase
+          .from('entities')
+          .select('*')
+          .eq('id', data.entity_id)
+          .single();
+        entityData = entity;
+      }
+      setExpandedPermitDetails({ ...data, entity: entityData });
     } catch (error) {
       console.error('Error fetching permit details:', error);
       toast({
@@ -170,11 +188,10 @@ export function PermitsList() {
       'Entity': permit.entity_name || '-',
       'Permit Type': permit.permit_type.replace(/_/g, ' '),
       'Activity Level': permit.activity_level || '-',
-      'Project Description': permit.description || '-',
-      'Approval Date': permit.approval_date ? format(new Date(permit.approval_date), 'MMM dd, yyyy') : '-',
+      'Approved Date': permit.approval_date ? format(new Date(permit.approval_date), 'MMM dd, yyyy') : '-',
+      'Last Updated': format(new Date(permit.updated_at), 'MMM dd, yyyy'),
       'Status': 'Active',
-      'Created Date': format(new Date(permit.created_at), 'MMM dd, yyyy'),
-      'Last Updated': format(new Date(permit.updated_at), 'MMM dd, yyyy')
+      'Created Date': format(new Date(permit.created_at), 'MMM dd, yyyy')
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -197,11 +214,10 @@ export function PermitsList() {
       'Entity': permit.entity_name || '-',
       'Permit Type': permit.permit_type.replace(/_/g, ' '),
       'Activity Level': permit.activity_level || '-',
-      'Project Description': permit.description || '-',
-      'Approval Date': permit.approval_date ? format(new Date(permit.approval_date), 'MMM dd, yyyy') : '-',
+      'Approved Date': permit.approval_date ? format(new Date(permit.approval_date), 'MMM dd, yyyy') : '-',
+      'Last Updated': format(new Date(permit.updated_at), 'MMM dd, yyyy'),
       'Status': 'Active',
-      'Created Date': format(new Date(permit.created_at), 'MMM dd, yyyy'),
-      'Last Updated': format(new Date(permit.updated_at), 'MMM dd, yyyy')
+      'Created Date': format(new Date(permit.created_at), 'MMM dd, yyyy')
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);

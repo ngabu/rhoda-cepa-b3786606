@@ -19,8 +19,9 @@ export function useApprovedPermits() {
   useEffect(() => {
     const fetchApprovedPermits = async () => {
       try {
-        const { data, error } = await supabase
-          .from('permit_applications')
+        // Use the view to get coordinates and activity_level from child tables
+        const { data, error } = await (supabase as any)
+          .from('vw_permit_applications_full')
           .select(`
             id,
             title,
@@ -36,7 +37,7 @@ export function useApprovedPermits() {
 
         if (error) throw error;
 
-        const formattedPermits = (data || [])
+        const formattedPermits = ((data || []) as any[])
           .filter(permit => {
             // Ensure coordinates exist and are valid
             if (!permit.coordinates) return false;

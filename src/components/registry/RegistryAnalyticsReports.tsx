@@ -62,8 +62,8 @@ const RegistryAnalyticsReports = () => {
   const { data: permitsData, isLoading: permitsLoading } = useQuery({
     queryKey: ['registry-permits-analytics', selectedPeriod],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('permit_applications')
+      const { data, error } = await (supabase as any)
+        .from('vw_permit_applications_list')
         .select('*')
         .gte('created_at', dateRange.start.toISOString())
         .lte('created_at', dateRange.end.toISOString());
@@ -311,7 +311,6 @@ const RegistryAnalyticsReports = () => {
                   <SelectItem value="weekly">Last 7 Days</SelectItem>
                   <SelectItem value="monthly">Last 30 Days</SelectItem>
                   <SelectItem value="quarterly">Last Quarter</SelectItem>
-                  <SelectItem value="yearly">Last Year</SelectItem>
                   <SelectItem value="mtd">Month to Date</SelectItem>
                   <SelectItem value="ytd">Year to Date</SelectItem>
                   <SelectItem value="last-year">Previous Year</SelectItem>

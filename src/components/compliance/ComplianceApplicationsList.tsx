@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, Calendar, User, Building, ExternalLink, Shield, Clock, Search, Filter, CheckCircle, AlertCircle } from 'lucide-react';
+import { FileText, Calendar, User, Building, ExternalLink, Shield, Clock, Search, Filter, CheckCircle, AlertCircle, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { PermitApplicationInlineView } from './PermitApplicationInlineView';
 
 export function ComplianceApplicationsList() {
   const { assessments, loading, assignAssessment, refetch } = useComplianceAssessments();
@@ -25,6 +26,15 @@ export function ComplianceApplicationsList() {
   const [assignmentFilter, setAssignmentFilter] = useState('all');
   const [selectedAssessments, setSelectedAssessments] = useState<string[]>([]);
   const [assigningTo, setAssigningTo] = useState<string | null>(null);
+  const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
+
+  const handleViewApplication = (applicationId: string) => {
+    setSelectedApplicationId(applicationId);
+  };
+
+  const handleBackToList = () => {
+    setSelectedApplicationId(null);
+  };
 
   const isManager = profile?.staff_position && ['manager', 'director', 'managing_director'].includes(profile.staff_position);
 
@@ -149,6 +159,17 @@ export function ComplianceApplicationsList() {
           </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  // If an application is selected, show the inline view
+  if (selectedApplicationId) {
+    return (
+      <PermitApplicationInlineView
+        applicationId={selectedApplicationId}
+        onBack={handleBackToList}
+        onUpdate={refetch}
+      />
     );
   }
 
@@ -413,11 +434,11 @@ export function ComplianceApplicationsList() {
                           
                           <Button 
                             size="sm" 
-                            variant="outline"
-                            onClick={() => handleViewAssessment(assessment.id)}
+                            variant="ghost"
+                            onClick={() => handleViewApplication(assessment.permit_application_id)}
                           >
-                            <ExternalLink className="w-4 h-4 mr-1" />
-                            Review
+                            <Eye className="w-4 h-4 mr-1" />
+                            View
                           </Button>
                         </div>
                       </TableCell>

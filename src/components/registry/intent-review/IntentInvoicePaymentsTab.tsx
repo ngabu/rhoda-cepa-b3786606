@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Receipt, Download, FileText, Loader2, Eye, Paperclip, Upload, Lock } from 'lucide-react';
+import { Receipt, Download, FileText, Loader2, Eye, Paperclip, Upload, Lock, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface IntentInvoicePaymentsTabProps {
@@ -38,7 +38,9 @@ export function IntentInvoicePaymentsTab({ intentId, entityId, onStatusUpdate }:
   const { toast } = useToast();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [remarks, setRemarks] = useState('');
+  const [assessment, setAssessment] = useState('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   
@@ -52,23 +54,44 @@ export function IntentInvoicePaymentsTab({ intentId, entityId, onStatusUpdate }:
                   profile?.user_type === 'super_admin';
 
   useEffect(() => {
-    fetchInvoices();
+    fetchData();
   }, [intentId, entityId]);
 
-  const fetchInvoices = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Fetch invoices
+      const { data: invoiceData, error: invoiceError } = await supabase
         .from('invoices')
         .select('*')
         .eq('entity_id', entityId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setInvoices(data || []);
+      if (invoiceError) throw invoiceError;
+      setInvoices(invoiceData || []);
+
+      // Fetch review data
+      const { data: reviewData, error: reviewError } = await supabase
+        .from('intent_reviews')
+        .select('*')
+        .eq('intent_registration_id', intentId)
+        .eq('review_stage', 'invoice_payment')
+        .maybeSingle();
+
+      if (reviewError) throw reviewError;
+
+      if (reviewData) {
+        setRemarks(reviewData.remarks || '');
+        setAssessment(reviewData.assessment || '');
+        
+        const validations = reviewData.validation_checks as Record<string, boolean> || {};
+        setInvoicePaymentVerified(validations.invoicePaymentVerified || false);
+        setCepaAccountsReconciled(validations.cepaAccountsReconciled || false);
+      }
     } catch (error) {
-      console.error('Error fetching invoices:', error);
-      toast({ title: 'Error', description: 'Failed to load invoices', variant: 'destructive' });
+      console.error('Error fetching data:', error);
+      toast({ title: 'Error', description: 'Failed to load data', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -104,13 +127,53 @@ export function IntentInvoicePaymentsTab({ intentId, entityId, onStatusUpdate }:
         title: 'Success', 
         description: verified ? 'Invoice marked as paid' : 'Invoice marked as pending' 
       });
-      fetchInvoices();
+      fetchData();
       onStatusUpdate();
     } catch (error) {
       console.error('Error updating invoice:', error);
       toast({ title: 'Error', description: 'Failed to update invoice status', variant: 'destructive' });
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleSaveReview = async () => {
+    if (!canEdit) {
+      toast({ title: 'Error', description: 'You do not have permission to edit this section', variant: 'destructive' });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const reviewData = {
+        intent_registration_id: intentId,
+        review_stage: 'invoice_payment',
+        reviewer_id: profile?.user_id,
+        assessment,
+        remarks,
+        validation_checks: {
+          invoicePaymentVerified,
+          cepaAccountsReconciled
+        },
+        status: invoicePaymentVerified && cepaAccountsReconciled ? 'completed' : 'pending',
+        reviewed_at: new Date().toISOString()
+      };
+
+      const { error: reviewError } = await supabase
+        .from('intent_reviews')
+        .upsert(reviewData, { 
+          onConflict: 'intent_registration_id,review_stage'
+        });
+
+      if (reviewError) throw reviewError;
+
+      toast({ title: 'Success', description: 'Invoice review saved successfully' });
+      onStatusUpdate();
+    } catch (error) {
+      console.error('Error saving review:', error);
+      toast({ title: 'Error', description: 'Failed to save review', variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -154,7 +217,7 @@ export function IntentInvoicePaymentsTab({ intentId, entityId, onStatusUpdate }:
       if (updateError) throw updateError;
 
       toast({ title: 'Success', description: 'Invoice document uploaded successfully' });
-      fetchInvoices();
+      fetchData();
     } catch (error) {
       console.error('Error uploading document:', error);
       toast({ title: 'Error', description: 'Failed to upload document', variant: 'destructive' });
@@ -368,8 +431,22 @@ export function IntentInvoicePaymentsTab({ intentId, entityId, onStatusUpdate }:
           </div>
         </div>
 
+        {/* Assessment Section */}
+        <div className="space-y-2">
+          <Label htmlFor="assessment">Assessment</Label>
+          <Textarea
+            id="assessment"
+            value={assessment}
+            onChange={(e) => setAssessment(e.target.value)}
+            placeholder="Provide assessment of invoice and payment status..."
+            rows={3}
+            disabled={!canEdit}
+            className={!canEdit ? 'bg-muted cursor-not-allowed' : ''}
+          />
+        </div>
+
         {/* Remarks Section */}
-        <div className="space-y-2 pt-4 border-t">
+        <div className="space-y-2">
           <Label htmlFor="remarks">Remarks</Label>
           <Textarea
             id="remarks"
@@ -381,6 +458,24 @@ export function IntentInvoicePaymentsTab({ intentId, entityId, onStatusUpdate }:
             className={!canEdit ? 'bg-muted cursor-not-allowed' : ''}
           />
         </div>
+
+        {canEdit && (
+          <div className="flex gap-4 pt-4">
+            <Button onClick={handleSaveReview} disabled={submitting} className="flex-1 bg-emerald-600 hover:bg-emerald-700">
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Save Invoice Review
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
